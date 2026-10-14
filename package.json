@@ -4,6 +4,27 @@
   "description": "A lean browser interface for AI agents: web pages as short numbered text.",
   "type": "module",
   "license": "MIT",
+  "author": "Aadit Singal",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adi-devv/mantis.git"
+  },
+  "homepage": "https://github.com/adi-devv/mantis#readme",
+  "bugs": "https://github.com/adi-devv/mantis/issues",
+  "keywords": [
+    "mcp",
+    "browser",
+    "ai-agent",
+    "playwright",
+    "claude",
+    "web-automation",
+    "accessibility"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
@@ -16,6 +37,7 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
+    "prepublishOnly": "npm run build",
     "dev:read": "tsx src/cli.ts read"
   },
   "dependencies": {
