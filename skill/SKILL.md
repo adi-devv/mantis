@@ -25,7 +25,12 @@ Mantis turns a web page into short numbered text. You act on elements by their
 - `(covered)` means another element is on top. A line like `[dialog "..." - covers page]`
   tells you what; deal with the dialog first (accept, close, Escape), then retry.
 - States appear in brackets: `(checked)`, `(disabled)`, `(required)`, `(collapsed)`.
-- `...and 8 more links (#3-#10)` is a collapsed run; the numbers exist and can be clicked.
+- `...and 8 more links (#3-#10)` is a collapsed run: those elements exist, but you can't see
+  which number is which. Never guess one - expand first with `read({region: "..."})` or
+  `read({full: true})`.
+- `[nav] same as before — 8 links (#5-#12)` (or `(known layout)`) means site memory shortened
+  a header/menu you've already seen on this site. Expand it with `read({region: "nav"})` if you
+  need a link from it; `read({fresh: true})` shows everything once, `forget()` clears the memory.
 - `⚠ CAPTCHA detected` means stop and call `ask_human` (see below).
 
 ## Keep token use low
@@ -38,7 +43,7 @@ Mantis turns a web page into short numbered text. You act on elements by their
 
 ## Tools
 
-Page tools: `open`, `read`, `click`, `type`, `select`, `press`, `scroll`, `back`.
+Page tools: `open`, `read`, `click`, `type`, `select`, `press`, `scroll`, `back`, `forget`.
 
 Fallback ladder, only when `read` is not enough. Go in order and stop at the first that works:
 
