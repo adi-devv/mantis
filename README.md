@@ -48,6 +48,27 @@ Page: Shop
 
 The agent then calls `click(3)`. It never sees a coordinate.
 
+After an action, Mantis replies with only what changed, not the whole page
+again (real output from test fixtures):
+
+```
+clicked #2 button "Open settings"
++ [dialog "Confirm" — covers page]
++ #4 button "OK"
++ #5 button "Cancel"
+~ 3 items now covered (#1–#3)
+```
+
+```
+typed "nope" into #1 textbox "Email" and pressed Enter
++ [form "Subscribe"] "Invalid email"
+~ #1 textbox "Email": value "" → "nope"; now invalid
+```
+
+`+` appeared, `-` disappeared, `~` changed. If nothing changed it says
+`(no visible change)`; if the action led to a new page, it returns that
+page's full view.
+
 ## How it works
 
 ```
@@ -82,8 +103,8 @@ progress in [PROGRESS.md](PROGRESS.md)).
 | Milestone | What it adds | Status |
 |---|---|---|
 | M1 | Read pages as numbered text, act by number, MCP server, CLI | ✅ Done |
-| M2 | After each action, report only what changed ("a dialog opened") | 🚧 In progress |
-| M3 | Names for icon-only buttons, error/primary flags, regions on pages without landmarks, compact dense pages | Planned |
+| M2 | After each action, report only what changed ("a dialog opened") | ✅ Done |
+| M3 | Names for icon-only buttons, error/primary flags, regions on pages without landmarks, compact dense pages | 🚧 In progress |
 | M4 | Fallback ladder: hidden text & chart data → OCR → one-element image → hand off to a human (CAPTCHA, 2FA) | Planned |
 | M6 | Per-site memory so repeat visits are near-free | Planned |
 | M5 | Claude skill + public benchmark vs. Playwright MCP and screenshots | Planned |

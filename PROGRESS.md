@@ -7,7 +7,7 @@ See `PLAN.md` for the full plan.
 
 - [x] Plan written (`PLAN.md`)
 - [x] M1 — Read + act + MCP
-- [ ] M2 — Diffs + stable IDs
+- [x] M2 — Diffs + stable IDs
 - [ ] M3 — Human-like text view
 - [ ] M4 — Fallback ladder
 - [ ] M5 — Skill + benchmark
@@ -27,3 +27,13 @@ See `PLAN.md` for the full plan.
   unnamed icon buttons (M3); plain page text is only shown next to controls, so prose-only pages read as nearly empty;
   elements made clickable only via JS listeners (no onclick/tabindex/role) are not detected.
   `open` returns the full page view (not just a status line) so the agent does not need a second call.
+- 2026-10-14: Switched vitest 5 → 3 (v5's native binding fails to install on Windows).
+- 2026-10-14: M2 built. `src/diff.ts` (pure `diffSnapshots`, ≤1200-char budget with 3 summary levels); actions
+  return a diff for same-document changes (`+` added, `-` removed, `~` changed, dialogs opening/closing,
+  covered flips) and the full view after a navigation. Settle also waits on short timers (≤1s) and fetch/XHR
+  (cap 1.5s), so delayed content is caught. 57 tests green.
+  Known gaps: text not next to a control (toasts, standalone `role=alert`) is invisible to the diff until M3's
+  walker emits it; timers >1s/intervals only covered by the 3s DOM-quiet window; changes the page makes on its
+  own between reads are not reported.
+- Next: M3 → M4 → M6 → M5 (sequential to keep load low on the dev machine; benchmark last so it measures the
+  finished tool).
