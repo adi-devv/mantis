@@ -16,24 +16,26 @@ page, as short text — and lets it act by number instead of by pixel.
 
 ## What the agent sees
 
-A login page (real output from a test fixture, local file paths shortened, ~86 tokens):
+All examples below are real Mantis output (local file paths shortened).
+
+A login page (~78 tokens; a screenshot is ~1,500):
 
 ```
 Page: Login — Acme  (file:///…/login.html)
 [header]
-  #1 link "Home" (href /home)
+  #1 link "Home"
 [main]
   # Sign in
   [form "Login"]
     #2 textbox "Email" (email, required)
     #3 textbox "Password" (password, required)
-    #4 button "Sign in" (submit)
-    "Forgot your password?" #5 link "Reset it" (href /reset)
+    #4 button "Sign in" (primary)
+    "Forgot your password?" #5 link "Reset it"
 ```
 
-A shop page with a cookie popup on top (real output, paths shortened, ~65 tokens). Mantis
-reports what is covering what, so the agent deals with the popup first
-instead of clicking a button it can't reach:
+A shop page with a cookie popup on top (~61 tokens). Mantis reports what is
+covering what, so the agent deals with the popup first instead of clicking a
+button it can't reach:
 
 ```
 Page: Shop
@@ -43,10 +45,40 @@ Page: Shop
 [main]
   # Shop
   #1 button "Add to cart" (covered)
-  #2 link "More products" (href /more, covered)
+  #2 link "More products" (covered)
 ```
 
 The agent then calls `click(3)`. It never sees a coordinate.
+
+Icon-only buttons get a name inferred from the icon, tooltip or link — marked
+with `~` so the agent knows it's a guess. With no evidence, Mantis leaves it
+unnamed rather than making something up (`#4`):
+
+```
+#1 button ~"trash"
+#3 button ~"settings"
+#4 button
+#6 button ~"search"
+#7 link ~"upvote"
+```
+
+Dense pages are compacted row by row. The Hacker News front page — all 30
+stories — fits in ~1,500 tokens:
+
+```
+Page: Hacker News  (https://news.ycombinator.com/)
+[top bar]
+  #1 link ~"home"
+  #2 link "Hacker News"
+  …and 8 more links (#3–#10)
+[main]
+  1. #11 link ~"upvote" · #12 "Better HTTP/1 connection reuse in Go 1.27" · #13 "go.dev" · 70 points · #14 "allddd" · #15 "1 hour ago" · #16 "hide" · #17 "8 comments"
+  2. #18 ~"upvote" · #19 "Submarine cable resilience" · #20 "apnic.net" · 76 points · …
+  …
+```
+
+`read({region: "nav"})` reads just one part of a page; `read({full: true})`
+turns off all trimming.
 
 After an action, Mantis replies with only what changed, not the whole page
 again (real output from test fixtures):
@@ -62,8 +94,11 @@ clicked #2 button "Open settings"
 ```
 typed "nope" into #1 textbox "Email" and pressed Enter
 + [form "Subscribe"] "Invalid email"
-~ #1 textbox "Email": value "" → "nope"; now invalid
+~ #1 textbox "Email": value "" → "nope"; now error
 ```
+
+Pop-up messages (`role=alert`, toasts, live regions) show up too, as
+`+ [main] ⚠ "Saved successfully"`.
 
 `+` appeared, `-` disappeared, `~` changed. If nothing changed it says
 `(no visible change)`; if the action led to a new page, it returns that
@@ -104,14 +139,15 @@ progress in [PROGRESS.md](PROGRESS.md)).
 |---|---|---|
 | M1 | Read pages as numbered text, act by number, MCP server, CLI | ✅ Done |
 | M2 | After each action, report only what changed ("a dialog opened") | ✅ Done |
-| M3 | Names for icon-only buttons, error/primary flags, regions on pages without landmarks, compact dense pages | 🚧 In progress |
-| M4 | Fallback ladder: hidden text & chart data → OCR → one-element image → hand off to a human (CAPTCHA, 2FA) | Planned |
+| M3 | Names for icon-only buttons, error/primary flags, regions on pages without landmarks, compact dense pages, article text | ✅ Done |
+| M4 | Fallback ladder: hidden text & chart data → OCR → one-element image → hand off to a human (CAPTCHA, 2FA) | 🚧 In progress |
 | M6 | Per-site memory so repeat visits are near-free | Planned |
 | M5 | Claude skill + public benchmark vs. Playwright MCP and screenshots | Planned |
 
-Known gaps today: iframes are skipped, closed shadow roots can't be read,
-unnamed icon buttons show without a name, prose-heavy pages read thin, and
-very dense pages (e.g. Hacker News) get trimmed to fit the budget.
+Known gaps today: iframes are skipped and closed shadow roots can't be read;
+inferred names are heuristics (always `~`-marked) with a small icon
+vocabulary; article text is summarised only for simple paragraph blocks;
+repeated-row compaction only catches rows with a consistent structure.
 
 ### Why not just Playwright MCP?
 
@@ -144,7 +180,7 @@ claude mcp add mantis -- node /abs/path/to/mantis/dist/server.js
 | Tool | What it does |
 |---|---|
 | `open(url)` | Go to a page and return its text view |
-| `read()` | Text view of the current page |
+| `read(region?, full?)` | Text view of the current page, or one region of it |
 | `click(id)` | Click element `#id` |
 | `type(id, text, submit?)` | Type into a field, optionally press Enter |
 | `select(id, option)` | Pick an option in a dropdown |

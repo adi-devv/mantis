@@ -37,3 +37,14 @@ See `PLAN.md` for the full plan.
   own between reads are not reported.
 - Next: M3 → M4 → M6 → M5 (sequential to keep load low on the dev machine; benchmark last so it measures the
   finished tool).
+- 2026-10-14: M3 built. Walker infers names for unnamed controls (SVG title, icon classes, ligatures, tooltips,
+  href heuristics, adjacent text) shown as `~"name"`; states `primary`, `error` (+ message), `looks disabled`,
+  `current`; derived `[top bar]/[sidebar]/[main]/[bottom]` regions on landmark-less pages; prose summaries
+  (≤8 paragraphs, ~120 chars each, with inline links); repeated-row compaction; hrefs only when needed;
+  `read({region, full})`; live messages (role=alert/status/aria-live) emitted and shown in diffs as `⚠`/`ℹ`.
+  Fixed quirks-mode viewport (no-doctype pages counted everything as in-viewport). 81 tests green.
+  Live (chars/4 estimate): HN front page 1466 tok with 16/30 stories → 1484 tok with all 30; Wikipedia
+  "Praying mantis" 1007 → 691 tok (now includes prose).
+  Format changes: primary submit shows `(primary)` instead of `(submit)`; `invalid` state renamed `error`.
+  Known gaps: icon alias map is small; prose only for inline-only text blocks; row detection needs consistent
+  sibling signatures; diffs ignore prose changes; derived regions not used as diff region keys.
