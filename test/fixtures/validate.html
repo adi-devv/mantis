@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Validate</title></head>
+<body>
+<main>
+  <h1>Subscribe</h1>
+  <form aria-label="Subscribe" id="f" novalidate>
+    <label for="email">Email</label>
+    <input id="email" type="email">
+    <button type="submit">Subscribe</button>
+  </form>
+</main>
+<script>
+  document.getElementById('f').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = document.getElementById('email');
+    const old = document.getElementById('err');
+    if (old) old.remove();
+    if (!/^[^@\s]+@[^@\s]+\.[a-z]+$/.test(input.value)) {
+      const s = document.createElement('span');
+      s.id = 'err';
+      s.textContent = 'Invalid email';
+      input.setAttribute('aria-invalid', 'true');
+      input.after(s);
+    } else {
+      input.removeAttribute('aria-invalid');
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Delayed</title></head>
+<body>
+<main>
+  <h1>Reports</h1>
+  <button id="load">Load report</button>
+  <div id="slot"></div>
+</main>
+<script>
+  document.getElementById('load').addEventListener('click', () => {
+    setTimeout(() => {
+      document.getElementById('slot').innerHTML = '<h2>Quarterly report</h2><a href="/dl">Download report</a>';
+    }, 500);
+  });
+</script>
+</body>
+</html>

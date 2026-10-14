@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Todo</title></head>
+<body>
+<main>
+  <h1>Todo</h1>
+  <label for="t">New item</label>
+  <input id="t" type="text">
+  <button id="add">Add</button>
+  <ul id="list">
+    <li><a href="/a">Buy milk</a></li>
+    <li><a href="/b">Walk dog</a></li>
+  </ul>
+</main>
+<script>
+  document.getElementById('add').addEventListener('click', () => {
+    const t = document.getElementById('t');
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.href = '/new/' + encodeURIComponent(t.value);
+    a.textContent = t.value || 'untitled';
+    li.append(a);
+    document.getElementById('list').append(li);
+  });
+</script>
+</body>
+</html>

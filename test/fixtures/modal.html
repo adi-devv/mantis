@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Modal</title></head>
+<body>
+<header><a href="/home">Home</a></header>
+<main>
+  <h1>Settings page</h1>
+  <button id="open">Open settings</button>
+  <a href="/help">Help</a>
+</main>
+<div id="overlay" hidden style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10">
+  <div role="dialog" aria-modal="true" aria-labelledby="dt" style="background:#fff;margin:100px auto;width:400px;padding:20px">
+    <h2 id="dt">Confirm</h2>
+    <button id="ok">OK</button>
+    <button id="cancel">Cancel</button>
+  </div>
+</div>
+<script>
+  const overlay = document.getElementById('overlay');
+  document.getElementById('open').addEventListener('click', () => { overlay.hidden = false; });
+  document.getElementById('ok').addEventListener('click', () => { overlay.hidden = true; });
+  document.getElementById('cancel').addEventListener('click', () => { overlay.hidden = true; });
+</script>
+</body>
+</html>

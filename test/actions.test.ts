@@ -29,7 +29,12 @@ describe('stable ids', () => {
     const maxBefore = Math.max(...before.values());
 
     const res = await b.click(refresh);
-    expect(res).toBe(`clicked #${refresh} button "Refresh list"`);
+    expect(res.startsWith(`clicked #${refresh} button "Refresh list"\n`)).toBe(true);
+    // the replaced items are reported as added and removed, nothing else
+    expect(res).toMatch(/^\+ #\d+ link "Gamma 1"/m);
+    expect(res).toMatch(/^\+ #\d+ link "Delta 1"/m);
+    expect(res).toMatch(/^- removed: #\d+–#\d+ link$/m);
+    expect(res).not.toMatch(/^~/m);
 
     const after = idsOf(await b.read());
     expect(after.get('Refresh list')).toBe(refresh);
@@ -90,7 +95,7 @@ describe('navigation actions', () => {
 describe('press and scroll', () => {
   it('press reports the key', async () => {
     await b.open(fixture('login.html'));
-    expect(await b.press('Tab')).toBe('pressed Tab');
+    expect(await b.press('Tab')).toBe('pressed Tab\n(no visible change)');
   });
 
   it('scroll(id) brings a below-the-fold element into the viewport', async () => {
@@ -120,7 +125,9 @@ describe('select', () => {
     let view = await b.open(url);
     expect(view).toMatch(/#\d+ combobox "Country" \(value "France", options: France \| Spain\)/);
     const id = idOf(view, 'combobox "Country"');
-    expect(await b.select(id, 'Spain')).toBe(`selected "Spain" in #${id} combobox "Country"`);
+    expect(await b.select(id, 'Spain')).toBe(
+      `selected "Spain" in #${id} combobox "Country"\n~ #${id} combobox "Country": value "France" → "Spain"`,
+    );
     view = await b.read();
     expect(view).toContain('value "Spain"');
     expect(await b.select(id, 'Mars')).toBe(`error: no option "Mars" in #${id} combobox "Country"; options: France | Spain`);
