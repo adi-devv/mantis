@@ -12,6 +12,30 @@ export interface ReadOptions {
   region?: string;
   /** No trimming: every paragraph, every link, every href, no run collapsing, no budget. */
   full?: boolean;
+  /** Bypass site memory for this call: show every region in full even if it was seen before. */
+  fresh?: boolean;
+}
+
+/** One top-level region as site memory sees it (see memory.ts). */
+export interface RegionInfo {
+  /** Index of the region node in the (region-derived) node array; opaque to memory. */
+  index: number;
+  role: string;
+  name: string;
+  /** The region rendered without any trimming, ids intact, independent of the rest of the page. */
+  lines: string[];
+  /** Interactive elements inside, in order (nested regions included). */
+  items: { id: number; role: string; name: string; inferred: boolean }[];
+  /** Never replaced by a summary: main, dialogs, focused/invalid fields, live messages. */
+  blocked: boolean;
+}
+
+/** Lets site memory replace regions the agent has already seen with a one-line summary. */
+export interface RegionHook {
+  /** Per region: replacement lines, or null to render it in full. */
+  collapse(regions: RegionInfo[]): (string[] | null)[];
+  /** What actually reached the agent: regions shown in full, and regions shown as a summary. */
+  shown(full: RegionInfo[], collapsed: RegionInfo[]): void;
 }
 
 export function estimateTokens(text: string): number {
@@ -40,7 +64,7 @@ const FULL_LEVEL: Level = { over: Infinity, keep: 0, dropOffscreenText: false, d
 
 export const quote = (s: string): string => s.replace(/"/g, "'");
 const norm = (s: string): string => s.toLowerCase().replace(/[\s:*]+$/g, '').trim();
-const plural = (role: string): string => role + (/[xs]$/.test(role) ? 'es' : 's');
+export const plural = (role: string): string => role + (/[xs]$/.test(role) ? 'es' : 's');
 const clip = (s: string, n: number): string => (s.length > n ? s.slice(0, n - 1).trimEnd() + '…' : s);
 const GENERIC_LINK = /^(click here|here|read more|more|learn more|link|details|this|view|open|go|continue|download|see more|more info)$/i;
 const ROW_FILLER = new Set(['by', 'at', 'of', 'on', 'in', 'to', 'from', 'via', 'and', 'or', 'with']);
@@ -211,10 +235,23 @@ interface Ctx {
   full: boolean;
   /** How many links carry each (not guessed) name: 2-3 copies get an href to tell them apart. */
   dupNames: Map<string, number>;
+  /** Site memory: node index of a top-level region -> the lines that stand in for it. */
+  replace?: Map<number, string[]>;
 }
 
-function renderBody(nodes: RawNode[], lvl: Level, ctx: Ctx): { lines: string[]; dropped: number } {
+/** Where a top-level region landed in the rendered lines. */
+interface Mark {
+  index: number;
+  start: number;
+  end: number;
+  collapsed: boolean;
+  /** Part of the region was left out (offscreen items dropped). */
+  trimmed: boolean;
+}
+
+function renderBody(nodes: RawNode[], lvl: Level, ctx: Ctx): { lines: string[]; dropped: number; marks: Mark[] } {
   let dropped = 0;
+  const marks: Mark[] = [];
   let proseShown = 0;
   const kids = new Map<number, number[]>();
   nodes.forEach((n, i) => {
@@ -337,8 +374,21 @@ function renderBody(nodes: RawNode[], lvl: Level, ctx: Ctx): { lines: string[]; 
       const prev = k > 0 ? nodes[items[k - 1]] : undefined;
 
       if (n.kind === 'region') {
+        const swap = depth === 0 ? ctx.replace?.get(items[k]) : undefined;
+        if (swap) {
+          if (depth === 0) marks.push({ index: items[k], start: out.length, end: out.length + swap.length, collapsed: true, trimmed: false });
+          out.push(...swap);
+          k++;
+          continue;
+        }
+        const droppedBefore = dropped;
         const inner = renderList(kids.get(items[k]) ?? [], depth + 1, n.name);
-        if (inner.length) out.push(pad + regionLine(n), ...inner);
+        if (inner.length) {
+          if (depth === 0) {
+            marks.push({ index: items[k], start: out.length, end: out.length + 1 + inner.length, collapsed: false, trimmed: dropped > droppedBefore });
+          }
+          out.push(pad + regionLine(n), ...inner);
+        }
         k++;
       } else if (n.kind === 'prose') {
         let j = k + 1;
@@ -415,11 +465,56 @@ function renderBody(nodes: RawNode[], lvl: Level, ctx: Ctx): { lines: string[]; 
   const top = kids.get(-1) ?? [];
   const blocking = (i: number): boolean => nodes[i].kind === 'region' && nodes[i].covers === true;
   const ordered = [...top.filter(blocking), ...top.filter((i) => !blocking(i))];
-  return { lines: renderList(ordered, 0), dropped };
+  return { lines: renderList(ordered, 0), dropped, marks };
+}
+
+// ---- site memory -----------------------------------------------------------
+
+const NEVER_COLLAPSE = new Set(['main', 'dialog', 'alertdialog']);
+/** Signatures are computed from this: every item, no run collapsing, no offscreen dropping. */
+const SIGNATURE_LEVEL: Level = { ...FULL_LEVEL };
+
+/** The region at `root` with its descendants, as a standalone node array (all treated as in the viewport). */
+function subtree(nodes: RawNode[], root: number): RawNode[] {
+  const inside = (i: number): boolean => {
+    for (let p = i; p >= 0; p = nodes[p].parent) if (p === root) return true;
+    return false;
+  };
+  const remap: number[] = [];
+  const out: RawNode[] = [];
+  nodes.forEach((n, i) => {
+    if (!inside(i)) return;
+    remap[i] = out.length;
+    out.push({ ...n, inViewport: true, parent: i === root ? -1 : remap[n.parent] });
+  });
+  return out;
+}
+
+/** What site memory needs to know about each top-level region of the page. */
+function regionInfos(nodes: RawNode[]): RegionInfo[] {
+  const infos: RegionInfo[] = [];
+  nodes.forEach((root, index) => {
+    if (root.kind !== 'region' || root.parent !== -1) return;
+    const sub = subtree(nodes, index);
+    const dupNames = new Map<string, number>();
+    for (const n of sub) {
+      if (n.kind === 'interactive' && n.href && n.name && !n.inferred) dupNames.set(norm(n.name), (dupNames.get(norm(n.name)) ?? 0) + 1);
+    }
+    const lines = renderBody(sub, SIGNATURE_LEVEL, { full: false, dupNames }).lines;
+    const items = sub
+      .filter((n) => n.kind === 'interactive' && n.id !== undefined)
+      .map((n) => ({ id: n.id as number, role: n.role, name: n.name, inferred: !!n.inferred }));
+    const blocked = sub.some((n) =>
+      (n.kind === 'region' && (NEVER_COLLAPSE.has(n.role) || n.covers === true)) ||
+      (n.kind === 'interactive' && (n.focused === true || n.states.includes('error'))) ||
+      (n.kind === 'text' && !!n.live));
+    infos.push({ index, role: root.role, name: root.name, lines, items, blocked });
+  });
+  return infos;
 }
 
 /** Snapshot -> the numbered text view an agent reads. */
-export function translate(snap: Snapshot, budget: number = BUDGET_CHARS, opts: ReadOptions = {}): string {
+export function translate(snap: Snapshot, budget: number = BUDGET_CHARS, opts: ReadOptions = {}, hook?: RegionHook): string {
   const header = `Page: ${snap.title || '(no title)'}  (${snap.url.length > 160 ? snap.url.slice(0, 159) + '…' : snap.url})`;
   const tail: string[] = [];
   if (snap.truncated) tail.push('(capture stopped: page has more than 3000 elements)');
@@ -445,11 +540,20 @@ export function translate(snap: Snapshot, budget: number = BUDGET_CHARS, opts: R
   const ctx: Ctx = { full, dupNames };
   const levels = full ? [FULL_LEVEL] : LEVELS;
 
+  // Site memory: regions the agent has already seen become one line (never on full/region/fresh reads).
+  const infos = hook ? regionInfos(nodes) : [];
+  if (hook && !full && !opts.region && !opts.fresh) {
+    const swaps = hook.collapse(infos);
+    ctx.replace = new Map();
+    infos.forEach((r, i) => { if (swaps[i]) ctx.replace!.set(r.index, swaps[i]!); });
+  }
+
   let result = renderBody(nodes, levels[0], ctx);
   const fits = (r: { lines: string[] }): boolean => [...head, ...r.lines, ...tail].join('\n').length <= budget;
   for (let i = 1; !fits(result) && i < levels.length; i++) result = renderBody(nodes, levels[i], ctx);
 
   let lines = result.lines;
+  let kept = lines.length; // lines that really reach the agent
   let note = result.dropped > 0 ? `(trimmed: ${result.dropped} items offscreen — scroll or read again)` : '';
   if (!fits(result)) {
     // Last resort: cut lines to the budget.
@@ -458,7 +562,16 @@ export function translate(snap: Snapshot, budget: number = BUDGET_CHARS, opts: R
     while (cut < lines.length && size + lines[cut].length + 1 <= budget) size += lines[cut++].length + 1;
     const left = lines.length - cut;
     lines = lines.slice(0, cut);
+    kept = cut;
     note = `(trimmed: ${left + result.dropped} more lines — scroll or read again)`;
+  }
+  if (hook) {
+    const byIndex = new Map(infos.map((r) => [r.index, r]));
+    const whole = result.marks.filter((m) => m.end <= kept && !m.trimmed);
+    hook.shown(
+      whole.filter((m) => !m.collapsed).map((m) => byIndex.get(m.index)!),
+      whole.filter((m) => m.collapsed).map((m) => byIndex.get(m.index)!),
+    );
   }
   if (!lines.length) lines = ['(no visible content)'];
   return [...head, ...lines, ...tail, ...(note ? [note] : [])].join('\n');

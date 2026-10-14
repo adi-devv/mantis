@@ -26,13 +26,23 @@ export function createServer(browser: MantisBrowser = new MantisBrowser()): McpS
     {
       description:
         'Return the current page as numbered text. Use the #numbers with click/type/select/scroll. Re-read after the page changes. ' +
-        'Names shown as ~"x" are guesses (icon/tooltip/link). Optional: region (e.g. "nav", "sidebar", "main") reads just that part; full=true turns off trimming.',
+        'Names shown as ~"x" are guesses (icon/tooltip/link). Optional: region (e.g. "nav", "sidebar", "main") reads just that part; full=true turns off trimming. ' +
+        'Regions you already saw on this site show as one line ("[nav] same as before — 8 links (#3–#10)"); their numbers still work. region, full or fresh show everything.',
       inputSchema: {
         region: z.string().optional().describe('Only this region: a substring of its label, e.g. "nav", "sidebar", "main", "top bar"'),
         full: z.boolean().optional().describe('Disable trimming: every paragraph, link and href'),
+        fresh: z.boolean().optional().describe('Show every region in full, even ones already seen on this site (this call only)'),
       },
     },
-    async ({ region, full }) => reply(await browser.read({ region, full })),
+    async ({ region, full, fresh }) => reply(await browser.read({ region, full, fresh })),
+  );
+  server.registerTool(
+    'forget',
+    {
+      description: 'Clear what Mantis remembers about the current site (regions already seen), so the next read shows everything in full.',
+      inputSchema: {},
+    },
+    async () => reply(await browser.forget()),
   );
   server.registerTool(
     'click',

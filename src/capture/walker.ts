@@ -52,6 +52,8 @@ export interface RawNode {
   live?: 'alert' | 'status';
   /** Inside a prose paragraph (an inline link in running text). */
   inline?: boolean;
+  /** Interactive only: a text-entry field that has keyboard focus (site memory never hides it). */
+  focused?: boolean;
   /** Bounding box in document coordinates: [x, y, width, height], rounded. */
   box?: [number, number, number, number];
 }
@@ -629,6 +631,9 @@ export function walker(): WalkResult {
     'nav,[role=navigation],[role=tablist],[role=menubar],[role=menu],.nav,.navbar,.tabs,.menu,[class*=nav-],[class*=-nav],[class*=tabs],[class*=menu]';
   const ACTIVE_CLASS = /(^|\s)(active|current|selected|is-active|is-current|is-selected)(\s|$)/;
 
+  let deepActive: Element | null = document.activeElement;
+  while (deepActive?.shadowRoot?.activeElement) deepActive = deepActive.shadowRoot.activeElement;
+
   const buttonish: { node: RawNode; el: Element; r: DOMRect; cs: CSSStyleDeclaration }[] = [];
 
   function emitInteractive(el: Element, role: string, parent: number, depth: number, r: DOMRect): void {
@@ -718,6 +723,7 @@ export function walker(): WalkResult {
       reg.byId.set(id, new WeakRef(el));
     }
     node.id = id;
+    if (el === deepActive && (field || (el as HTMLElement).isContentEditable)) node.focused = true;
     stamp(node, r);
     nodes.push(node);
     if (role === 'button' || (t === 'a' && /(^|[\s_-])(btn|button|cta)([\s_-]|$)/i.test(classOf(el)))) {
