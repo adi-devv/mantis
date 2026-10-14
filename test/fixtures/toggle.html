@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Toggle</title></head>
+<body>
+<main>
+  <h1>Profile</h1>
+  <button id="save">Save</button>
+  <button id="noop">Do nothing</button>
+  <button id="rename">Rename</button>
+  <p id="count">Saved 0 times</p>
+</main>
+<script>
+  let n = 0;
+  document.getElementById('save').addEventListener('click', (e) => {
+    n++;
+    document.getElementById('count').textContent = 'Saved ' + n + ' times';
+    e.currentTarget.disabled = true;
+  });
+  document.getElementById('rename').addEventListener('click', (e) => {
+    e.currentTarget.textContent = 'Renamed';
+  });
+</script>
+</body>
+</html>
