@@ -58,3 +58,14 @@ See `PLAN.md` for the full plan.
   `MANTIS_ASK_HUMAN_HEADLESS=1` (tests only).
   Known gaps: headed-window path of ask_human untested (needs a display); ECharts/Highcharts untested (only a
   Chart.js fixture); media() skips closed shadow roots and cross-origin iframes; no OCR preprocessing.
+- 2026-10-15: M6 built (`src/memory.ts`, `RegionHook` in translate). Top-level regions already shown in full on
+  the same origin collapse to `[nav] same as before — 8 links (#5–#12); read({region}) to expand`; regions known
+  only from disk show `(known layout)` with names. Never collapsed: main, dialogs, regions with a focused/error
+  field or live message, <3 lines. Disk store keeps only hashes + counts + timestamps (30-day expiry, 300/origin,
+  atomic writes; corrupt files ignored). `read({fresh})`, `forget()` tool, `MANTIS_MEMORY=0`,
+  `MANTIS_MEMORY_DIR`. Tests run with memory off by default (test/setup.ts). 142 tests green.
+  Honest numbers (chars/4, 3 pages per site, one session): MDN 1837 → 1843 (no saving), Wikipedia 1973 → 1909
+  (−3%), GitHub 3057 → 2913 (−5%); second session −5% / −7%; synthetic fixture site ~25%.
+  Why small: M3 already shrinks chrome; nested navs inside `[main]` are never collapsed; per-page state
+  ("current", counts, breadcrumbs) changes signatures. Next: collapse nested regions, ignore "current"/counts in
+  signatures. Note: a second read() of the same page also collapses chrome.

@@ -167,15 +167,17 @@ progress in [PROGRESS.md](PROGRESS.md)).
 | M2 | After each action, report only what changed ("a dialog opened") | ✅ Done |
 | M3 | Names for icon-only buttons, error/primary flags, regions on pages without landmarks, compact dense pages, article text | ✅ Done |
 | M4 | Fallback ladder: hidden text & chart data → OCR → one-element image → hand off to a human (CAPTCHA, 2FA) | ✅ Done |
-| M6 | Per-site memory so repeat visits are near-free | 🚧 In progress |
-| M5 | Claude skill + public benchmark vs. Playwright MCP and screenshots | Planned |
+| M6 | Site memory: headers/menus already seen on a site are shortened to one line | ✅ Done |
+| M5 | Claude skill + public benchmark vs. Playwright MCP and screenshots | 🚧 In progress |
 
 Known gaps today: iframes are skipped and closed shadow roots can't be read;
 inferred names are heuristics (always `~`-marked) with a small icon
 vocabulary; article text is summarised only for simple paragraph blocks;
 repeated-row compaction only catches rows with a consistent structure;
 ECharts/Highcharts extraction is implemented but only Chart.js is tested;
-the visible-window path of `ask_human` hasn't been tested yet.
+the visible-window path of `ask_human` hasn't been tested yet; site memory
+saves little on real sites so far (0–7% on MDN, Wikipedia, GitHub) because
+menus nested inside the main content aren't collapsed yet.
 
 ### Why not just Playwright MCP?
 
@@ -208,7 +210,7 @@ claude mcp add mantis -- node /abs/path/to/mantis/dist/server.js
 | Tool | What it does |
 |---|---|
 | `open(url)` | Go to a page and return its text view |
-| `read(region?, full?)` | Text view of the current page, or one region of it |
+| `read(region?, full?, fresh?)` | Text view of the current page, or one region of it |
 | `click(id)` | Click element `#id` |
 | `type(id, text, submit?)` | Type into a field, optionally press Enter |
 | `select(id, option)` | Pick an option in a dropdown |
@@ -220,10 +222,13 @@ claude mcp add mantis -- node /abs/path/to/mantis/dist/server.js
 | `ocr(id \| selector)` | Read text inside an image (no image returned) |
 | `look(id \| selector)` | Last resort: a cropped image of one element |
 | `ask_human(reason, until?)` | Hand off to a human (CAPTCHA, 2FA, payment) and wait |
+| `forget()` | Clear site memory for the current site |
 
 Set `MANTIS_HEADLESS=0` to watch the browser. OCR language data is downloaded
 on first use and cached in `~/.cache/mantis/tessdata` (or set
-`MANTIS_TESSDATA`). Run the tests with `npm test`.
+`MANTIS_TESSDATA`). Site memory stores only hashes of page layout (never page
+text) in `~/.cache/mantis/sites`; turn it off with `MANTIS_MEMORY=0`. Run the
+tests with `npm test`.
 
 ## Contributing
 
