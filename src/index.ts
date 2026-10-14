@@ -4,5 +4,8 @@ export { capture, resolve } from './capture/index.js';
 export type { Snapshot, RawNode, NodeKind, Resolved } from './capture/index.js';
 export { translate, estimateTokens, BUDGET_CHARS } from './translate.js';
 export { createServer } from './server.js';
+export { SiteMemory, originOf, regionSignature } from './memory.js';
+export type { MemoryOptions } from './memory.js';
+export type { ReadOptions, RegionInfo, RegionHook } from './translate.js';
 export { diffSnapshots, DIFF_BUDGET_CHARS } from './diff.js';
 export type { Target } from './fallback/media.js';

@@ -4,6 +4,7 @@ import { capture, resolve } from './capture/index.js';
 import type { Snapshot } from './capture/index.js';
 import { translate } from './translate.js';
 import type { ReadOptions } from './translate.js';
+import { SiteMemory, originOf } from './memory.js';
 import { NO_CHANGE, diffSnapshots, headerLines } from './diff.js';
 import { listMedia, describeElement, formatData } from './fallback/media.js';
 import type { Target } from './fallback/media.js';
@@ -20,6 +21,10 @@ export interface MantisOptions {
   headless?: boolean;
   /** How long a click/type/select waits for the element to become actionable. */
   actionTimeoutMs?: number;
+  /** Site memory (collapse regions already seen on this site). Default on; MANTIS_MEMORY=0 turns it off. */
+  memory?: boolean;
+  /** Where site memory is stored between sessions. Default MANTIS_MEMORY_DIR or ~/.cache/mantis/sites. */
+  memoryDir?: string;
 }
 
 /** A failure the agent should see as a plain message. */
@@ -87,9 +92,11 @@ export class MantisBrowser {
   private notes: string[] = [];
   private scratch: BrowserContext | null = null;
   private readonly actionTimeout: number;
+  private readonly memory: SiteMemory;
 
   constructor(private readonly opts: MantisOptions = {}) {
     this.actionTimeout = opts.actionTimeoutMs ?? 5000;
+    this.memory = new SiteMemory({ enabled: opts.memory, dir: opts.memoryDir });
   }
 
   async launch(): Promise<void> {
@@ -144,9 +151,24 @@ export class MantisBrowser {
     });
   }
 
-  /** The numbered view of the page. `region` narrows to one region; `full` turns trimming off. */
+  /**
+   * The numbered view of the page. `region` narrows to one region; `full` turns trimming off;
+   * `fresh` shows regions in full that site memory would otherwise summarise (as `full` and `region` also do).
+   */
   async read(opts: ReadOptions = {}): Promise<string> {
     return this.guard(async () => this.view(await this.activePage(), opts));
+  }
+
+  /** Clear what site memory holds about the current site (this session and on disk). */
+  async forget(): Promise<string> {
+    return this.guard(async () => {
+      const page = await this.activePage();
+      const origin = originOf(page.url());
+      if (!this.memory.enabled) return 'site memory is off (MANTIS_MEMORY=0); nothing to forget';
+      if (!origin) return 'no site is open; nothing to forget';
+      this.memory.forget(origin);
+      return `forgot everything remembered about ${origin === 'file://' ? 'local files' : origin}; the next read shows every region in full`;
+    });
   }
 
   async click(id: number): Promise<string> {
@@ -476,7 +498,7 @@ export class MantisBrowser {
 
   private render(snap: Snapshot, opts: ReadOptions = {}): string {
     this.remember(snap);
-    return translate(snap, undefined, opts);
+    return translate(snap, undefined, opts, this.memory.hook(originOf(snap.url)));
   }
 
   /** Remember how each number was last described, for action messages. */
