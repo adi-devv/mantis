@@ -1,4 +1,5 @@
 import type { RawNode, Snapshot } from './capture/index.js';
+import { interactiveLine as fmtInteractive, textLine } from './translate.js';
 
 /** Soft cap on the diff body; past this the diff degrades to summaries. */
 export const DIFF_BUDGET_CHARS = 1200;
@@ -32,14 +33,9 @@ export function headerLines(before: Pick<Snapshot, 'url' | 'title'>, after: Pick
 
 // ---- line formats (kept in step with translate.ts) -------------------------
 
+/** Same format as the full view; hrefs kept (a new link is something to follow) unless the name is a guess. */
 function interactiveLine(n: RawNode): string {
-  const parts = [...n.states];
-  if (n.value) parts.push(`value "${quote(n.value)}"`);
-  if (n.options?.length) parts.push(`options: ${n.options.map(quote).join(' | ')}`);
-  if (n.href) parts.push(`href ${n.href}`);
-  if (n.covered) parts.push('covered');
-  const name = n.name ? ` "${quote(n.name)}"` : '';
-  return `#${n.id} ${n.role}${name}${parts.length ? ` (${parts.join(', ')})` : ''}`;
+  return fmtInteractive(n, { showHref: !n.inferred });
 }
 
 function regionLabel(n: RawNode): string {
@@ -260,12 +256,12 @@ function collect(before: Snapshot, after: Snapshot): Parts {
       } else {
         g.items.push(`${hashes(n)} ${quote(n.name)}`);
       }
-    } else if (nextIsAddedControl) {
-      g.items.push(`"${quote(n.name)}" ${interactiveLine(next)}`);
+    } else if (nextIsAddedControl && !n.live) {
+      g.items.push(`${textLine(n)} ${interactiveLine(next)}`);
       g.interactive++;
       consumed.add(i + 1);
     } else {
-      g.items.push(`"${quote(n.name)}"`);
+      g.items.push(textLine(n));
     }
   });
 
@@ -354,7 +350,7 @@ function collect(before: Snapshot, after: Snapshot): Parts {
 
 /** `#14 button "Save"` without states: the stable part of a changed element. */
 function interactiveHead(n: RawNode): string {
-  return `#${n.id} ${n.role}${n.name ? ` "${quote(n.name)}"` : ''}`;
+  return `#${n.id} ${n.role}${n.name ? ` ${n.inferred ? '~' : ''}"${quote(n.name)}"` : ''}`;
 }
 
 type Level = 0 | 1 | 2;

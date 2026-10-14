@@ -11,7 +11,7 @@
  * and coordinate translation; deferred).
  */
 
-export type NodeKind = 'interactive' | 'heading' | 'region' | 'text';
+export type NodeKind = 'interactive' | 'heading' | 'region' | 'text' | 'prose';
 
 export interface RawNode {
   kind: NodeKind;
@@ -40,6 +40,20 @@ export interface RawNode {
   inViewport: boolean;
   /** Interactive only: another element is on top at the element's center. */
   covered: boolean;
+  /** Interactive only: `name` is a guess from icons/tooltips/href/nearby text, not an accessible name. */
+  inferred?: boolean;
+  /** Interactive only: visible message explaining why the field is in error. */
+  errorText?: string;
+  /** Page-unique id of the outermost repeated-sibling row (tr, li, card...) this node sits in. */
+  row?: number;
+  /** Id of the sibling group the row belongs to; rows of one group are candidates for compaction. */
+  rowGroup?: number;
+  /** Text nodes only: this is a live message (role=alert / status / aria-live), kept for diffs. */
+  live?: 'alert' | 'status';
+  /** Inside a prose paragraph (an inline link in running text). */
+  inline?: boolean;
+  /** Bounding box in document coordinates: [x, y, width, height], rounded. */
+  box?: [number, number, number, number];
 }
 
 export interface WalkResult {
@@ -48,6 +62,8 @@ export interface WalkResult {
   nodes: RawNode[];
   /** Capture stopped early because the page exceeded the node cap. */
   truncated: boolean;
+  /** Viewport and document size in px (used to derive regions on landmark-less pages). */
+  page?: { vw: number; vh: number; docW: number; docH: number };
 }
 
 export function walker(): WalkResult {
@@ -88,11 +104,13 @@ export function walker(): WalkResult {
   let truncated = false;
 
   const vw = document.documentElement.clientWidth || window.innerWidth;
-  const vh = document.documentElement.clientHeight || window.innerHeight;
+  // In quirks mode (no doctype) clientHeight is the whole document, which would make everything "in view".
+  const vh = document.compatMode === 'BackCompat' ? window.innerHeight : document.documentElement.clientHeight || window.innerHeight;
   const docW = Math.max(document.documentElement.scrollWidth, document.body ? document.body.scrollWidth : 0);
   const docH = Math.max(document.documentElement.scrollHeight, document.body ? document.body.scrollHeight : 0);
 
-  const collapse = (s: string): string => s.replace(/\s+/g, ' ').trim();
+  // Private-use code points are icon-font glyphs (Font Awesome etc.): no meaning as text.
+  const collapse = (s: string): string => s.replace(/[-]/g, ' ').replace(/\s+/g, ' ').trim();
   const cap = (s: string, n: number): string => (s.length > n ? s.slice(0, n - 1).trimEnd() + '…' : s);
   const inDoc = (r: DOMRect): boolean =>
     r.right + window.scrollX > 0 && r.bottom + window.scrollY > 0 &&
@@ -226,6 +244,11 @@ export function walker(): WalkResult {
       }
     } else {
       n = deepText(el, 200);
+      const ic = iconFontText(el);
+      if (n && ic) {
+        // Ligature icon fonts (material-icons "delete") render their name as text: not a real label.
+        n = n === ic ? '' : collapse(n.startsWith(ic) ? n.slice(ic.length) : n.endsWith(ic) ? n.slice(0, -ic.length) : n);
+      }
       if (n) return cap(n, 80);
     }
     n = collapse(el.getAttribute('title') || '');
@@ -233,6 +256,167 @@ export function walker(): WalkResult {
     n = collapse(el.getAttribute('placeholder') || '');
     if (n) return cap(n, 80);
     return '';
+  }
+
+  // ---- name inference for unnamed controls --------------------------------
+  // Evidence only, in order: SVG title/aria-label, icon class or ligature, tooltip attributes, href,
+  // adjacent text. The caller marks the result as inferred. No evidence -> no name.
+
+  const ICON_FONT_CLASS = /(^|\s)material-(icons|symbols)[\w-]*(\s|$)/;
+  const ICON_PREFIX =
+    /^(?:fa[srlbdt]?|bi|icon|icons|ico|lucide|ti|tabler-icon|mdi|glyphicon|octicon|ri|bx[sl]?|feather|ion|ionicon|uil|uis|iconoir|ph|codicon|remixicon)-(.+)$/;
+  const ICON_NOISE = new Set([
+    'fw', 'lg', 'sm', 'xs', 'xl', 'xxs', 'spin', 'pulse', 'solid', 'regular', 'light', 'thin', 'duotone', 'brands',
+    'stack', 'inverse', 'border', 'li', 'ul', 'rotate', 'flip', 'btn', 'button', 'only', 'wrapper', 'wrap',
+    'container', 'left', 'right', 'small', 'large', 'medium', 'default', 'primary', 'secondary', 'md', 'bold',
+    'fill', 'outline', 'link', 'text', 'inline', 'base', 'size', 'color', 'sharp', 'rounded', 'round', 'twotone',
+    'before', 'after', 'font', 'svg', 'img', 'image', 'icon', 'icons', 'i', 'mr', 'ml', 'me', 'ms',
+  ]);
+  const ICON_ALIAS: Record<string, string> = {
+    x: 'close', times: 'close', xmark: 'close', cross: 'close', 'x lg': 'close', 'x circle': 'close',
+    'times circle': 'close', 'xmark circle': 'close', 'magnifying glass': 'search', magnify: 'search',
+    gear: 'settings', cog: 'settings', cogs: 'settings', bars: 'menu', hamburger: 'menu', navicon: 'menu',
+    ellipsis: 'more', 'ellipsis v': 'more', 'ellipsis h': 'more', 'more vert': 'more', 'more horiz': 'more',
+    'three dots': 'more', dots: 'more', pen: 'edit', pencil: 'edit', 'pencil alt': 'edit', 'pen to square': 'edit',
+    plus: 'add', 'plus lg': 'add', 'plus circle': 'add', 'trash can': 'trash', 'trash alt': 'trash',
+    'trash 2': 'trash', bin: 'trash', 'delete bin': 'trash', 'ellipsis vertical': 'more',
+    'ellipsis horizontal': 'more', 'arrow path': 'refresh', sync: 'refresh', redo: 'refresh',
+  };
+  const SOCIAL_HOSTS: Record<string, string> = {
+    'facebook.com': 'facebook', 'twitter.com': 'twitter', 'x.com': 'x', 'instagram.com': 'instagram',
+    'linkedin.com': 'linkedin', 'youtube.com': 'youtube', 'github.com': 'github', 'tiktok.com': 'tiktok',
+    'reddit.com': 'reddit', 'discord.com': 'discord', 'discord.gg': 'discord', 't.me': 'telegram',
+    'wa.me': 'whatsapp', 'pinterest.com': 'pinterest', 'gitlab.com': 'gitlab',
+  };
+  const TOOLTIP_ATTRS = ['title', 'data-tooltip', 'data-title', 'data-original-title', 'data-tip', 'data-bs-title',
+    'data-tooltip-content', 'data-hint', 'tooltip'];
+  const GENERIC_PATH = new Set(['index', 'default', 'page', 'item', 'view', 'html', 'php', 'aspx', 'null', 'undefined', 'redirect']);
+
+  function classOf(e: Element): string {
+    return e.getAttribute('class') || '';
+  }
+
+  /** Text that comes from ligature icon fonts (class material-icons ...) inside `el`. */
+  function iconFontText(el: Element): string {
+    const parts: string[] = [];
+    const pick = (e: Element): void => {
+      if (ICON_FONT_CLASS.test(classOf(e))) parts.push(collapse(e.textContent || ''));
+    };
+    pick(el);
+    for (const d of Array.from(el.querySelectorAll('[class*=material-]')).slice(0, 6)) pick(d);
+    return collapse(parts.join(' '));
+  }
+
+  function aliasIcon(raw: string): string {
+    let w = raw.toLowerCase().replace(/[_\s]+/g, '-');
+    w = w.replace(/^(ios|md|logo)-/, '');
+    w = w.replace(/-(fill|filled|line|o|outline|outlined|solid|regular|sharp|rounded|bold|thin|light|duotone|twotone|alt)$/, '');
+    w = w.replace(/-\d+(px)?$/, '');
+    if (!/[a-z]/.test(w) || ICON_NOISE.has(w)) return '';
+    const words = w.replace(/-/g, ' ').trim();
+    if (words.length < 1 || words.length > 30) return '';
+    return ICON_ALIAS[words] ?? words;
+  }
+
+  function iconFromClasses(e: Element): string {
+    for (const tok of classOf(e).split(/\s+/)) {
+      const m = ICON_PREFIX.exec(tok);
+      if (!m) continue;
+      const w = aliasIcon(m[1]);
+      if (w) return w;
+    }
+    return '';
+  }
+
+  function nameFromHref(a: Element): string {
+    const raw = a.getAttribute('href') || '';
+    if (/^mailto:/i.test(raw)) return 'email';
+    if (/^tel:/i.test(raw)) return 'phone';
+    let u: URL;
+    try { u = new URL((a as HTMLAnchorElement).href, location.href); } catch { return ''; }
+    if (u.protocol !== 'http:' && u.protocol !== 'https:' && u.protocol !== 'file:') return '';
+    const how = u.searchParams.get('how');
+    if (how === 'up') return 'upvote';
+    if (how === 'un' || how === 'unvote') return 'unvote';
+    if (how === 'down') return 'downvote';
+    const segs = u.pathname.toLowerCase().split('/').filter(Boolean).map((x) => { try { return decodeURIComponent(x); } catch { return x; } });
+    for (const sg of segs) {
+      if (/^(upvote|downvote|unvote|like|unlike|follow|unfollow|share|bookmark|subscribe|print|download|rss|feed)$/.test(sg)) return sg;
+    }
+    const host = u.hostname.replace(/^www\./, '');
+    if (u.origin !== location.origin) {
+      for (const h of Object.keys(SOCIAL_HOSTS)) if (host === h || host.endsWith('.' + h)) return SOCIAL_HOSTS[h];
+    }
+    if (u.origin === location.origin && !segs.length && !u.search) return 'home';
+    const last = (segs[segs.length - 1] || '').replace(/\.\w{1,5}$/, '');
+    if (/^[a-z][a-z_-]{2,24}$/.test(last) && !GENERIC_PATH.has(last)) return last.replace(/[_-]+/g, ' ');
+    if (u.origin !== location.origin && !segs.length) return host;
+    return '';
+  }
+
+  /** Short visible text right next to the control (same parent, nothing interactive in it). */
+  function adjacentText(el: Element): string {
+    const from = (n: Node | null): string => {
+      if (!n) return '';
+      let t = '';
+      if (n.nodeType === 3) t = collapse(n.nodeValue ?? '');
+      else if (n.nodeType === 1) {
+        const e = n as Element;
+        if (SKIP.has(e.localName) || e.querySelector(INTERACTIVE_SEL) || e.matches(INTERACTIVE_SEL)) return '';
+        // Only inline neighbours: a heading or block above is a title for the section, not for this control.
+        if (!getComputedStyle(e).display.startsWith('inline')) return '';
+        t = deepText(e, 60);
+      }
+      return t.length >= 2 && t.length <= 30 && /[\p{L}]/u.test(t) ? t : '';
+    };
+    const side = (e: Element): string => from(e.previousSibling) || from(e.nextSibling);
+    let t = side(el);
+    const p = el.parentElement;
+    if (!t && p && p.children.length === 1 && p.childNodes.length === 1) t = side(p);
+    return t;
+  }
+
+  function inferName(el: Element, role: string): string {
+    // 1. SVG title / aria-label inside
+    for (const svg of Array.from(el.querySelectorAll('svg')).slice(0, 3)) {
+      const t = collapse(svg.querySelector('title')?.textContent || '');
+      if (t) return t;
+      const al = collapse(svg.getAttribute('aria-label') || '');
+      if (al) return al;
+    }
+    const inner = el.querySelector('[aria-label]');
+    if (inner) { const al = collapse(inner.getAttribute('aria-label') || ''); if (al) return al; }
+    // 2. icon class names / ligatures / sprite ids / image file names
+    let w = iconFromClasses(el);
+    if (w) return w;
+    const withClass = Array.from(el.querySelectorAll('[class]')).slice(0, 12);
+    for (const d of withClass) { w = iconFromClasses(d); if (w) return w; }
+    const lig = iconFontText(el);
+    if (/^[a-z][a-z0-9_]{1,30}$/i.test(lig)) { w = aliasIcon(lig); if (w) return w; }
+    const use = el.querySelector('use');
+    const ref = use ? use.getAttribute('href') || use.getAttribute('xlink:href') || '' : '';
+    if (ref.includes('#')) {
+      const frag = ref.slice(ref.indexOf('#') + 1).replace(/^(icon|ic|i|svg|symbol)[-_]/i, '');
+      w = aliasIcon(frag);
+      if (w) return w;
+    }
+    const img = el.querySelector('img');
+    if (img && !img.getAttribute('alt')) {
+      const base = ((img.getAttribute('src') || '').split(/[?#]/)[0].split('/').pop() || '').replace(/\.\w{2,4}$/, '');
+      if (/^[a-z][a-z_-]{2,20}$/i.test(base)) { w = aliasIcon(base); if (w) return w; }
+    }
+    // 3. tooltip attributes on the control or something inside it
+    const tipEls: Element[] = [el, ...Array.from(el.querySelectorAll(TOOLTIP_ATTRS.map((a) => `[${a}]`).join(','))).slice(0, 4)];
+    for (const e of tipEls) {
+      for (const a of TOOLTIP_ATTRS) {
+        const v = collapse(e.getAttribute(a) || '');
+        if (v) return v;
+      }
+    }
+    // 4. where the link goes
+    if (role === 'link') { const h = nameFromHref(el); if (h) return h; }
+    // 5. text right next to it
+    return adjacentText(el);
   }
 
   function regionInfo(el: Element, explicit: string): { label: string; name: string } | null {
@@ -305,6 +489,148 @@ export function walker(): WalkResult {
     }
   }
 
+  // ---- repeated sibling rows (tr, li, cards) ---------------------------------
+  let curRow = -1;
+  let curGroup = -1;
+  let nextRow = 1;
+  let inProse = false;
+  let suppressText = false;
+  const PROSE_TAGS = new Set(['p', 'blockquote', 'dd', 'figcaption', 'li']);
+  const BLOCK_SEL =
+    'div,p,ul,ol,table,section,article,h1,h2,h3,h4,h5,h6,blockquote,pre,form,nav,header,footer,aside,main,li,dl,dt,dd,tr,td,fieldset,figure,details,hr';
+
+  /** Rows among `kids`: runs of >=3 repeats of a block of 1-3 siblings (by tag + classes). */
+  function detectRows(kids: Element[]): Map<Element, { row: number; group: number }> | null {
+    if (kids.length < 3) return null;
+    // Only things that are rows/cards in practice; bare <td>, <span>, <a>... siblings are layout, not rows.
+    const rowish = (e: Element): boolean =>
+      /^(tr|li|article|dt|dd)$/.test(e.localName) || e.getAttribute('role') === 'row' || e.getAttribute('role') === 'listitem' ||
+      (/^(div|section|a)$/.test(e.localName) && e.classList.length > 0);
+    if (!kids.every(rowish) && kids.filter(rowish).length < 3) return null;
+    const sig = kids.map((k) => k.localName + '.' + Array.from(k.classList).sort().join('.'));
+    let out: Map<Element, { row: number; group: number }> | null = null;
+    let i = 0;
+    while (i < kids.length) {
+      let found = false;
+      for (let k = 1; k <= 3 && !found; k++) {
+        let reps = 1;
+        const same = (a: number, b: number): boolean => {
+          for (let t = 0; t < k; t++) if (sig[a + t] !== sig[b + t]) return false;
+          return true;
+        };
+        while (i + (reps + 1) * k <= kids.length && same(i, i + reps * k)) reps++;
+        const distinct = new Set(sig.slice(i, i + k)).size;
+        if (reps >= 3 && kids.slice(i, i + k).every(rowish) && (k === 1 || distinct >= 2)) {
+          // A row is a small unit (a table row, a card): a "row" holding half the page is a layout wrapper.
+          let small = true;
+          for (let rr = 0; rr < reps && small; rr++) {
+            let count = 0;
+            for (let t = 0; t < k; t++) {
+              const e = kids[i + rr * k + t];
+              count += e.querySelectorAll(INTERACTIVE_SEL).length + (e.matches(INTERACTIVE_SEL) ? 1 : 0);
+            }
+            small = count <= 14;
+          }
+          if (small) {
+            const group = nextRow++;
+            out ??= new Map();
+            for (let rr = 0; rr < reps; rr++) {
+              const row = nextRow++;
+              for (let t = 0; t < k; t++) out.set(kids[i + rr * k + t], { row, group });
+            }
+          }
+          i += reps * k;
+          found = true;
+        }
+      }
+      if (!found) i++;
+    }
+    return out;
+  }
+
+  function stamp(n: RawNode, r: DOMRect): RawNode {
+    n.box = [Math.round(r.left + window.scrollX), Math.round(r.top + window.scrollY), Math.round(r.width), Math.round(r.height)];
+    if (curRow >= 0) { n.row = curRow; n.rowGroup = curGroup; }
+    if (inProse && n.kind === 'interactive') n.inline = true;
+    return n;
+  }
+
+  // ---- visual meaning --------------------------------------------------------
+
+  function parseColor(c: string): { r: number; g: number; b: number; a: number } | null {
+    const m = /rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:[,\s/]+([\d.]+%?))?\s*\)/.exec(c);
+    if (!m) return null;
+    const a = m[4] === undefined ? 1 : m[4].endsWith('%') ? parseFloat(m[4]) / 100 : parseFloat(m[4]);
+    return { r: +m[1], g: +m[2], b: +m[3], a };
+  }
+  function isRedish(c: string): boolean {
+    const p = parseColor(c);
+    return !!p && p.a > 0.5 && p.r >= 170 && p.g <= 100 && p.b <= 100 && p.r - Math.max(p.g, p.b) >= 90;
+  }
+  /** 0 = plain; 1 = colored or dark opaque background (looks like a filled call-to-action). */
+  function emphasis(cs: CSSStyleDeclaration): number {
+    const p = parseColor(cs.backgroundColor);
+    if (!p || p.a < 0.6) return 0;
+    const mx = Math.max(p.r, p.g, p.b) / 255;
+    const mn = Math.min(p.r, p.g, p.b) / 255;
+    const l = (mx + mn) / 2;
+    const sat = mx === mn ? 0 : (mx - mn) / (1 - Math.abs(2 * l - 1));
+    return (sat >= 0.35 && l > 0.15 && l < 0.85) || l < 0.2 ? 1 : 0;
+  }
+  function effectiveOpacity(el: Element): number {
+    let o = 1;
+    let a: Element | null = el;
+    for (let d = 0; a && d < 5; d++, a = a.parentElement) {
+      const v = parseFloat(getComputedStyle(a).opacity);
+      if (!Number.isNaN(v)) o *= v;
+    }
+    return o;
+  }
+  function isVisibleBox(e: Element): boolean {
+    const cs = getComputedStyle(e);
+    if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+    const b = e.getBoundingClientRect();
+    return b.width > 0 && b.height > 0;
+  }
+  const ERROR_CLASS = /(^|[\s_-])(error|errors|invalid|danger|err|err-msg|field-error|form-error|help-block|validation)([\s_-]|$)/i;
+  const FIELD_ROLES = new Set(['textbox', 'searchbox', 'combobox', 'spinbutton']);
+
+  /** Visible message that explains why a field is wrong (aria-linked, or right next to it). */
+  function findErrorText(el: Element, invalid: boolean): string {
+    const linked: Element[] = [];
+    for (const attrName of ['aria-errormessage', 'aria-describedby']) {
+      const ids = (el.getAttribute(attrName) || '').split(/\s+/).filter(Boolean);
+      const root = el.getRootNode() as Document | ShadowRoot;
+      for (const id of ids) {
+        const t = root.getElementById?.(id) ?? document.getElementById(id);
+        if (t) linked.push(t);
+      }
+    }
+    const adjacent: Element[] = [];
+    const sib = el.nextElementSibling;
+    if (sib) adjacent.push(sib);
+    const p = el.parentElement;
+    if (p && p !== document.body && p.nextElementSibling && p.querySelectorAll(INTERACTIVE_SEL).length <= 1) {
+      adjacent.push(p.nextElementSibling);
+    }
+    const ok = (e: Element, trust: boolean): string => {
+      if (!isVisibleBox(e) || e.querySelector(INTERACTIVE_SEL)) return '';
+      const looksLikeError = e.getAttribute('role') === 'alert' || ERROR_CLASS.test(classOf(e));
+      if (!looksLikeError && !(trust && invalid)) return '';
+      const t = deepText(e, 120);
+      return t.length >= 2 && t.length <= 120 ? cap(t, 70) : '';
+    };
+    for (const e of linked) { const t = ok(e, true); if (t) return t; }
+    for (const e of adjacent) { const t = ok(e, false); if (t) return t; }
+    return '';
+  }
+
+  const NAV_CONTEXT =
+    'nav,[role=navigation],[role=tablist],[role=menubar],[role=menu],.nav,.navbar,.tabs,.menu,[class*=nav-],[class*=-nav],[class*=tabs],[class*=menu]';
+  const ACTIVE_CLASS = /(^|\s)(active|current|selected|is-active|is-current|is-selected)(\s|$)/;
+
+  const buttonish: { node: RawNode; el: Element; r: DOMRect; cs: CSSStyleDeclaration }[] = [];
+
   function emitInteractive(el: Element, role: string, parent: number, depth: number, r: DOMRect): void {
     const t = el.localName;
     const states: string[] = [];
@@ -312,8 +638,13 @@ export function walker(): WalkResult {
       kind: 'interactive', role, name: accName(el, role), states, parent, depth,
       inViewport: inView(r), covered: isCovered(el, r),
     };
+    if (!node.name) {
+      const guess = cap(inferName(el, role), 40);
+      if (guess) { node.name = guess; node.inferred = true; }
+    }
     const input = el as HTMLInputElement;
     const attr = (a: string): string | null => el.getAttribute(a);
+    const ecs = getComputedStyle(el);
 
     if (t === 'input') {
       const ty = input.type;
@@ -325,6 +656,7 @@ export function walker(): WalkResult {
     if ((t === 'button' || t === 'input') && input.type === 'submit' && input.form) states.push('submit');
     if ((el as HTMLInputElement).required || attr('aria-required') === 'true') states.push('required');
     if (el.matches(':disabled') || attr('aria-disabled') === 'true') states.push('disabled');
+    else if (effectiveOpacity(el) < 0.5 || ecs.pointerEvents === 'none') states.push('looks disabled');
     if (((t === 'input' || t === 'textarea') && input.readOnly) || attr('aria-readonly') === 'true') states.push('readonly');
     if (role === 'checkbox' || role === 'radio' || role === 'switch' || role === 'menuitemcheckbox' || role === 'menuitemradio') {
       if (t === 'input' && input.indeterminate) states.push('mixed');
@@ -341,9 +673,26 @@ export function walker(): WalkResult {
     if (attr('aria-pressed') === 'true') states.push('pressed');
     const cur = attr('aria-current');
     if (cur && cur !== 'false') states.push('current');
+    else if (!states.includes('selected') && (role === 'link' || role === 'tab' || role === 'menuitem')) {
+      // Nav item highlighted only by CSS class ("active"), on the item or its <li>.
+      const li = el.parentElement;
+      const activeClass = ACTIVE_CLASS.test(classOf(el)) || (li !== null && li.localName === 'li' && ACTIVE_CLASS.test(classOf(li)));
+      if (activeClass && el.closest(NAV_CONTEXT)) states.push(role === 'tab' ? 'selected' : 'current');
+    }
+
     let invalid = attr('aria-invalid') === 'true';
     if (!invalid) { try { invalid = el.matches(':user-invalid'); } catch { /* unsupported */ } }
-    if (invalid) states.push('invalid');
+    const field = FIELD_ROLES.has(role) || t === 'input' || t === 'textarea' || t === 'select';
+    let errorText = '';
+    let redLook = false;
+    if (field) {
+      errorText = findErrorText(el, invalid);
+      redLook = (parseFloat(ecs.borderTopWidth) > 0 && isRedish(ecs.borderTopColor)) || isRedish(ecs.color);
+    }
+    if (invalid || errorText || redLook) {
+      states.push('error');
+      if (errorText) node.errorText = errorText;
+    }
 
     let value = '';
     if (t === 'select') {
@@ -369,7 +718,45 @@ export function walker(): WalkResult {
       reg.byId.set(id, new WeakRef(el));
     }
     node.id = id;
+    stamp(node, r);
     nodes.push(node);
+    if (role === 'button' || (t === 'a' && /(^|[\s_-])(btn|button|cta)([\s_-]|$)/i.test(classOf(el)))) {
+      buttonish.push({ node, el, r, cs: ecs });
+    }
+  }
+
+  /** Mark the most prominent button of each form / dialog as `primary`. */
+  function markPrimary(): void {
+    const groups = new Map<Element, typeof buttonish>();
+    for (const b of buttonish) {
+      if (b.node.states.includes('disabled') || b.node.states.includes('looks disabled')) continue;
+      const g = b.el.closest('form,dialog,[role=dialog],[role=alertdialog],[aria-modal=true]');
+      if (!g) continue;
+      (groups.get(g) ?? groups.set(g, []).get(g)!).push(b);
+    }
+    for (const [g, list] of groups) {
+      let winner: (typeof list)[number] | undefined;
+      if (list.length >= 2) {
+        const maxH = Math.max(...list.map((b) => b.r.height)) || 1; // height, not area: label length must not make a button "bigger"
+        const scored = list
+          .map((b) => ({ b, score: emphasis(b.cs) + b.r.height / maxH }))
+          .sort((x, y) => y.score - x.score);
+        if (scored[0].score - scored[1].score >= 0.3) winner = scored[0].b;
+      }
+      if (!winner && g.localName === 'form') {
+        const subs = list.filter((b) => {
+          const e = b.el as HTMLInputElement;
+          return !!e.form && (e.localName === 'button' || e.localName === 'input') && e.type === 'submit';
+        });
+        if (subs.length === 1) winner = subs[0];
+      }
+      if (winner) {
+        const s = winner.node.states;
+        const k = s.indexOf('submit');
+        if (k >= 0) s.splice(k, 1);
+        s.push('primary');
+      }
+    }
   }
 
   function visit(el: Element, parent: number, depth: number, box: DOMRect): void {
@@ -398,42 +785,95 @@ export function walker(): WalkResult {
         const name = cap(deepText(el, 200), 80);
         const lvl = tag.length === 2 && tag[0] === 'h' ? Number(tag[1]) : Number(el.getAttribute('aria-level')) || 2;
         if (name) {
-          nodes.push({ kind: 'heading', role: 'heading', name, level: lvl, states: [], parent, depth, inViewport: inView(r), covered: false });
+          nodes.push(stamp({ kind: 'heading', role: 'heading', name, level: lvl, states: [], parent, depth, inViewport: inView(r), covered: false }, r));
         }
       }
       // Links inside headings (article cards) still need to be emitted.
       if (!el.querySelector(INTERACTIVE_SEL)) return;
-      for (const c of childrenOf(el)) if (c.nodeType === 1) visit(c as Element, parent, depth, r);
+      visitChildren(el, parent, depth, r);
       return;
+    }
+
+    // Toasts and status messages: kept even when no control is next to them, so diffs can report them.
+    const liveAttr = el.getAttribute('aria-live');
+    const live: 'alert' | 'status' | '' =
+      explicit === 'alert' ? 'alert'
+        : explicit === 'status' || explicit === 'log' || (liveAttr !== null && liveAttr !== 'off' && explicit !== 'alertdialog' && explicit !== 'dialog')
+          ? 'status' : '';
+    if (live && shown && !suppressText) {
+      const msg = cap(deepText(el, 200), 120);
+      if (msg && /[\p{L}\p{N}]/u.test(msg)) {
+        nodes.push(stamp({ kind: 'text', role: 'text', name: msg, live, states: [], parent, depth, inViewport: inView(r), covered: false }, r));
+        if (!el.querySelector(INTERACTIVE_SEL)) return;
+        const prev = suppressText;
+        suppressText = true;
+        visitChildren(el, parent, depth, r);
+        suppressText = prev;
+        return;
+      }
     }
 
     let childParent = parent;
     let childDepth = depth;
     const region = cs.visibility === 'visible' ? regionInfo(el, explicit) : null;
+    let proseHere = false;
     if (region) {
-      nodes.push({
+      nodes.push(stamp({
         kind: 'region', role: region.label, name: region.name, states: [], parent, depth,
         covers: region.label === 'dialog' ? coversPage(el, r) : undefined,
         inViewport: inView(r), covered: false,
-      });
+      }, r));
       childParent = nodes.length - 1;
       childDepth = depth + 1;
-    } else if (shown) {
+    } else if (shown && !suppressText) {
       const t = deepText(el, 81);
+      const isProseTag = PROSE_TAGS.has(tag);
       if (t && t.length <= 80 && !el.shadowRoot && !el.querySelector(LEAF_BLOCKER)) {
-        nodes.push({ kind: 'text', role: 'text', name: t, states: [], parent, depth, inViewport: inView(r), covered: false });
+        nodes.push(stamp({ kind: isProseTag && t.length >= 40 ? 'prose' : 'text', role: 'text', name: t, states: [], parent, depth, inViewport: inView(r), covered: false }, r));
         return;
+      }
+      if ((t.length > 80 || (isProseTag && t.length >= 40)) && !el.shadowRoot && !el.querySelector(BLOCK_SEL)) {
+        // A paragraph of running text (maybe with inline links): keep it as prose, unless it is
+        // mostly link text (a headline card), which the links already cover.
+        const full = deepText(el, 600);
+        let linkLen = 0;
+        for (const a of Array.from(el.querySelectorAll('a,button')).slice(0, 60)) linkLen += deepText(a, 200).length;
+        const plain = full.length - linkLen;
+        if (plain >= 40 && plain >= full.length * 0.5) {
+          nodes.push(stamp({ kind: 'prose', role: 'text', name: cap(full, 1200), states: [], parent, depth, inViewport: inView(r), covered: false }, r));
+          proseHere = true;
+        }
       }
     }
 
-    for (const c of childrenOf(el)) {
+    const prevProse = inProse;
+    const prevSuppress = suppressText;
+    if (proseHere) { inProse = true; suppressText = true; }
+    visitChildren(el, childParent, childDepth, r, shown);
+    inProse = prevProse;
+    suppressText = prevSuppress;
+  }
+
+  /** Visit child nodes of `el`, tagging repeated sibling rows; text nodes become `text` nodes. */
+  function visitChildren(el: Element, parent: number, depth: number, r: DOMRect, textShown = false): void {
+    const kids = childrenOf(el);
+    const rows = curRow < 0 ? detectRows(kids.filter((c): c is Element => c.nodeType === 1)) : null;
+    for (const c of kids) {
       if (c.nodeType === 3) {
         const t = collapse(c.nodeValue ?? '');
-        if (shown && t.length <= 80 && /[\p{L}\p{N}]/u.test(t)) {
-          nodes.push({ kind: 'text', role: 'text', name: t, states: [], parent: childParent, depth: childDepth, inViewport: inView(r), covered: false });
+        if (textShown && !suppressText && t.length <= 80 && /[\p{L}\p{N}]/u.test(t)) {
+          nodes.push(stamp({ kind: 'text', role: 'text', name: t, states: [], parent, depth, inViewport: inView(r), covered: false }, r));
         }
       } else if (c.nodeType === 1) {
-        visit(c as Element, childParent, childDepth, r);
+        const info = rows?.get(c as Element);
+        if (info) {
+          curRow = info.row;
+          curGroup = info.group;
+          visit(c as Element, parent, depth, r);
+          curRow = curGroup = -1;
+        } else {
+          visit(c as Element, parent, depth, r);
+        }
       }
     }
   }
@@ -441,10 +881,12 @@ export function walker(): WalkResult {
   const rootEl = document.body ?? document.documentElement;
   visit(rootEl, -1, 0, rootEl.getBoundingClientRect());
 
+  markPrimary();
+
   // Plain text is only worth its tokens next to a control (labels, hints, errors).
   const keep = nodes.map(() => true);
   nodes.forEach((n, i) => {
-    if (n.kind !== 'text') return;
+    if (n.kind !== 'text' || n.live) return;
     const adjacent = (m: RawNode | undefined): boolean => !!m && m.kind === 'interactive' && m.parent === n.parent;
     keep[i] = adjacent(nodes[i - 1]) || adjacent(nodes[i + 1]);
   });
@@ -462,5 +904,5 @@ export function walker(): WalkResult {
     out.push({ ...n, parent: n.parent >= 0 ? remap[n.parent] : -1 });
   });
 
-  return { url: location.href, title: document.title, nodes: out, truncated };
+  return { url: location.href, title: document.title, nodes: out, truncated, page: { vw, vh, docW, docH } };
 }

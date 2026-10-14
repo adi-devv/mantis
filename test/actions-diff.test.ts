@@ -18,12 +18,12 @@ describe('action diffs: same page', () => {
     expect(bad).toMatch(/^typed "nope" into #\d+ textbox "Email" and pressed Enter\n/);
     expect(diffOf(bad)).toEqual([
       '+ [form "Subscribe"] "Invalid email"',
-      `~ #${email} textbox "Email": value "" → "nope"; now invalid`,
+      `~ #${email} textbox "Email": value "" → "nope"; now error`,
     ]);
 
     const good = await b.type(email, 'a@b.com', true);
     expect(diffOf(good)).toEqual([
-      `~ #${email} textbox "Email": value "nope" → "a@b.com"; no longer invalid`,
+      `~ #${email} textbox "Email": value "nope" → "a@b.com"; no longer error`,
       '- removed: "Invalid email"',
     ]);
   });

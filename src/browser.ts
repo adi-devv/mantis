@@ -3,6 +3,7 @@ import type { Browser, BrowserContext, ElementHandle, Page } from 'playwright';
 import { capture, resolve } from './capture/index.js';
 import type { Snapshot } from './capture/index.js';
 import { translate } from './translate.js';
+import type { ReadOptions } from './translate.js';
 import { NO_CHANGE, diffSnapshots, headerLines } from './diff.js';
 
 export interface MantisOptions {
@@ -132,8 +133,9 @@ export class MantisBrowser {
     });
   }
 
-  async read(): Promise<string> {
-    return this.guard(async () => this.view(await this.activePage()));
+  /** The numbered view of the page. `region` narrows to one region; `full` turns trimming off. */
+  async read(opts: ReadOptions = {}): Promise<string> {
+    return this.guard(async () => this.view(await this.activePage(), opts));
   }
 
   async click(id: number): Promise<string> {
@@ -326,14 +328,14 @@ export class MantisBrowser {
     return { snap, doc };
   }
 
-  private async view(page: Page): Promise<string> {
-    const text = this.render(await capture(page));
+  private async view(page: Page, opts: ReadOptions = {}): Promise<string> {
+    const text = this.render(await capture(page), opts);
     return this.notes.length ? `${text}\n${this.notes.splice(0).join('\n')}` : text;
   }
 
-  private render(snap: Snapshot): string {
+  private render(snap: Snapshot, opts: ReadOptions = {}): string {
     this.remember(snap);
-    return translate(snap);
+    return translate(snap, undefined, opts);
   }
 
   /** Remember how each number was last described, for action messages. */
@@ -341,7 +343,7 @@ export class MantisBrowser {
     this.labels.clear();
     for (const n of snap.nodes) {
       if (n.kind === 'interactive' && n.id !== undefined) {
-        const name = n.name ? ` "${n.name.replace(/"/g, "'")}"` : '';
+        const name = n.name ? ` ${n.inferred ? '~' : ''}"${n.name.replace(/"/g, "'")}"` : '';
         this.labels.set(n.id, `#${n.id} ${n.role}${name}${n.secret ? ' (password)' : ''}`);
       }
     }

@@ -17,7 +17,7 @@ describe('login form', () => {
     expect(view).toMatch(/^\s*# Sign in$/m);
     expect(view).toMatch(/#\d+ textbox "Email" \(email, required\)/);
     expect(view).toMatch(/#\d+ textbox "Password" \(password, required\)/);
-    expect(view).toMatch(/#\d+ button "Sign in" \(submit\)/);
+    expect(view).toMatch(/#\d+ button "Sign in" \(primary\)/);
     expect(view).toMatch(/"Forgot your password\?" #\d+ link "Reset it"/);
     expect(view).toMatch(/#\d+ link "Home"/);
   });

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Dashboard</title>
+<style>
+  body { margin: 0; font: 14px sans-serif; min-height: 1500px; position: relative; }
+  .top { height: 50px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; background: #eee; }
+  .side { position: absolute; left: 0; top: 60px; width: 180px; }
+  .side a { display: block; height: 50px; line-height: 50px; padding-left: 10px; }
+  .content { margin-left: 220px; padding: 20px; }
+  .foot { position: absolute; top: 1400px; left: 0; right: 0; display: flex; justify-content: space-around; }
+</style></head>
+<body>
+<div class="top"><a href="/">Acme</a><a href="/products">Products</a><a href="/pricing">Pricing</a><a href="/login">Login</a></div>
+<div class="side"><a href="/s1">Inbox</a><a href="/s2">Sent</a><a href="/s3">Drafts</a><a href="/s4">Spam</a><a href="/s5">Trash</a></div>
+<div class="content">
+  <div><b>Welcome back</b></div>
+  <div><label for="q">Search mail</label> <input id="q" type="text"></div>
+  <div><button>Compose</button></div>
+  <div><a href="/settings">Settings</a></div>
+</div>
+<div class="foot"><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/contact">Contact</a></div>
+</body>
+</html>

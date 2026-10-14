@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Toast</title></head>
+<body>
+<main>
+  <h1>Settings</h1>
+  <button id="save">Save</button>
+  <div id="slot"></div>
+</main>
+<script>
+  document.getElementById('save').addEventListener('click', () => {
+    const t = document.createElement('div');
+    t.setAttribute('role', 'alert');
+    t.textContent = 'Saved successfully';
+    document.getElementById('slot').appendChild(t);
+  });
+</script>
+</body>
+</html>

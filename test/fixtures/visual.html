@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Visual</title>
+<style>
+  body { font: 14px sans-serif; }
+  input { width: 200px; height: 24px; }
+  .red { border: 2px solid #d00; }
+  .btn { padding: 4px 12px; border: 1px solid #999; background: #eee; font-size: 14px; }
+  .go { background: #0d6efd; color: #fff; padding: 12px 24px; border: 0; }
+</style></head>
+<body>
+<main>
+  <h1>Profile</h1>
+  <form aria-label="Profile">
+    <div><label for="em">Email</label> <input id="em" type="text" aria-invalid="true" value="nope"></div>
+    <div role="alert" id="emsg">Enter a valid email</div>
+    <div><label for="nm">Name</label> <input id="nm" type="text" class="red"></div>
+    <div><label for="ok">Nickname</label> <input id="ok" type="text"></div>
+    <button type="button" class="btn">Cancel</button>
+    <button type="button" class="btn go">Save changes</button>
+    <button type="button" class="btn" style="opacity:.3">Archive</button>
+    <button type="button" class="btn" aria-disabled="true">Delete</button>
+  </form>
+  <nav aria-label="Sections">
+    <ul>
+      <li class="active"><a href="/a">Overview</a></li>
+      <li><a href="/b">Billing</a></li>
+      <li><a href="/c" aria-current="page">Team</a></li>
+    </ul>
+  </nav>
+</main>
+</body>
+</html>

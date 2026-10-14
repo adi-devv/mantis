@@ -23,8 +23,16 @@ export function createServer(browser: MantisBrowser = new MantisBrowser()): McpS
   );
   server.registerTool(
     'read',
-    { description: 'Return the current page as numbered text. Use the #numbers with click/type/select/scroll. Re-read after the page changes.', inputSchema: {} },
-    async () => reply(await browser.read()),
+    {
+      description:
+        'Return the current page as numbered text. Use the #numbers with click/type/select/scroll. Re-read after the page changes. ' +
+        'Names shown as ~"x" are guesses (icon/tooltip/link). Optional: region (e.g. "nav", "sidebar", "main") reads just that part; full=true turns off trimming.',
+      inputSchema: {
+        region: z.string().optional().describe('Only this region: a substring of its label, e.g. "nav", "sidebar", "main", "top bar"'),
+        full: z.boolean().optional().describe('Disable trimming: every paragraph, link and href'),
+      },
+    },
+    async ({ region, full }) => reply(await browser.read({ region, full })),
   );
   server.registerTool(
     'click',
