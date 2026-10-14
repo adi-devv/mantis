@@ -5,6 +5,15 @@ import type { Snapshot } from './capture/index.js';
 import { translate } from './translate.js';
 import type { ReadOptions } from './translate.js';
 import { NO_CHANGE, diffSnapshots, headerLines } from './diff.js';
+import { listMedia, describeElement, formatData } from './fallback/media.js';
+import type { Target } from './fallback/media.js';
+import { detectCaptcha } from './fallback/captcha.js';
+import { recognize, closeOcr } from './fallback/ocr.js';
+import { downscale, pngSize } from './fallback/look.js';
+import { parseUntil, describeUntil, waitForHuman, DEFAULT_TIMEOUT_SECONDS } from './fallback/askHuman.js';
+
+/** Transpiler helper shim for pages (see launch()). */
+const NAME_SHIM = "Object.defineProperty(globalThis, '__name', { value: (f) => f, configurable: true });";
 
 export interface MantisOptions {
   /** Run Chromium without a window. Default true; MANTIS_HEADLESS=0 shows it. */
@@ -76,6 +85,7 @@ export class MantisBrowser {
   private page: Page | null = null;
   private labels = new Map<number, string>();
   private notes: string[] = [];
+  private scratch: BrowserContext | null = null;
   private readonly actionTimeout: number;
 
   constructor(private readonly opts: MantisOptions = {}) {
@@ -97,7 +107,8 @@ export class MantisBrowser {
 
   async close(): Promise<void> {
     const b = this.browser;
-    this.browser = this.context = this.page = null;
+    this.browser = this.context = this.page = this.scratch = null;
+    await closeOcr();
     await b?.close().catch(() => undefined);
   }
 
@@ -259,6 +270,134 @@ export class MantisBrowser {
     }, { quiet: true });
   }
 
+  // ---- fallback ladder: data -> ocr -> look -> ask_human -------------------
+
+  /** Visible images, canvases and chart-like SVGs, each with a number usable by data/ocr/look. */
+  async media(): Promise<string> {
+    return this.guard(async () => listMedia(await this.activePage()));
+  }
+
+  /** Hidden text behind a visual element: alt/caption/filename, SVG text, in-memory chart data. */
+  async data(target: Target): Promise<string> {
+    return this.guard(async () => {
+      const page = await this.activePage();
+      const { el, label } = await this.visualTarget(page, target);
+      try {
+        return formatData(label, await describeElement(el));
+      } finally {
+        await el.dispose();
+      }
+    });
+  }
+
+  /** Text inside an image/canvas via OCR (tesseract.js). Never returns the image. */
+  async ocr(target: Target): Promise<string> {
+    return this.guard(async () => {
+      const page = await this.activePage();
+      const { el, label } = await this.visualTarget(page, target);
+      try {
+        const png = await this.shot(el, label);
+        const { text, confidence } = await recognize(png).catch((e: unknown) => {
+          throw new ActionError(e instanceof Error ? e.message : String(e));
+        });
+        if (!text) return `ocr ${label}: no text recognised (confidence ${confidence}%). Try look(id) as a last resort.`;
+        const body = text.length > 1500 ? text.slice(0, 1499).trimEnd() + '…' : text;
+        const warn = confidence < 60 ? ' - low confidence, text may be wrong; consider look(id)' : '';
+        return `ocr ${label} (confidence ${confidence}%${warn}):\n${body}`;
+      } finally {
+        await el.dispose();
+      }
+    });
+  }
+
+  /** The one tool that returns an image: a PNG of a single element, at most 800px on its longest side. */
+  async look(target: Target): Promise<{ png: Buffer; text: string } | { error: string }> {
+    try {
+      const page = await this.activePage();
+      const { el, label } = await this.visualTarget(page, target);
+      try {
+        const raw = await this.shot(el, label);
+        const png = await downscale(raw, () => this.scratchPage());
+        const { width, height } = pngSize(png);
+        return { png, text: `look ${label}: ${width}×${height} PNG` };
+      } finally {
+        await el.dispose();
+      }
+    } catch (e) {
+      return { error: `error: ${e instanceof ActionError ? e.message : brief(e)}` };
+    }
+  }
+
+  /**
+   * Hand control to a human (CAPTCHA, 2FA, payment, login). Mantis never solves CAPTCHAs.
+   * Headless: opens a headed window with the same cookies/storage and URL, waits, then carries
+   * the state back and reloads. Headed (or MANTIS_ASK_HUMAN_HEADLESS=1, tests only): waits on the same page.
+   */
+  async askHuman(reason: string, until?: string, timeoutSeconds = DEFAULT_TIMEOUT_SECONDS): Promise<string> {
+    return this.guard(async () => {
+      let cond;
+      try {
+        cond = parseUntil(until);
+      } catch (e) {
+        throw new ActionError((e as Error).message);
+      }
+      const page = await this.activePage();
+      if (cond.kind === 'selector_gone' || cond.kind === 'selector_present') {
+        const sel = cond.selector;
+        await page.evaluate((s) => void document.querySelector(s), sel).catch(() => {
+          throw new ActionError(`invalid CSS selector "${sel}"`);
+        });
+      }
+      const timeoutMs = Math.max(0.1, timeoutSeconds) * 1000;
+      const what = describeUntil(cond);
+      const secs = `${Math.round(timeoutSeconds * 10) / 10}s`;
+      console.error(`[mantis] human needed: ${reason} (waiting for ${what}, up to ${secs})`);
+
+      if (!this.isHeadless() || process.env.MANTIS_ASK_HUMAN_HEADLESS === '1') {
+        const ok = await waitForHuman(page, cond, { timeoutMs });
+        if (!ok) return `error: timed out after ${secs} waiting for ${what} (${reason}); the page is unchanged, call read() to see it`;
+        const now = this.page ?? page;
+        await this.settle(now);
+        return `human step done (${reason})\n${await this.view(now)}`;
+      }
+
+      // Headless: let the human work in a visible window that carries over this session.
+      const state = await this.context!.storageState();
+      const url = page.url();
+      let headed: Browser;
+      try {
+        headed = await chromium.launch({ headless: false });
+      } catch (e) {
+        throw new ActionError(
+          `cannot open a visible browser window for the human (${brief(e)}). ` +
+            'Run Mantis with MANTIS_HEADLESS=0 on a machine with a display, or complete this step yourself.',
+        );
+      }
+      try {
+        const ctx = await headed.newContext({ viewport: null, storageState: state });
+        await ctx.addInitScript(NAME_SHIM);
+        const hp = await ctx.newPage();
+        if (url && !url.startsWith('chrome-error:') && url !== 'about:blank') {
+          await hp.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 }).catch(() => undefined);
+        }
+        const ok = await waitForHuman(hp, cond, { timeoutMs });
+        if (!ok) return `error: timed out after ${secs} waiting for ${what} (${reason}); nothing was changed, call read() to see the page`;
+        const finalUrl = hp.url();
+        const newState = await ctx.storageState();
+        await headed.close().catch(() => undefined);
+        await this.swapContext(newState);
+        const fresh = await this.activePage();
+        if (finalUrl && finalUrl !== 'about:blank') {
+          await fresh.goto(finalUrl, { waitUntil: 'domcontentloaded', timeout: 30_000 }).catch(() => undefined);
+        }
+        await this.settle(fresh);
+        return `human step done (${reason}); session carried over\n${await this.view(fresh)}`;
+      } finally {
+        await headed.close().catch(() => undefined);
+      }
+    });
+  }
+
   // ---- internals ---------------------------------------------------------
 
   private adopt(p: Page): void {
@@ -329,7 +468,9 @@ export class MantisBrowser {
   }
 
   private async view(page: Page, opts: ReadOptions = {}): Promise<string> {
-    const text = this.render(await capture(page), opts);
+    let text = this.render(await capture(page), opts);
+    const captcha = await detectCaptcha(page);
+    if (captcha) text += `\n${captcha}`;
     return this.notes.length ? `${text}\n${this.notes.splice(0).join('\n')}` : text;
   }
 
@@ -375,6 +516,58 @@ export class MantisBrowser {
     if (/not an <input>|not editable|Element is not/.test(msg)) return `${plain} is not a text field`;
     if (/Timeout/.test(msg)) return `${plain} did not become clickable in time`;
     return `${plain}: ${brief(e)}`;
+  }
+
+  private isHeadless(): boolean {
+    return this.opts.headless ?? process.env.MANTIS_HEADLESS !== '0';
+  }
+
+  /** Resolve an id or CSS selector to a live element, with a label for messages. */
+  private async visualTarget(page: Page, t: Target): Promise<{ el: ElementHandle<Element>; label: string }> {
+    if (t.id !== undefined) return this.target(page, t.id);
+    if (t.selector) {
+      let el: ElementHandle<Element> | null;
+      try {
+        el = await page.$(t.selector);
+      } catch {
+        throw new ActionError(`invalid CSS selector "${t.selector}"`);
+      }
+      if (!el) throw new ActionError(`nothing matches selector "${t.selector}"; call media() to list images and charts`);
+      return { el, label: `"${t.selector}"` };
+    }
+    throw new ActionError('give an element number (id) from read()/media(), or a CSS selector');
+  }
+
+  /** PNG of one element, scrolled into view; never the whole page. */
+  private async shot(el: ElementHandle<Element>, label: string): Promise<Buffer> {
+    try {
+      await el.scrollIntoViewIfNeeded({ timeout: this.actionTimeout });
+      return await el.screenshot({ type: 'png', timeout: this.actionTimeout * 2 });
+    } catch (e) {
+      throw new ActionError(`could not capture ${label}: ${brief(e)}`);
+    }
+  }
+
+  /** A blank page in a separate context for image work; never becomes the active page. */
+  private async scratchPage(): Promise<Page> {
+    await this.launch();
+    if (!this.scratch) {
+      this.scratch = await this.browser!.newContext();
+      await this.scratch.addInitScript(NAME_SHIM);
+    }
+    return this.scratch.pages()[0] ?? this.scratch.newPage();
+  }
+
+  /** Replace the browser context with a fresh one holding `state` (cookies + localStorage). */
+  private async swapContext(state: Awaited<ReturnType<BrowserContext['storageState']>>): Promise<void> {
+    const old = this.context;
+    const ctx = await this.browser!.newContext({ viewport: { width: 1280, height: 800 }, storageState: state });
+    await ctx.addInitScript(NAME_SHIM);
+    await ctx.addInitScript(TRACKER);
+    ctx.on('page', (p) => this.adopt(p));
+    this.context = ctx;
+    this.adopt(await ctx.newPage());
+    await old?.close().catch(() => undefined);
   }
 
   /**

@@ -70,6 +70,68 @@ export function createServer(browser: MantisBrowser = new MantisBrowser()): McpS
     { description: 'Go back one page in history.', inputSchema: {} },
     async () => reply(await browser.back()),
   );
+
+  // ---- fallback ladder: only when read() is not enough. Try in this order. ----
+  const visual = {
+    id: id.optional().describe('Number from media() or read()'),
+    selector: z.string().optional().describe('CSS selector instead of a number'),
+  };
+  server.registerTool(
+    'media',
+    {
+      description: 'List visible images, canvases and charts with numbers for data/ocr/look. Use when read() mentions a picture or chart you need.',
+      inputSchema: {},
+    },
+    async () => reply(await browser.media()),
+  );
+  server.registerTool(
+    'data',
+    {
+      description:
+        'Step 1 (prefer this; text only). Hidden text behind an image, SVG or chart canvas: alt/caption/filename, SVG text, and chart values read from Chart.js/ECharts/Highcharts memory. Give id or selector.',
+      inputSchema: visual,
+    },
+    async ({ id, selector }) => reply(await browser.data({ id, selector })),
+  );
+  server.registerTool(
+    'ocr',
+    {
+      description: 'Step 2 (text only). Read text drawn inside an image/canvas with deterministic OCR; returns text and confidence, never the image. Use when data() found nothing. Give id or selector.',
+      inputSchema: visual,
+    },
+    async ({ id, selector }) => reply(await browser.ocr({ id, selector })),
+  );
+  server.registerTool(
+    'look',
+    {
+      description:
+        'Step 3, LAST RESORT: the only tool that returns an image (PNG crop of one element, max 800px). Use only when read/data/ocr failed; never for pages you can read as text. Give id or selector.',
+      inputSchema: visual,
+    },
+    async ({ id, selector }) => {
+      const r = await browser.look({ id, selector });
+      if ('error' in r) return reply(r.error);
+      return {
+        content: [
+          { type: 'image' as const, data: r.png.toString('base64'), mimeType: 'image/png' },
+          { type: 'text' as const, text: r.text },
+        ],
+      };
+    },
+  );
+  server.registerTool(
+    'ask_human',
+    {
+      description:
+        'Step 4: hand over to a person for a CAPTCHA, 2FA code, payment or login you cannot do. Mantis never solves CAPTCHAs. Waits until the page changes or until condition (url_change | selector_gone:<css> | selector_present:<css>), then returns the page view.',
+      inputSchema: {
+        reason: z.string().describe('What the human needs to do, e.g. "captcha", "enter 2FA code"'),
+        until: z.string().optional().describe('url_change | selector_gone:<css> | selector_present:<css>; default: URL or page contents change'),
+        timeout_seconds: z.number().positive().optional().describe('Default 300'),
+      },
+    },
+    async ({ reason, until, timeout_seconds }) => reply(await browser.askHuman(reason, until, timeout_seconds)),
+  );
   return server;
 }
 

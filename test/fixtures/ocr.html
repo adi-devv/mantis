@@ -1,0 +1,10 @@
+<!doctype html><html><head><title>OCR</title></head><body style="margin:0;background:#fff">
+<canvas id="c" width="900" height="260" style="display:block"></canvas>
+<script>
+  const ctx = document.getElementById('c').getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 900, 260);
+  ctx.fillStyle = '#000'; ctx.font = 'bold 90px Arial, Helvetica, sans-serif'; ctx.textBaseline = 'top';
+  ctx.fillText('HELLO MANTIS', 30, 30);
+  ctx.fillText('INVOICE 2024', 30, 140);
+</script>
+</body></html>

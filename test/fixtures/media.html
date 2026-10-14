@@ -1,0 +1,21 @@
+<!doctype html><html><head><title>Media</title></head><body>
+<main>
+  <h1>Gallery</h1>
+  <figure>
+    <img id="photo" src="img/logo.svg" srcset="img/logo.svg 1x, img/logo-2x.svg 2x" alt="Acme company logo" title="Acme Inc." width="120" height="60">
+    <figcaption>Figure 1: The Acme logo, 2024 edition</figcaption>
+  </figure>
+  <img id="deco" src="img/logo.svg" alt="" width="120" height="60">
+  <img id="bare" src="img/logo.svg" width="120" height="60">
+  <a href="#x"><img id="tiny" src="img/logo.svg" width="20" height="20" alt="icon"></a>
+  <svg id="chart" width="300" height="150" aria-label="Quarterly revenue">
+    <title>Revenue by quarter</title>
+    <desc>Bar chart: revenue grows each quarter</desc>
+    <rect x="10" y="80" width="40" height="60" fill="#06c"><title>Q1: 60</title></rect>
+    <text x="10" y="148">Q1</text><text x="70" y="148">Q2</text><text x="130" y="148">Q3</text>
+  </svg>
+  <svg id="icon" width="16" height="16"><circle cx="8" cy="8" r="6"/></svg>
+  <canvas id="plain" width="200" height="100" aria-label="Plain canvas">Fallback: traffic by hour</canvas>
+  <button id="b">Buy</button>
+</main>
+</body></html>

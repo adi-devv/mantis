@@ -22,9 +22,9 @@ const call = async (name: string, args: Record<string, unknown> = {}) => {
   return { text: content[0].text, isError: res.isError === true };
 };
 
-it('exposes the eight tools', async () => {
+it('exposes the core tools and the fallback ladder', async () => {
   const { tools } = await client.listTools();
-  expect(tools.map((t) => t.name).sort()).toEqual(['back', 'click', 'open', 'press', 'read', 'scroll', 'select', 'type']);
+  expect(tools.map((t) => t.name).sort()).toEqual(['ask_human', 'back', 'click', 'data', 'look', 'media', 'ocr', 'open', 'press', 'read', 'scroll', 'select', 'type']);
 });
 
 it('open then click by number over MCP', async () => {

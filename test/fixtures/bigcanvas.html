@@ -1,0 +1,10 @@
+<!doctype html><html><head><title>Big</title></head><body style="margin:0">
+<canvas id="big" width="1600" height="1000" style="display:block"></canvas>
+<canvas id="small" width="200" height="100" style="display:block"></canvas>
+<script>
+  for (const [id, color] of [['big', '#c33'], ['small', '#3c3']]) {
+    const c = document.getElementById(id); const x = c.getContext('2d');
+    x.fillStyle = color; x.fillRect(0, 0, c.width, c.height);
+  }
+</script>
+</body></html>
