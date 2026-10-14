@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Rerender</title></head>
+<body>
+<h1>Rerender</h1>
+<button id="stable">Refresh list</button>
+<ul id="list">
+  <li><a href="/alpha">Alpha</a></li>
+  <li><a href="/beta">Beta</a></li>
+</ul>
+<script>
+  let n = 0;
+  document.getElementById('stable').addEventListener('click', () => {
+    n++;
+    document.getElementById('list').innerHTML =
+      `<li><a href="/gamma${n}">Gamma ${n}</a></li><li><a href="/delta${n}">Delta ${n}</a></li>`;
+  });
+</script>
+</body>
+</html>

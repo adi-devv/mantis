@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Login — Acme</title></head>
+<body>
+<header><a href="/home">Home</a></header>
+<main>
+  <h1>Sign in</h1>
+  <form aria-label="Login" id="f">
+    <label for="email">Email</label>
+    <input id="email" type="email" required>
+    <label for="pw">Password</label>
+    <input id="pw" type="password" required>
+    <button type="submit">Sign in</button>
+    <p>Forgot your password? <a href="/reset">Reset it</a></p>
+  </form>
+</main>
+<script>
+  document.getElementById('f').addEventListener('submit', (e) => {
+    e.preventDefault();
+    document.title = 'Welcome — Acme';
+    document.querySelector('h1').textContent = 'Signed in';
+  });
+</script>
+</body>
+</html>

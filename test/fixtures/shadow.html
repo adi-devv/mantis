@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Shadow</title></head>
+<body>
+<h1>Shadow DOM</h1>
+<div id="host"></div>
+<script>
+  const root = document.getElementById('host').attachShadow({ mode: 'open' });
+  root.innerHTML = '<button id="b">Shadow button</button>';
+  root.getElementById('b').addEventListener('click', () => { document.title = 'Shadow clicked'; });
+</script>
+</body>
+</html>

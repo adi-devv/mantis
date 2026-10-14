@@ -21,4 +21,27 @@ The agent says `click(14)`. Mantis clicks it and reports only what changed.
 - **Text first** — images only as an opt-in fallback.
 - **Plugs into any agent** via MCP.
 
+## Quick start
+
+Requires Node 20+.
+
+```bash
+npm install
+npx playwright install chromium   # one-time browser download
+npm run build
+
+# print the numbered text view of any page (plus a ~token estimate)
+npx tsx src/cli.ts read https://example.com
+```
+
+Add Mantis to Claude Code as an MCP server (use the absolute path to this checkout):
+
+```bash
+claude mcp add mantis -- node /abs/path/to/mantis/dist/server.js
+```
+
+Tools: `open(url)`, `read()`, `click(id)`, `type(id, text, submit?)`, `select(id, option)`,
+`press(key)`, `scroll(direction | id)`, `back()`. Set `MANTIS_HEADLESS=0` to watch the browser.
+Run the tests with `npm test`.
+
 > Status: early development. See [PLAN.md](PLAN.md) and [PROGRESS.md](PROGRESS.md).
