@@ -190,20 +190,28 @@ not a result.
 
 ## Quick start
 
-Requires Node 20+.
+Requires Node 20+. Mantis is on npm as
+[`mantis-browser`](https://www.npmjs.com/package/mantis-browser).
+
+```bash
+# one-time browser download
+npx playwright install chromium
+
+# add Mantis to Claude Code as an MCP server
+claude mcp add mantis -- npx -y -p mantis-browser mantis-mcp
+# (native Windows: claude mcp add mantis -- cmd /c npx -y -p mantis-browser mantis-mcp)
+
+# or try it in a terminal: print the numbered text view of any page
+npx -y -p mantis-browser mantis read https://example.com
+```
+
+From source:
 
 ```bash
 npm install
-npx playwright install chromium   # one-time browser download
+npx playwright install chromium
 npm run build
-
-# print the numbered text view of any page (plus a ~token estimate)
 npx tsx src/cli.ts read https://example.com
-```
-
-Add Mantis to Claude Code as an MCP server (absolute path to this checkout):
-
-```bash
 claude mcp add mantis -- node /abs/path/to/mantis/dist/server.js
 ```
 
