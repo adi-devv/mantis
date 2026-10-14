@@ -409,6 +409,13 @@ describe('memory helpers', () => {
     expect(isCollapsible(region({ lines: ['[nav]', '  #3 link "Home"', '  #4 link "Docs"'] }))).toBe(false);
   });
 
+  it('never hides a search box or text input behind a summary', () => {
+    for (const role of ['searchbox', 'textbox', 'combobox']) {
+      const withInput = region({ items: [...region().items, { id: 6, role, name: 'Search', inferred: false }] });
+      expect(isCollapsible(withInput)).toBe(false);
+    }
+  });
+
   it('describes items and number ranges', () => {
     expect(idRange(region().items)).toBe('(#3–#5)');
     expect(idRange([{ id: 9, role: 'link', name: 'x', inferred: false }])).toBe('(#9)');

@@ -36,9 +36,12 @@ export function regionSignature(r: Pick<RegionInfo, 'role' | 'name' | 'lines'>):
   return createHash('sha256').update(`${r.role}\u0000${r.name}\u0000${body}`).digest('hex').slice(0, 24);
 }
 
-/** A region may be summarised only if it is not special and big enough to be worth it. */
-export function isCollapsible(r: Pick<RegionInfo, 'blocked' | 'lines'>): boolean {
-  return !r.blocked && r.lines.length - 1 >= MIN_BODY_LINES;
+/** Roles an agent usually came for (search boxes, inputs); hiding them behind a summary costs a round trip. */
+const INPUT_ROLES = new Set(['textbox', 'searchbox', 'combobox']);
+
+/** A region may be summarised only if it is not special, holds no text input, and is big enough to be worth it. */
+export function isCollapsible(r: Pick<RegionInfo, 'blocked' | 'lines' | 'items'>): boolean {
+  return !r.blocked && !r.items.some((i) => INPUT_ROLES.has(i.role)) && r.lines.length - 1 >= MIN_BODY_LINES;
 }
 
 /** `[nav]` or `[nav "Main"]`, exactly as the region line reads in the view. */
