@@ -5,11 +5,15 @@ instead of screenshots, and how to use the fallback ladder (`data` -> `ocr` -> `
 
 ## Install
 
-1. Add the Mantis MCP server (use the absolute path to your checkout, after `npm run build`):
+1. Add the Mantis MCP server (from npm):
 
    ```bash
-   claude mcp add mantis -- node /abs/path/to/mantis/dist/server.js
+   npx playwright install chromium
+   claude mcp add mantis -- npx -y -p mantis-browser mantis-mcp
    ```
+
+   Or from a local checkout (after `npm run build`):
+   `claude mcp add mantis -- node /abs/path/to/mantis/dist/server.js`
 
    Set `MANTIS_HEADLESS=0` in the server's environment to watch the browser.
 
@@ -17,15 +21,18 @@ instead of screenshots, and how to use the fallback ladder (`data` -> `ocr` -> `
 
    ```bash
    mkdir -p ~/.claude/skills/mantis-browser
-   cp skill/SKILL.md ~/.claude/skills/mantis-browser/SKILL.md
+   curl -fsSL https://raw.githubusercontent.com/adi-devv/mantis/main/skill/SKILL.md \
+     -o ~/.claude/skills/mantis-browser/SKILL.md
    ```
 
    On Windows PowerShell:
 
    ```powershell
    New-Item -ItemType Directory -Force "$HOME\.claude\skills\mantis-browser"
-   Copy-Item skill\SKILL.md "$HOME\.claude\skills\mantis-browser\SKILL.md"
+   Invoke-WebRequest https://raw.githubusercontent.com/adi-devv/mantis/main/skill/SKILL.md -OutFile "$HOME\.claude\skills\mantis-browser\SKILL.md"
    ```
+
+   From a checkout you can just copy `skill/SKILL.md` there instead.
 
    For a single project, use `.claude/skills/mantis-browser/` inside that project instead.
 
@@ -36,4 +43,4 @@ instead of screenshots, and how to use the fallback ladder (`data` -> `ocr` -> `
 - The skill only gives instructions; the browsing itself is done by the MCP server.
 - If the MCP server is not connected, the skill does not apply.
 - Tool names and arguments must match the server (`open`, `read`, `click`, `type`, `select`,
-  `press`, `scroll`, `back`, `media`, `data`, `ocr`, `look`, `ask_human`). If you change the tools, update `SKILL.md`.
+  `press`, `scroll`, `back`, `forget`, `media`, `data`, `ocr`, `look`, `ask_human`). If you change the tools, update `SKILL.md`.
