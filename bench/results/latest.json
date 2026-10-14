@@ -1,0 +1,2744 @@
+{
+  "meta": {
+    "date": "2026-10-14",
+    "mantisSha": "34b8cf0",
+    "mantisSrcDirty": false,
+    "playwrightMcp": "0.0.83",
+    "playwright": "1.64.1",
+    "chromium": "156.0.8078.4",
+    "machine": "win32 10.0.26200, 12 logical cores, 7 GB RAM",
+    "node": "v20.14.0",
+    "command": "npm run bench"
+  },
+  "toolDefinitions": {
+    "mantis": {
+      "tools": 13,
+      "chars": 5958,
+      "t4": 1490,
+      "tik": 1453
+    },
+    "playwright-mcp": {
+      "tools": 25,
+      "chars": 20286,
+      "t4": 5072,
+      "tik": 4310
+    }
+  },
+  "tasks": [
+    {
+      "task": {
+        "id": "example-read",
+        "title": "Open example.com and read it",
+        "site": "live"
+      },
+      "runs": {
+        "mantis": {
+          "taskId": "example-read",
+          "tool": "mantis",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open https://example.com/",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 760,
+                "t4": 190,
+                "tik": 295
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 1275
+            },
+            {
+              "n": 2,
+              "label": "read (expect /Example Domain/)",
+              "ok": true,
+              "note": "already in hand",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 1
+            }
+          ],
+          "completed": true
+        },
+        "playwright-mcp": {
+          "taskId": "example-read",
+          "tool": "playwright-mcp",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open https://example.com/",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 208,
+                "t4": 52,
+                "tik": 66
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 937
+            },
+            {
+              "n": 2,
+              "label": "read (expect /Example Domain/)",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 1272,
+                "t4": 318,
+                "tik": 444
+              },
+              "ms": 41
+            }
+          ],
+          "completed": true
+        },
+        "screenshot": {
+          "taskId": "example-read",
+          "tool": "screenshot",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open https://example.com/",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 1312
+            },
+            {
+              "n": 2,
+              "label": "read (expect /Example Domain/)",
+              "ok": null,
+              "note": "content check not applicable to an image; no extra screenshot",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 0
+            }
+          ],
+          "completed": true
+        }
+      }
+    },
+    {
+      "task": {
+        "id": "hn-front-read",
+        "title": "Open the Hacker News front page and read it",
+        "site": "live"
+      },
+      "runs": {
+        "mantis": {
+          "taskId": "hn-front-read",
+          "tool": "mantis",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open https://news.ycombinator.com/",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 5761,
+                "t4": 1441,
+                "tik": 2187
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 2460
+            },
+            {
+              "n": 2,
+              "label": "read (expect /\\d+\\s*comments?/)",
+              "ok": true,
+              "note": "already in hand",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 0
+            }
+          ],
+          "completed": true
+        },
+        "playwright-mcp": {
+          "taskId": "hn-front-read",
+          "tool": "playwright-mcp",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open https://news.ycombinator.com/",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 223,
+                "t4": 56,
+                "tik": 74
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 2118
+            },
+            {
+              "n": 2,
+              "label": "read (expect /\\d+\\s*comments?/)",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 48363,
+                "t4": 12091,
+                "tik": 12522
+              },
+              "ms": 153
+            }
+          ],
+          "completed": true
+        },
+        "screenshot": {
+          "taskId": "hn-front-read",
+          "tool": "screenshot",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open https://news.ycombinator.com/",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 2355
+            },
+            {
+              "n": 2,
+              "label": "read (expect /\\d+\\s*comments?/)",
+              "ok": null,
+              "note": "content check not applicable to an image; no extra screenshot",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 0
+            }
+          ],
+          "completed": true
+        }
+      }
+    },
+    {
+      "task": {
+        "id": "hn-open-comments",
+        "title": "Hacker News: open the first story's comment thread",
+        "site": "live"
+      },
+      "runs": {
+        "mantis": {
+          "taskId": "hn-open-comments",
+          "tool": "mantis",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open https://news.ycombinator.com/",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 5761,
+                "t4": 1441,
+                "tik": 2187
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 2314
+            },
+            {
+              "n": 2,
+              "label": "click link /^\\d+\\s*comments?$/",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 2116,
+                "t4": 529,
+                "tik": 646
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 1870
+            },
+            {
+              "n": 3,
+              "label": "read (expect /add comment/i)",
+              "ok": true,
+              "note": "already in hand",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 0
+            }
+          ],
+          "completed": true
+        },
+        "playwright-mcp": {
+          "taskId": "hn-open-comments",
+          "tool": "playwright-mcp",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open https://news.ycombinator.com/",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 223,
+                "t4": 56,
+                "tik": 74
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 2275
+            },
+            {
+              "n": 2,
+              "label": "click link /^\\d+\\s*comments?$/",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 330,
+                "t4": 83,
+                "tik": 100
+              },
+              "observe": {
+                "chars": 48363,
+                "t4": 12091,
+                "tik": 12522
+              },
+              "ms": 3221
+            },
+            {
+              "n": 3,
+              "label": "read (expect /add comment/i)",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 296906,
+                "t4": 74227,
+                "tik": 70619
+              },
+              "ms": 755
+            }
+          ],
+          "completed": true
+        },
+        "screenshot": {
+          "taskId": "hn-open-comments",
+          "tool": "screenshot",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open https://news.ycombinator.com/",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 2368
+            },
+            {
+              "n": 2,
+              "label": "click link /^\\d+\\s*comments?$/",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 3633
+            },
+            {
+              "n": 3,
+              "label": "read (expect /add comment/i)",
+              "ok": null,
+              "note": "content check not applicable to an image; no extra screenshot",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 0
+            }
+          ],
+          "completed": true
+        }
+      }
+    },
+    {
+      "task": {
+        "id": "wikipedia-article-read",
+        "title": "Read the Wikipedia article on Alan Turing",
+        "site": "live"
+      },
+      "runs": {
+        "mantis": {
+          "taskId": "wikipedia-article-read",
+          "tool": "mantis",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open https://en.wikipedia.org/wiki/Alan_Turing",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 2553,
+                "t4": 639,
+                "tik": 782
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 3563
+            },
+            {
+              "n": 2,
+              "label": "read (expect /English mathematician|computer scientist/i)",
+              "ok": true,
+              "note": "already in hand",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 0
+            }
+          ],
+          "completed": true
+        },
+        "playwright-mcp": {
+          "taskId": "wikipedia-article-read",
+          "tool": "playwright-mcp",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open https://en.wikipedia.org/wiki/Alan_Turing",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 259,
+                "t4": 65,
+                "tik": 80
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 3185
+            },
+            {
+              "n": 2,
+              "label": "read (expect /English mathematician|computer scientist/i)",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 610756,
+                "t4": 152689,
+                "tik": 169570
+              },
+              "ms": 1639
+            }
+          ],
+          "completed": true
+        },
+        "screenshot": {
+          "taskId": "wikipedia-article-read",
+          "tool": "screenshot",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open https://en.wikipedia.org/wiki/Alan_Turing",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 2202
+            },
+            {
+              "n": 2,
+              "label": "read (expect /English mathematician|computer scientist/i)",
+              "ok": null,
+              "note": "content check not applicable to an image; no extra screenshot",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 0
+            }
+          ],
+          "completed": true
+        }
+      }
+    },
+    {
+      "task": {
+        "id": "wikipedia-search",
+        "title": "Search Wikipedia for \"Ada Lovelace\" and read the result",
+        "site": "live"
+      },
+      "runs": {
+        "mantis": {
+          "taskId": "wikipedia-search",
+          "tool": "mantis",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open https://en.wikipedia.org/wiki/Main_Page",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 5020,
+                "t4": 1255,
+                "tik": 1606
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 3658
+            },
+            {
+              "n": 2,
+              "label": "type \"Ada Lovelace\" into textbox /search/i + Enter",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 2777,
+                "t4": 695,
+                "tik": 836
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 5158
+            },
+            {
+              "n": 3,
+              "label": "read (expect /Ada Lovelace/)",
+              "ok": true,
+              "note": "already in hand",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 1
+            }
+          ],
+          "completed": true
+        },
+        "playwright-mcp": {
+          "taskId": "wikipedia-search",
+          "tool": "playwright-mcp",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open https://en.wikipedia.org/wiki/Main_Page",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 264,
+                "t4": 66,
+                "tik": 77
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 2089
+            },
+            {
+              "n": 2,
+              "label": "type \"Ada Lovelace\" into textbox /search/i + Enter",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 365,
+                "t4": 92,
+                "tik": 111
+              },
+              "observe": {
+                "chars": 64315,
+                "t4": 16079,
+                "tik": 15079
+              },
+              "ms": 7447
+            },
+            {
+              "n": 3,
+              "label": "read (expect /Ada Lovelace/)",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 390767,
+                "t4": 97692,
+                "tik": 111357
+              },
+              "ms": 1175
+            }
+          ],
+          "completed": true
+        },
+        "screenshot": {
+          "taskId": "wikipedia-search",
+          "tool": "screenshot",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open https://en.wikipedia.org/wiki/Main_Page",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 7711
+            },
+            {
+              "n": 2,
+              "label": "type \"Ada Lovelace\" into textbox /search/i + Enter",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 7206
+            },
+            {
+              "n": 3,
+              "label": "read (expect /Ada Lovelace/)",
+              "ok": null,
+              "note": "content check not applicable to an image; no extra screenshot",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 0
+            }
+          ],
+          "completed": true
+        }
+      }
+    },
+    {
+      "task": {
+        "id": "github-repo-read",
+        "title": "Read the microsoft/playwright GitHub repo page",
+        "site": "live"
+      },
+      "runs": {
+        "mantis": {
+          "taskId": "github-repo-read",
+          "tool": "mantis",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open https://github.com/microsoft/playwright",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 3362,
+                "t4": 841,
+                "tik": 1047
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 5438
+            },
+            {
+              "n": 2,
+              "label": "read (expect /Pull requests/i)",
+              "ok": false,
+              "note": "expected /Pull requests/i not found in what the agent receives",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 3362,
+                "t4": 841,
+                "tik": 1047
+              },
+              "ms": 295
+            }
+          ],
+          "completed": false
+        },
+        "playwright-mcp": {
+          "taskId": "github-repo-read",
+          "tool": "playwright-mcp",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open https://github.com/microsoft/playwright",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 395,
+                "t4": 99,
+                "tik": 105
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 3320
+            },
+            {
+              "n": 2,
+              "label": "read (expect /Pull requests/i)",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 51312,
+                "t4": 12828,
+                "tik": 12108
+              },
+              "ms": 328
+            }
+          ],
+          "completed": true
+        },
+        "screenshot": {
+          "taskId": "github-repo-read",
+          "tool": "screenshot",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open https://github.com/microsoft/playwright",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 4268
+            },
+            {
+              "n": 2,
+              "label": "read (expect /Pull requests/i)",
+              "ok": null,
+              "note": "content check not applicable to an image; no extra screenshot",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 0
+            }
+          ],
+          "completed": true
+        }
+      }
+    },
+    {
+      "task": {
+        "id": "mdn-read",
+        "title": "Read the MDN Fetch API page",
+        "site": "live"
+      },
+      "runs": {
+        "mantis": {
+          "taskId": "mdn-read",
+          "tool": "mantis",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 4735,
+                "t4": 1184,
+                "tik": 1309
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 3085
+            },
+            {
+              "n": 2,
+              "label": "read (expect /interface for fetching resources/i)",
+              "ok": true,
+              "note": "already in hand",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 0
+            }
+          ],
+          "completed": true
+        },
+        "playwright-mcp": {
+          "taskId": "mdn-read",
+          "tool": "playwright-mcp",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 370,
+                "t4": 93,
+                "tik": 119
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 1620
+            },
+            {
+              "n": 2,
+              "label": "read (expect /interface for fetching resources/i)",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 117698,
+                "t4": 29425,
+                "tik": 28041
+              },
+              "ms": 610
+            }
+          ],
+          "completed": true
+        },
+        "screenshot": {
+          "taskId": "mdn-read",
+          "tool": "screenshot",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 1655
+            },
+            {
+              "n": 2,
+              "label": "read (expect /interface for fetching resources/i)",
+              "ok": null,
+              "note": "content check not applicable to an image; no extra screenshot",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 0
+            }
+          ],
+          "completed": true
+        }
+      }
+    },
+    {
+      "task": {
+        "id": "local-login",
+        "title": "Fill email + password and submit a login form (local fixture)",
+        "site": "local"
+      },
+      "runs": {
+        "mantis": {
+          "taskId": "local-login",
+          "tool": "mantis",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open <local>/login",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 281,
+                "t4": 71,
+                "tik": 94
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 943
+            },
+            {
+              "n": 2,
+              "label": "type \"agent@example.com\" into textbox /email/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 102,
+                "t4": 26,
+                "tik": 28
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 454
+            },
+            {
+              "n": 3,
+              "label": "type \"correct-horse-battery\" into textbox /password/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 78,
+                "t4": 20,
+                "tik": 26
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 406
+            },
+            {
+              "n": 4,
+              "label": "click button /sign in/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 96,
+                "t4": 24,
+                "tik": 34
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 399
+            },
+            {
+              "n": 5,
+              "label": "read (expect /Signed in/)",
+              "ok": true,
+              "note": "already in hand",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 0
+            }
+          ],
+          "completed": true
+        },
+        "playwright-mcp": {
+          "taskId": "local-login",
+          "tool": "playwright-mcp",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open <local>/login",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 222,
+                "t4": 56,
+                "tik": 86
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 707
+            },
+            {
+              "n": 2,
+              "label": "type \"agent@example.com\" into textbox /email/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 111,
+                "t4": 28,
+                "tik": 30
+              },
+              "observe": {
+                "chars": 604,
+                "t4": 151,
+                "tik": 203
+              },
+              "ms": 124
+            },
+            {
+              "n": 3,
+              "label": "type \"correct-horse-battery\" into textbox /password/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 118,
+                "t4": 30,
+                "tik": 32
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 40
+            },
+            {
+              "n": 4,
+              "label": "click button /sign in/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 236,
+                "t4": 59,
+                "tik": 85
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 1254
+            },
+            {
+              "n": 5,
+              "label": "read (expect /Signed in/)",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 651,
+                "t4": 163,
+                "tik": 213
+              },
+              "ms": 26
+            }
+          ],
+          "completed": true
+        },
+        "screenshot": {
+          "taskId": "local-login",
+          "tool": "screenshot",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open <local>/login",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 1146
+            },
+            {
+              "n": 2,
+              "label": "type \"agent@example.com\" into textbox /email/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 1135
+            },
+            {
+              "n": 3,
+              "label": "type \"correct-horse-battery\" into textbox /password/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 1106
+            },
+            {
+              "n": 4,
+              "label": "click button /sign in/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 1135
+            },
+            {
+              "n": 5,
+              "label": "read (expect /Signed in/)",
+              "ok": null,
+              "note": "content check not applicable to an image; no extra screenshot",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 0
+            }
+          ],
+          "completed": true
+        }
+      }
+    },
+    {
+      "task": {
+        "id": "local-cookie",
+        "title": "Dismiss a cookie dialog, then add to cart (local fixture)",
+        "site": "local"
+      },
+      "runs": {
+        "mantis": {
+          "taskId": "local-cookie",
+          "tool": "mantis",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open <local>/cookie",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 231,
+                "t4": 58,
+                "tik": 79
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 929
+            },
+            {
+              "n": 2,
+              "label": "click button /^accept/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 162,
+                "t4": 41,
+                "tik": 45
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 488
+            },
+            {
+              "n": 3,
+              "label": "click button /add to cart/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 78,
+                "t4": 20,
+                "tik": 24
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 376
+            },
+            {
+              "n": 4,
+              "label": "read (expect /Added to cart/)",
+              "ok": true,
+              "note": "already in hand",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 0
+            }
+          ],
+          "completed": true
+        },
+        "playwright-mcp": {
+          "taskId": "local-cookie",
+          "tool": "playwright-mcp",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open <local>/cookie",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 216,
+                "t4": 54,
+                "tik": 85
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 723
+            },
+            {
+              "n": 2,
+              "label": "click button /^accept/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 226,
+                "t4": 57,
+                "tik": 82
+              },
+              "observe": {
+                "chars": 469,
+                "t4": 118,
+                "tik": 166
+              },
+              "ms": 1326
+            },
+            {
+              "n": 3,
+              "label": "click button /add to cart/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 231,
+                "t4": 58,
+                "tik": 84
+              },
+              "observe": {
+                "chars": 292,
+                "t4": 73,
+                "tik": 108
+              },
+              "ms": 606
+            },
+            {
+              "n": 4,
+              "label": "read (expect /Added to cart/)",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 310,
+                "t4": 78,
+                "tik": 114
+              },
+              "ms": 21
+            }
+          ],
+          "completed": true
+        },
+        "screenshot": {
+          "taskId": "local-cookie",
+          "tool": "screenshot",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open <local>/cookie",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 1102
+            },
+            {
+              "n": 2,
+              "label": "click button /^accept/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 1167
+            },
+            {
+              "n": 3,
+              "label": "click button /add to cart/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 1103
+            },
+            {
+              "n": 4,
+              "label": "read (expect /Added to cart/)",
+              "ok": null,
+              "note": "content check not applicable to an image; no extra screenshot",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 0
+            }
+          ],
+          "completed": true
+        }
+      }
+    },
+    {
+      "task": {
+        "id": "local-longlist-find",
+        "title": "Find \"Item 150\" in a 200-link list and open it (local fixture)",
+        "site": "local"
+      },
+      "runs": {
+        "mantis": {
+          "taskId": "local-longlist-find",
+          "tool": "mantis",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open <local>/longlist",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 238,
+                "t4": 60,
+                "tik": 103
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 1060
+            },
+            {
+              "n": 2,
+              "label": "click link /^Item 150$/",
+              "ok": false,
+              "note": "target link /^Item 150$/ not in what the agent receives",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 238,
+                "t4": 60,
+                "tik": 103
+              },
+              "ms": 97
+            },
+            {
+              "n": 3,
+              "label": "read (expect /Detail for item 150/)",
+              "ok": false,
+              "note": "expected /Detail for item 150/ not found in what the agent receives",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 476,
+                "t4": 120,
+                "tik": 206
+              },
+              "ms": 204
+            }
+          ],
+          "completed": false
+        },
+        "playwright-mcp": {
+          "taskId": "local-longlist-find",
+          "tool": "playwright-mcp",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open <local>/longlist",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 220,
+                "t4": 55,
+                "tik": 87
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 762
+            },
+            {
+              "n": 2,
+              "label": "click link /^Item 150$/",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 232,
+                "t4": 58,
+                "tik": 87
+              },
+              "observe": {
+                "chars": 22544,
+                "t4": 5636,
+                "tik": 7560
+              },
+              "ms": 950
+            },
+            {
+              "n": 3,
+              "label": "read (expect /Detail for item 150/)",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 253,
+                "t4": 64,
+                "tik": 99
+              },
+              "ms": 19
+            }
+          ],
+          "completed": true
+        },
+        "screenshot": {
+          "taskId": "local-longlist-find",
+          "tool": "screenshot",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open <local>/longlist",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 1104
+            },
+            {
+              "n": 2,
+              "label": "click link /^Item 150$/",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 1212
+            },
+            {
+              "n": 3,
+              "label": "read (expect /Detail for item 150/)",
+              "ok": null,
+              "note": "content check not applicable to an image; no extra screenshot",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 0
+            }
+          ],
+          "completed": true
+        }
+      }
+    },
+    {
+      "task": {
+        "id": "local-longlist-filter",
+        "title": "Use the filter box to reach \"Item 150\" and open it (local fixture)",
+        "site": "local"
+      },
+      "runs": {
+        "mantis": {
+          "taskId": "local-longlist-filter",
+          "tool": "mantis",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open <local>/longlist",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 238,
+                "t4": 60,
+                "tik": 103
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 1113
+            },
+            {
+              "n": 2,
+              "label": "type \"Item 150\" into textbox /filter/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 126,
+                "t4": 32,
+                "tik": 44
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 562
+            },
+            {
+              "n": 3,
+              "label": "click link /^Item 150$/",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 192,
+                "t4": 48,
+                "tik": 75
+              },
+              "observe": {
+                "chars": 153,
+                "t4": 39,
+                "tik": 61
+              },
+              "ms": 459
+            },
+            {
+              "n": 4,
+              "label": "read (expect /Detail for item 150/)",
+              "ok": true,
+              "note": "already in hand",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 0
+            }
+          ],
+          "completed": true
+        },
+        "playwright-mcp": {
+          "taskId": "local-longlist-filter",
+          "tool": "playwright-mcp",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open <local>/longlist",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 220,
+                "t4": 55,
+                "tik": 87
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 762
+            },
+            {
+              "n": 2,
+              "label": "type \"Item 150\" into textbox /filter/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 103,
+                "t4": 26,
+                "tik": 30
+              },
+              "observe": {
+                "chars": 22544,
+                "t4": 5636,
+                "tik": 7560
+              },
+              "ms": 238
+            },
+            {
+              "n": 3,
+              "label": "click link /^Item 150$/",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 228,
+                "t4": 57,
+                "tik": 85
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 681
+            },
+            {
+              "n": 4,
+              "label": "read (expect /Detail for item 150/)",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 253,
+                "t4": 64,
+                "tik": 99
+              },
+              "ms": 21
+            }
+          ],
+          "completed": true
+        },
+        "screenshot": {
+          "taskId": "local-longlist-filter",
+          "tool": "screenshot",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open <local>/longlist",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 1119
+            },
+            {
+              "n": 2,
+              "label": "type \"Item 150\" into textbox /filter/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 1157
+            },
+            {
+              "n": 3,
+              "label": "click link /^Item 150$/",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 1132
+            },
+            {
+              "n": 4,
+              "label": "read (expect /Detail for item 150/)",
+              "ok": null,
+              "note": "content check not applicable to an image; no extra screenshot",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 0
+            }
+          ],
+          "completed": true
+        }
+      }
+    },
+    {
+      "task": {
+        "id": "local-form-select",
+        "title": "Pick a country, tick a checkbox, submit (local fixture)",
+        "site": "local"
+      },
+      "runs": {
+        "mantis": {
+          "taskId": "local-form-select",
+          "tool": "mantis",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open <local>/form",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 279,
+                "t4": 70,
+                "tik": 81
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 902
+            },
+            {
+              "n": 2,
+              "label": "select \"Canada\" in combobox /country/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 94,
+                "t4": 24,
+                "tik": 28
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 449
+            },
+            {
+              "n": 3,
+              "label": "click checkbox /newsletter/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 110,
+                "t4": 28,
+                "tik": 24
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 399
+            },
+            {
+              "n": 4,
+              "label": "click button /subscribe/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 49,
+                "t4": 13,
+                "tik": 11
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 418
+            },
+            {
+              "n": 5,
+              "label": "read (expect /Subscribed from Canada \\(weekly: yes\\)/)",
+              "ok": false,
+              "note": "expected /Subscribed from Canada \\(weekly: yes\\)/ not found in what the agent receives",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 288,
+                "t4": 72,
+                "tik": 83
+              },
+              "ms": 26
+            }
+          ],
+          "completed": false
+        },
+        "playwright-mcp": {
+          "taskId": "local-form-select",
+          "tool": "playwright-mcp",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open <local>/form",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 218,
+                "t4": 55,
+                "tik": 83
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 702
+            },
+            {
+              "n": 2,
+              "label": "select \"Canada\" in combobox /country/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 227,
+                "t4": 57,
+                "tik": 77
+              },
+              "observe": {
+                "chars": 558,
+                "t4": 140,
+                "tik": 168
+              },
+              "ms": 125
+            },
+            {
+              "n": 3,
+              "label": "click checkbox /newsletter/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 255,
+                "t4": 64,
+                "tik": 85
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 869
+            },
+            {
+              "n": 4,
+              "label": "click button /subscribe/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 233,
+                "t4": 59,
+                "tik": 81
+              },
+              "observe": {
+                "chars": 577,
+                "t4": 145,
+                "tik": 175
+              },
+              "ms": 614
+            },
+            {
+              "n": 5,
+              "label": "read (expect /Subscribed from Canada \\(weekly: yes\\)/)",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 627,
+                "t4": 157,
+                "tik": 190
+              },
+              "ms": 23
+            }
+          ],
+          "completed": true
+        },
+        "screenshot": {
+          "taskId": "local-form-select",
+          "tool": "screenshot",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open <local>/form",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 1111
+            },
+            {
+              "n": 2,
+              "label": "select \"Canada\" in combobox /country/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 1111
+            },
+            {
+              "n": 3,
+              "label": "click checkbox /newsletter/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 1116
+            },
+            {
+              "n": 4,
+              "label": "click button /subscribe/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 1116
+            },
+            {
+              "n": 5,
+              "label": "read (expect /Subscribed from Canada \\(weekly: yes\\)/)",
+              "ok": null,
+              "note": "content check not applicable to an image; no extra screenshot",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 0
+            }
+          ],
+          "completed": true
+        }
+      }
+    },
+    {
+      "task": {
+        "id": "local-nav-back",
+        "title": "Navigate Home → Pricing, read, go back (local fixture)",
+        "site": "local"
+      },
+      "runs": {
+        "mantis": {
+          "taskId": "local-nav-back",
+          "tool": "mantis",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open <local>/site/home",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 258,
+                "t4": 65,
+                "tik": 84
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 887
+            },
+            {
+              "n": 2,
+              "label": "click link /^pricing$/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 341,
+                "t4": 86,
+                "tik": 112
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 485
+            },
+            {
+              "n": 3,
+              "label": "read (expect /\\$29 per month/)",
+              "ok": false,
+              "note": "expected /\\$29 per month/ not found in what the agent receives",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 227,
+                "t4": 57,
+                "tik": 77
+              },
+              "ms": 23
+            },
+            {
+              "n": 4,
+              "label": "back",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 356,
+                "t4": 89,
+                "tik": 114
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 409
+            },
+            {
+              "n": 5,
+              "label": "read (expect /Welcome to Example Corp/)",
+              "ok": true,
+              "note": "already in hand",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 0
+            }
+          ],
+          "completed": false
+        },
+        "playwright-mcp": {
+          "taskId": "local-nav-back",
+          "tool": "playwright-mcp",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open <local>/site/home",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 237,
+                "t4": 60,
+                "tik": 88
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 693
+            },
+            {
+              "n": 2,
+              "label": "click link /^pricing$/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 262,
+                "t4": 66,
+                "tik": 90
+              },
+              "observe": {
+                "chars": 729,
+                "t4": 183,
+                "tik": 237
+              },
+              "ms": 797
+            },
+            {
+              "n": 3,
+              "label": "read (expect /\\$29 per month/)",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 811,
+                "t4": 203,
+                "tik": 292
+              },
+              "ms": 20
+            },
+            {
+              "n": 4,
+              "label": "back",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 205,
+                "t4": 52,
+                "tik": 73
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 92
+            },
+            {
+              "n": 5,
+              "label": "read (expect /Welcome to Example Corp/)",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 753,
+                "t4": 189,
+                "tik": 261
+              },
+              "ms": 21
+            }
+          ],
+          "completed": true
+        },
+        "screenshot": {
+          "taskId": "local-nav-back",
+          "tool": "screenshot",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open <local>/site/home",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 1106
+            },
+            {
+              "n": 2,
+              "label": "click link /^pricing$/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 1159
+            },
+            {
+              "n": 3,
+              "label": "read (expect /\\$29 per month/)",
+              "ok": null,
+              "note": "content check not applicable to an image; no extra screenshot",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 0
+            },
+            {
+              "n": 4,
+              "label": "back",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 1079
+            },
+            {
+              "n": 5,
+              "label": "read (expect /Welcome to Example Corp/)",
+              "ok": null,
+              "note": "content check not applicable to an image; no extra screenshot",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 0
+            }
+          ],
+          "completed": true
+        }
+      }
+    },
+    {
+      "task": {
+        "id": "local-dashboard",
+        "title": "Large dashboard (60-row table): click Refresh and confirm (local fixture)",
+        "site": "local"
+      },
+      "runs": {
+        "mantis": {
+          "taskId": "local-dashboard",
+          "tool": "mantis",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open <local>/dashboard",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 4841,
+                "t4": 1211,
+                "tik": 1981
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 1052
+            },
+            {
+              "n": 2,
+              "label": "click button /^refresh$/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 78,
+                "t4": 20,
+                "tik": 25
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 605
+            },
+            {
+              "n": 3,
+              "label": "read (expect /Last updated: just now/)",
+              "ok": true,
+              "note": "already in hand",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 0
+            }
+          ],
+          "completed": true
+        },
+        "playwright-mcp": {
+          "taskId": "local-dashboard",
+          "tool": "playwright-mcp",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open <local>/dashboard",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 237,
+                "t4": 60,
+                "tik": 85
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 836
+            },
+            {
+              "n": 2,
+              "label": "click button /^refresh$/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 245,
+                "t4": 62,
+                "tik": 83
+              },
+              "observe": {
+                "chars": 18184,
+                "t4": 4546,
+                "tik": 5765
+              },
+              "ms": 818
+            },
+            {
+              "n": 3,
+              "label": "read (expect /Last updated: just now/)",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 18187,
+                "t4": 4547,
+                "tik": 5763
+              },
+              "ms": 80
+            }
+          ],
+          "completed": true
+        },
+        "screenshot": {
+          "taskId": "local-dashboard",
+          "tool": "screenshot",
+          "steps": [
+            {
+              "n": 1,
+              "label": "open <local>/dashboard",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 1131
+            },
+            {
+              "n": 2,
+              "label": "click button /^refresh$/i",
+              "ok": true,
+              "note": "",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 1366,
+                "tik": 1366
+              },
+              "ms": 1177
+            },
+            {
+              "n": 3,
+              "label": "read (expect /Last updated: just now/)",
+              "ok": null,
+              "note": "content check not applicable to an image; no extra screenshot",
+              "action": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "observe": {
+                "chars": 0,
+                "t4": 0,
+                "tik": 0
+              },
+              "ms": 0
+            }
+          ],
+          "completed": true
+        }
+      }
+    }
+  ]
+}
