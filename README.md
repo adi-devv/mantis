@@ -104,12 +104,38 @@ Pop-up messages (`role=alert`, toasts, live regions) show up too, as
 `(no visible change)`; if the action led to a new page, it returns that
 page's full view.
 
+### When text isn't enough: the fallback ladder
+
+Mantis tries the cheapest option first and only goes further when the agent
+asks:
+
+1. **`data(id)` — the text behind visuals.** Image alt text and captions, SVG
+   labels, and the actual numbers inside Chart.js / ECharts / Highcharts
+   charts (real output from a Chart.js canvas):
+   ```
+   Chart.js bar chart "Q1 numbers"
+    | Sales | Cost
+   Jan | 10 | 5
+   Feb | 20 | 8
+   ```
+2. **`ocr(id)` — text inside an image**, via Tesseract (plain OCR, no AI).
+   Returns text, never the image.
+3. **`look(id)` — a picture of one element only.** The single tool that
+   returns an image: a crop of that element, at most 800px. Never the full
+   page.
+4. **`ask_human(reason)` — hand off to you.** For CAPTCHAs, 2FA codes and
+   payments. Mantis opens a visible browser window, waits for you to finish,
+   then carries on. **Mantis never solves CAPTCHAs.** `read()` flags them:
+   ```
+   ⚠ CAPTCHA detected — call ask_human("captcha")
+   ```
+
 ## How it works
 
 ```
 Agent (Claude, Cursor, …)
       │  MCP
-Mantis server     tools: open, read, click, type, select, press, scroll, back
+Mantis server     tools: open, read, click, type, … + fallbacks (data, ocr, look, ask_human)
 Translator        cleanup → numbering → regions → compact text
 Page capture      script inside the page reads the live DOM (no pixels)
 Playwright        drives a real Chromium
@@ -140,14 +166,16 @@ progress in [PROGRESS.md](PROGRESS.md)).
 | M1 | Read pages as numbered text, act by number, MCP server, CLI | ✅ Done |
 | M2 | After each action, report only what changed ("a dialog opened") | ✅ Done |
 | M3 | Names for icon-only buttons, error/primary flags, regions on pages without landmarks, compact dense pages, article text | ✅ Done |
-| M4 | Fallback ladder: hidden text & chart data → OCR → one-element image → hand off to a human (CAPTCHA, 2FA) | 🚧 In progress |
-| M6 | Per-site memory so repeat visits are near-free | Planned |
+| M4 | Fallback ladder: hidden text & chart data → OCR → one-element image → hand off to a human (CAPTCHA, 2FA) | ✅ Done |
+| M6 | Per-site memory so repeat visits are near-free | 🚧 In progress |
 | M5 | Claude skill + public benchmark vs. Playwright MCP and screenshots | Planned |
 
 Known gaps today: iframes are skipped and closed shadow roots can't be read;
 inferred names are heuristics (always `~`-marked) with a small icon
 vocabulary; article text is summarised only for simple paragraph blocks;
-repeated-row compaction only catches rows with a consistent structure.
+repeated-row compaction only catches rows with a consistent structure;
+ECharts/Highcharts extraction is implemented but only Chart.js is tested;
+the visible-window path of `ask_human` hasn't been tested yet.
 
 ### Why not just Playwright MCP?
 
@@ -187,8 +215,15 @@ claude mcp add mantis -- node /abs/path/to/mantis/dist/server.js
 | `press(key)` | Press a key (`Enter`, `Escape`, `Tab`…) |
 | `scroll(direction \| id)` | Scroll the page or bring `#id` into view |
 | `back()` | Go back |
+| `media()` | List images, canvases and charts, with numbers |
+| `data(id \| selector)` | Text behind an image, SVG or chart (no image) |
+| `ocr(id \| selector)` | Read text inside an image (no image returned) |
+| `look(id \| selector)` | Last resort: a cropped image of one element |
+| `ask_human(reason, until?)` | Hand off to a human (CAPTCHA, 2FA, payment) and wait |
 
-Set `MANTIS_HEADLESS=0` to watch the browser. Run the tests with `npm test`.
+Set `MANTIS_HEADLESS=0` to watch the browser. OCR language data is downloaded
+on first use and cached in `~/.cache/mantis/tessdata` (or set
+`MANTIS_TESSDATA`). Run the tests with `npm test`.
 
 ## Contributing
 

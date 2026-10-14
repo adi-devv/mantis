@@ -48,3 +48,13 @@ See `PLAN.md` for the full plan.
   Format changes: primary submit shows `(primary)` instead of `(submit)`; `invalid` state renamed `error`.
   Known gaps: icon alias map is small; prose only for inline-only text blocks; row detection needs consistent
   sibling signatures; diffs ignore prose changes; derived regions not used as diff region keys.
+- 2026-10-14: M4 built (`src/fallback/`). New tools: `media` (numbered images/canvases/charts, shared id
+  registry), `data` (alt/caption/SVG text, Chart.js/ECharts/Highcharts values from page memory; ≤1500 chars),
+  `ocr` (tesseract.js, lazy-loaded, text + confidence only), `look` (one-element PNG crop ≤800px — the only
+  image-returning tool), `ask_human` (headed window with carried-over storage state; waits for url change /
+  selector gone/present / big change; 5-min default timeout). `read()` flags visible CAPTCHAs. 13 tools total,
+  112 tests green (OCR test runs for real; skips with a reason if language data can't download).
+  New deps: tesseract.js (runtime), chart.js (dev, fixture only). Env: `MANTIS_TESSDATA`,
+  `MANTIS_ASK_HUMAN_HEADLESS=1` (tests only).
+  Known gaps: headed-window path of ask_human untested (needs a display); ECharts/Highcharts untested (only a
+  Chart.js fixture); media() skips closed shadow roots and cross-origin iframes; no OCR preprocessing.
