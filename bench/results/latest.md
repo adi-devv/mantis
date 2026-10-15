@@ -5,7 +5,7 @@
 ## Setup
 
 - Date: 2026-10-15
-- Mantis: git `e4961ef` (**src/ had uncommitted changes**); numbers reflect Mantis at this commit and will change as it changes
+- Mantis: git `d783a9a`; numbers reflect Mantis at this commit and will change as it changes
 - Playwright MCP: `@playwright/mcp@0.0.83` (default config, headless, isolated profile, viewport 1280x800)
 - Playwright (screenshot baseline + Mantis): `1.64.1`; Chromium 156.0.8078.4; viewport 1280x800 for all three
 - Machine: win32 10.0.26200, 12 logical cores, 7 GB RAM; Node v20.14.0
@@ -19,15 +19,18 @@
 - In `@playwright/mcp` 0.0.83 default mode, action replies contain only a short log plus a *link to a snapshot file*, not the page. We therefore count `browser_snapshot` (inline) whenever the agent needs to see the page. The file would hold the same content.
 - **Screenshot baseline:** one 1280x800 viewport PNG per open/action step (`read` steps add none). Actions are performed by the harness with role+name locators (an oracle), so this baseline does not test whether an agent could find targets from pixels, and it ignores scrolling for below-the-fold content: **it under-counts a real screenshot agent**. Tokens = `ceil(w*h/750)` after downscaling to <=1568 px longest side and <=~1.15 MP (Anthropic's published image-token formula; an estimate). For 1280x800 that is 1,366 tokens per screenshot.
 - **Text tokens:** primary estimator is `chars/4` (rounded up), used for every text tool. Secondary: OpenAI `cl100k_base` via js-tiktoken. Both are approximations; Claude's tokenizer differs. The image estimate is the same in both columns.
+- **Time:** wall-clock time of each step as measured by the harness: the tool call(s), including any wait for the page to settle, and the observe call when one is counted. Local fixture pages give the steadiest number; live pages add network time. The screenshot baseline acts through Playwright directly (no MCP hop, no settle logic) and takes one PNG, so its time is a lower bound for a real screenshot agent.
 - Steps run to the end even after a failure (failed steps are shown, never dropped). One run per task; live sites change over time, so live-site numbers are a snapshot.
 
 ## Summary (all tasks)
 
 | | Mantis | Playwright MCP | Screenshot (est.) |
 |---|---:|---:|---:|
-| Total tokens (chars/4) | 11,464 | 578,028 | 40,980 |
-| Total tokens (cl100k) | 15,949 | 601,475 | 40,980 |
+| Total tokens (chars/4) | 11,824 | 342,767 | 40,980 |
+| Total tokens (cl100k) | 16,488 | 378,289 | 40,980 |
 | Median tokens per step (chars/4) | 28 | 131 | 1,366 |
+| Median time per step, local pages (ms) | 247 | 315 | 1,066 |
+| Total time, all steps (s) | 22.5 | 24.9 | 36.7 |
 | Steps ok / total | 45 / 45 | 45 / 45 | 30 / 30 (+15 n/a) |
 | Tasks fully completed | 14 / 14 | 14 / 14 | 14 / 14 |
 
@@ -37,8 +40,8 @@ Totals include tokens spent on failed steps, and exclude tokens a tool would hav
 
 | | Mantis | Playwright MCP | Screenshot (est.) |
 |---|---:|---:|---:|
-| Total tokens (chars/4) | 11,464 | 578,028 | 40,980 |
-| Total tokens (cl100k) | 15,949 | 601,475 | 40,980 |
+| Total tokens (chars/4) | 11,824 | 342,767 | 40,980 |
+| Total tokens (cl100k) | 16,488 | 378,289 | 40,980 |
 | Median tokens per step (chars/4) | 28 | 131 | 1,366 |
 
 Tasks: example-read, hn-front-read, hn-open-comments, wikipedia-article-read, wikipedia-search, github-repo-read, mdn-read, local-login, local-cookie, local-longlist-find, local-longlist-filter, local-form-select, local-nav-back, local-dashboard
@@ -57,12 +60,12 @@ The tool list an agent carries in context for the whole session (not included in
 | Task | Steps | Mantis | Playwright MCP | Screenshot (est.) |
 |---|---:|---:|---:|---:|
 | `example-read` (live) | 2 | 190 | 370 | 1,366 |
-| `hn-front-read` (live) | 2 | 1,467 | 12,050 | 1,366 |
-| `hn-open-comments` (live) | 3 | 1,941 | 256,718 | 2,732 |
-| `wikipedia-article-read` (live) | 2 | 688 | 152,727 | 1,366 |
-| `wikipedia-search` (live) | 3 | 2,258 | 112,547 | 2,732 |
-| `github-repo-read` (live) | 2 | 908 | 13,942 | 1,366 |
-| `mdn-read` (live) | 2 | 1,427 | 6,453 | 1,366 |
+| `hn-front-read` (live) | 2 | 1,466 | 12,121 | 1,366 |
+| `hn-open-comments` (live) | 3 | 2,326 | 20,393 | 2,732 |
+| `wikipedia-article-read` (live) | 2 | 688 | 154,735 | 1,366 |
+| `wikipedia-search` (live) | 3 | 2,223 | 112,547 | 2,732 |
+| `github-repo-read` (live) | 2 | 906 | 12,927 | 1,366 |
+| `mdn-read` (live) | 2 | 1,440 | 6,453 | 1,366 |
 | `local-login` (local) | 5 | 141 | 487 | 5,464 |
 | `local-cookie` (local) | 4 | 119 | 438 | 4,098 |
 | `local-longlist-find` (local) | 3 | 340 | 5,813 | 2,732 |
@@ -90,29 +93,29 @@ Cells are `action + observe` tokens (chars/4); `FAIL` marks a failed step; `n/a`
 
 | # | Step | Mantis | Playwright MCP | Screenshot (est.) |
 |---:|---|---:|---:|---:|
-| 1 | open https://news.ycombinator.com/ | 1,467 + 0 | 56 + 0 | 0 + 1,366 |
-| 2 | read (expect /\d+\s*comments?/) | 0 + 0 | 0 + 11,994 | n/a (0 + 0) |
+| 1 | open https://news.ycombinator.com/ | 1,466 + 0 | 56 + 0 | 0 + 1,366 |
+| 2 | read (expect /\d+\s*comments?/) | 0 + 0 | 0 + 12,065 | n/a (0 + 0) |
 
 ### `hn-open-comments` — Hacker News: open the first story's comment thread
 
 | # | Step | Mantis | Playwright MCP | Screenshot (est.) |
 |---:|---|---:|---:|---:|
 | 1 | open https://news.ycombinator.com/ | 1,451 + 0 | 56 + 0 | 0 + 1,366 |
-| 2 | click link /^\d+\s*comments?$/ | 490 + 0 | 73 + 11,994 | 0 + 1,366 |
-| 3 | read (expect /add comment/i) | 0 + 0 | 0 + 244,595 | n/a (0 + 0) |
+| 2 | click link /^\d+\s*comments?$/ | 875 + 0 | 83 + 12,065 | 0 + 1,366 |
+| 3 | read (expect /add comment/i) | 0 + 0 | 0 + 8,189 | n/a (0 + 0) |
 
 ### `wikipedia-article-read` — Read the Wikipedia article on Alan Turing
 
 | # | Step | Mantis | Playwright MCP | Screenshot (est.) |
 |---:|---|---:|---:|---:|
 | 1 | open https://en.wikipedia.org/wiki/Alan_Turing | 688 + 0 | 65 + 0 | 0 + 1,366 |
-| 2 | read (expect /English mathematician\|computer scientist/i) | 0 + 0 | 0 + 152,662 | n/a (0 + 0) |
+| 2 | read (expect /English mathematician\|computer scientist/i) | 0 + 0 | 0 + 154,670 | n/a (0 + 0) |
 
 ### `wikipedia-search` — Search Wikipedia for "Ada Lovelace" and read the result
 
 | # | Step | Mantis | Playwright MCP | Screenshot (est.) |
 |---:|---|---:|---:|---:|
-| 1 | open https://en.wikipedia.org/wiki/Main_Page | 1,483 + 0 | 66 + 0 | 0 + 1,366 |
+| 1 | open https://en.wikipedia.org/wiki/Main_Page | 1,448 + 0 | 66 + 0 | 0 + 1,366 |
 | 2 | type "Ada Lovelace" into textbox /search/i + Enter | 775 + 0 | 92 + 14,728 | 0 + 1,366 |
 | 3 | read (expect /Ada Lovelace/) | 0 + 0 | 0 + 97,661 | n/a (0 + 0) |
 
@@ -120,14 +123,14 @@ Cells are `action + observe` tokens (chars/4); `FAIL` marks a failed step; `n/a`
 
 | # | Step | Mantis | Playwright MCP | Screenshot (est.) |
 |---:|---|---:|---:|---:|
-| 1 | open https://github.com/microsoft/playwright | 908 + 0 | 99 + 0 | 0 + 1,366 |
-| 2 | read (expect /Pull requests/i) | 0 + 0 | 0 + 13,843 | n/a (0 + 0) |
+| 1 | open https://github.com/microsoft/playwright | 906 + 0 | 99 + 0 | 0 + 1,366 |
+| 2 | read (expect /Pull requests/i) | 0 + 0 | 0 + 12,828 | n/a (0 + 0) |
 
 ### `mdn-read` — Read the MDN Fetch API page
 
 | # | Step | Mantis | Playwright MCP | Screenshot (est.) |
 |---:|---|---:|---:|---:|
-| 1 | open https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API | 1,427 + 0 | 93 + 0 | 0 + 1,366 |
+| 1 | open https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API | 1,440 + 0 | 93 + 0 | 0 + 1,366 |
 | 2 | read (expect /interface for fetching resources/i) | 0 + 0 | 0 + 6,360 | n/a (0 + 0) |
 
 ### `local-login` — Fill email + password and submit a login form (local fixture)

@@ -83,3 +83,12 @@ See `PLAN.md` for the full plan.
   shorter settle wait; reuse the previous scan as the diff's "before"; cheaper scan), then better
   (names from Chrome's AX tree; JS-only clickables via CDP event listeners; iframes), then a
   real-agent eval (pilot first to size usage), then publish 0.1.1.
+- 2026-10-15: Faster + better, before the real-agent eval. Faster: scan returns one JSON string
+  (3x on big pages); actions reuse the last scan when an in-page change counter says nothing
+  changed; settle quiet 300 -> 150 ms; benchmark now reports time. Local median per step 360 ->
+  208 ms (Playwright MCP 286). Better: script-only clickables (click listeners recorded by the init
+  script, or where a pointer cursor starts; containers excluded); iframes read inline with per-frame
+  number ranges (#10001...), reused when frames go away. Tried Chrome computedName for names: ~25x
+  slower scan, reverted. human.html timers moved past 1s (test was timing the settle window).
+  183 tests. Full benchmark: 14/14; median 28 vs 131 tokens/step; 247 vs 315 ms/step local.
+  Next: real-agent eval (pilot first), fallback tools inside iframes, publish 0.1.1.

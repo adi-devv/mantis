@@ -136,6 +136,8 @@ and never of the full page. Mantis never solves CAPTCHAs.
 | Element references | tied to a snapshot | stable `#N` while the element lives |
 | Menus on page 2, 3, 4… | repeated in full | one line (site memory) |
 | Charts / canvas | nothing | `data(id)` returns the numbers |
+| Clickable only by script (`div` + click listener) | not shown | `clickable "Pro plan"` |
+| Iframes (payment, login widgets) | per frame | inline under `[iframe "Payment"]`, own numbers |
 | Size | whole page | budgeted, compacted |
 
 **Measured so far** (deterministic replay, no LLM in the loop; Playwright MCP 0.0.83
@@ -145,12 +147,14 @@ stands in for the accessibility tree; full method in
 | | Mantis | Accessibility tree (Playwright MCP) | Screenshots (est.) |
 |---|---:|---:|---:|
 | Median tokens per step | 28 | 131 | 1,366 |
-| Tokens, all 14 tasks | 11,464 | 578,028 | 40,980 |
+| Median time per step, local pages | 247 ms | 315 ms | 1,066 ms |
+| Tokens, all 14 tasks | 11,824 | 342,767 | 40,980 |
 | Tasks completed | 14 / 14 | 14 / 14 | 14 / 14 |
 
 Read this honestly:
 
-- The **typical step is ~4.7× smaller**. The ~50× total is driven by a few huge pages, and on
+- The **typical step is ~4.7× smaller** and a little **faster** (247 vs 315 ms on local pages;
+  live pages add network time to both). The ~30× total is driven by a few huge pages, and on
   some of them Mantis shows a trimmed view while the tree sends everything.
 - **Same tasks completed.** Mantis used to fail 4 because trimming hid what the agent
   needed; short text is now kept, long lists name their items, and `find` reaches the rest.
@@ -177,23 +181,28 @@ actually succeed more often**. Work, in order:
    accessibility tree must be reachable through Mantis (`test/coverage.test.ts`). A change
    that breaks this does not ship, however many tokens it saves.
 
-**Faster** (the benchmark measures tokens but not time yet)
+**Faster** (median per step on local pages: 360 → 208–247 ms; Playwright MCP 286–315 ms)
 
-3. **Time every step in the benchmark**, next to tokens, for all three approaches.
-4. **Shorter wait after actions.** Settling waits for a quiet DOM window; return as soon as
-   the page has been still briefly instead of waiting out the full window.
-5. **One page scan per action, not two.** Reuse the scan from the previous reply as the
-   "before" state of the diff instead of scanning again.
-6. **Cheaper page scan.** Fewer style lookups per element.
+3. ✅ **Time every step in the benchmark**, next to tokens, for all three approaches.
+4. ✅ **Cheaper page scan.** The scan result comes back as one JSON string instead of
+   Playwright's structured serializer: 3× faster on big pages (Wikipedia 597 → 199 ms).
+5. ✅ **One page scan per action, not two.** When nothing changed on the page since the last
+   reply (an in-page counter of DOM changes, scroll, input, focus, hover), that scan is reused
+   as the diff's "before" state.
+6. ✅ **Shorter wait after actions.** 150 ms of DOM quiet instead of 300 ms; short timers and
+   requests are tracked separately, so delayed effects are still caught.
 
 **Better** (things the accessibility tree can't do, or does more correctly)
 
-7. **Names from Chrome.** Take accessible names from Chrome's own tree (spec-correct)
-   and only infer (`~`) when it has none.
-8. **Clickables made only by JavaScript.** Elements with a click listener but no role,
-   link or tabindex are invisible to the tree and to Mantis today; Chrome can list event
-   listeners, so Mantis can show them.
-9. **Iframes.** Embedded frames (payment forms, logins, widgets) are skipped today.
+7. ✅ **Clickables made only by JavaScript.** Elements given a click listener in script, or
+   where a pointer cursor starts (frameworks that listen once at the root), show as
+   `clickable`. Containers are excluded. The tree doesn't show these at all.
+8. ✅ **Iframes.** Visible frames, cross-origin included, are read inline under
+   `[iframe "title"]`, with their own number range (`#10001…`).
+9. ✗ **Names from Chrome — tried, not shipped.** Chrome can expose its own computed name
+   per element (`computedName`), but reading it made the scan ~25× slower (15 → 378 ms on a
+   200-link page). Mantis keeps its own name logic; `test/coverage.test.ts` checks it
+   against Chrome's names on every test page instead.
 
 **Then**
 

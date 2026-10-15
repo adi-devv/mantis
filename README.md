@@ -180,7 +180,13 @@ progress in [PROGRESS.md](PROGRESS.md)).
 | M6 | Site memory: headers/menus already seen on a site are shortened to one line | ✅ Done |
 | M5 | Claude skill + public benchmark vs. Playwright MCP and screenshots | ✅ Done |
 
-Known gaps today: iframes are skipped and closed shadow roots can't be read;
+Iframes are read (each frame numbers its elements from its own range, e.g.
+`#10001`), and elements made clickable only by script (a click listener or a
+pointer cursor, no role) show up as `clickable`; the accessibility tree shows
+neither.
+
+Known gaps today: closed shadow roots can't be read; the fallback tools
+(`media`, `data`, `ocr`, `look`) don't look inside iframes yet;
 inferred names are heuristics (always `~`-marked) with a small icon
 vocabulary; article text is summarised only for simple paragraph blocks;
 repeated-row compaction only catches rows with a consistent structure;
@@ -197,7 +203,8 @@ notice: changes-only replies after actions, stable numbers, covered/blocked
 elements, visual meaning (error, primary) as words, and a text-first fallback
 ladder. The benchmark ([bench/results/latest.md](bench/results/latest.md)) replays
 14 fixed tasks through all three: Mantis completes 14/14 with a median of 28
-tokens per step, vs 131 for Playwright MCP and ~1,366 per screenshot. It has no
+tokens per step, vs 131 for Playwright MCP and ~1,366 per screenshot, and a
+median of 247 ms per step on local pages vs 315 ms for Playwright MCP. It has no
 LLM in the loop: it measures what an agent receives, not whether an agent
 succeeds. A real-agent eval is next.
 
