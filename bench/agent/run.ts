@@ -6,6 +6,7 @@
  *   npx tsx bench/agent/run.ts                          # pilot: 2 tasks x 3 approaches x 1 run
  *   AGENT_TASKS=all AGENT_RUNS=3 npx tsx bench/agent/run.ts
  *   AGENT_TASKS=cat:forms AGENT_APPROACHES=mantis,tree npx tsx bench/agent/run.ts
+ *   AGENT_RESUME=1 ...                                   (continue a stopped run)
  *   AGENT_MODEL=sonnet AGENT_CONCURRENCY=3 ...   (defaults)
  *
  * Needs a logged-in Claude Code CLI (`claude auth login`). Uses your plan's usage.
@@ -13,7 +14,7 @@
 import { spawn, spawnSync } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
 import net from 'node:net';
-import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { chromiumForMcp } from '../adapters.js';
@@ -269,33 +270,49 @@ const want = process.env.AGENT_TASKS ?? PILOT.join(',');
 const picks = want.split(',');
 const tasks = want === 'all' ? TASKS : TASKS.filter((t) => picks.includes(t.id) || picks.includes(`cat:${t.category}`));
 if (!tasks.length) throw new Error(`no tasks match AGENT_TASKS=${want}; ids: ${TASKS.map((t) => t.id).join(', ')}`);
-const approaches = (process.env.AGENT_APPROACHES ?? 'mantis,tree,screenshot').split(',') as Approach[];
-const fx = await startFixtures();
+const approaches = (process.env.AGENT_APPROACHES ?? 'mantis,tree,devtools,browseruse,screenshot').split(',') as Approach[];
+const name = process.env.AGENT_OUT ?? (want === PILOT.join(',') ? 'agent-pilot' : 'agent');
 const jobs: { t: AgentTask; a: Approach; run: number }[] = [];
 for (const t of tasks) for (let run = 1; run <= RUNS; run++) for (const a of approaches) jobs.push({ t, a, run });
+const key = (task: string, a: string, run: number): string => `${task}|${a}|${run}`;
+const order = (r: RunResult): number => jobs.findIndex((j) => j.t.id === r.task && j.a === r.approach && j.run === r.run);
+
+// AGENT_RESUME=1 keeps the valid runs already in the results file and only does the rest.
+mkdirSync(OUT, { recursive: true });
+const jsonPath = path.join(OUT, `${name}.json`);
 const results: RunResult[] = [];
+if (process.env.AGENT_RESUME === '1' && existsSync(jsonPath)) {
+  const prev = (JSON.parse(readFileSync(jsonPath, 'utf8')) as { results: RunResult[] }).results;
+  results.push(...prev.filter((r) => r.valid && jobs.some((j) => key(j.t.id, j.a, j.run) === key(r.task, r.approach, r.run))));
+}
+const done = new Set(results.map((r) => key(r.task, r.approach, r.run)));
+const todo = jobs.filter((j) => !done.has(key(j.t.id, j.a, j.run)));
+
+/** Results are written after every run, so a stopped eval loses nothing and can resume. */
+function save(): void {
+  results.sort((x, y) => order(x) - order(y));
+  writeFileSync(jsonPath, JSON.stringify({ model: MODEL, runs: RUNS, results }, null, 2));
+  writeFileSync(path.join(OUT, `${name}.md`), report(results, approaches, tasks));
+}
+
+const fx = await startFixtures();
 try {
   let next = 0;
   const worker = async (): Promise<void> => {
-    while (next < jobs.length) {
-      const { t, a, run } = jobs[next++]!;
+    while (next < todo.length) {
+      const { t, a, run } = todo[next++]!;
       let r = await runOnce(t, a, fx.base, run);
       // A tool that never connected says nothing about the approach: try that run once more.
       if (!r.valid) r = await runOnce(t, a, fx.base, run);
       results.push(r);
-      console.log(`[agent] ${t.id} / ${a} / run ${run} ... ${!r.valid ? 'INVALID' : r.ok ? 'ok' : 'FAIL'} · ${r.toolCalls} tool calls · ${fmt(r.inputTokens)} in · ${(r.ms / 1000).toFixed(0)}s${r.error ? ` · ${r.error}` : ''}`);
+      save();
+      console.log(`[agent] (${results.length}/${jobs.length}) ${t.id} / ${a} / run ${run} ... ${!r.valid ? 'INVALID' : r.ok ? 'ok' : 'FAIL'} · ${r.toolCalls} tool calls · ${fmt(r.inputTokens)} in · ${(r.ms / 1000).toFixed(0)}s${r.error ? ` · ${r.error}` : ''}`);
     }
   };
-  console.log(`[agent] ${jobs.length} runs, ${Math.min(CONCURRENCY, jobs.length)} at a time, model ${MODEL}`);
-  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, jobs.length) }, worker));
+  console.log(`[agent] ${todo.length} runs to do (${done.size} kept), ${Math.min(CONCURRENCY, todo.length)} at a time, model ${MODEL}`);
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, todo.length) }, worker));
 } finally {
   await fx.close();
 }
-// Report in a stable order regardless of which run finished first.
-const order = (r: RunResult): number => jobs.findIndex((j) => j.t.id === r.task && j.a === r.approach && j.run === r.run);
-results.sort((x, y) => order(x) - order(y));
-mkdirSync(OUT, { recursive: true });
-const name = process.env.AGENT_OUT ?? (want === PILOT.join(',') ? 'agent-pilot' : 'agent');
-writeFileSync(path.join(OUT, `${name}.json`), JSON.stringify({ model: MODEL, runs: RUNS, results }, null, 2));
-writeFileSync(path.join(OUT, `${name}.md`), report(results, approaches, tasks));
+save();
 console.log(`[agent] wrote bench/results/${name}.{json,md}`);
