@@ -246,7 +246,7 @@ const payInner = page(
   `document.getElementById('f').addEventListener('submit', (e) => {
     e.preventDefault();
     const n = document.getElementById('cn').value.replace(/\\s/g, '');
-    document.getElementById('out').textContent = n === '4242424242424242' && document.getElementById('ex').value && document.getElementById('cvc').value
+    document.getElementById('out').textContent = n === '4242424242424242' && document.getElementById('ex').value === '12/30' && document.getElementById('cvc').value === '123'
       ? 'Payment approved. Receipt R-5531.' : 'Payment declined: check the card details.';
   });`,
 );

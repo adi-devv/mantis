@@ -4,6 +4,79 @@ import type { AddressInfo } from 'node:net';
 import type { Server } from 'node:http';
 import { moreRoute } from './fixtures-more.js';
 
+export interface FixtureObservation {
+  path: string;
+  kind: 'load' | 'click' | 'input' | 'change' | 'submit' | 'scroll' | 'settled';
+  documentId: string;
+  actionId?: number;
+  target: { tag: string; id: string; name: string; type: string; ariaLabel: string; text: string; href: string; value: string; checked: boolean };
+  controls: Record<string, { value: string; checked: boolean }>;
+  text: string;
+}
+
+export interface FixtureCheckResult { ok: boolean; details?: string }
+export type FixtureCheck = (events: FixtureObservation[]) => boolean | FixtureCheckResult;
+export interface FixtureCheckEntry { taskId: string; check?: FixtureCheck }
+
+/** Hidden benchmark instrumentation. It records ordinary DOM events and post-action page state. */
+const attemptBootstrap = String.raw`<script>(() => {
+  const prefix = location.pathname.match(/^\/__attempt\/([A-Za-z0-9_-]+)(?:\/|$)/);
+  if (prefix) sessionStorage.setItem('__fixture_attempt', prefix[1]);
+})();</script>`;
+
+const observer = String.raw`<script>
+(() => {
+  const prefix = location.pathname.match(/^\/__attempt\/([A-Za-z0-9_-]+)(?:\/|$)/);
+  if (prefix) sessionStorage.setItem('__fixture_attempt', prefix[1]);
+  const token = sessionStorage.getItem('__fixture_attempt');
+  if (!token) return;
+  const documentId = Math.random().toString(36).slice(2);
+  let actionSerial = 0;
+  const summarize = (el) => {
+    if (!(el instanceof Element)) el = document.documentElement;
+    const target = el.closest('button,a,input,select,textarea,[role="menuitem"],[data-plan],[data-v]') || el;
+    return {
+      tag: target.tagName.toLowerCase(), id: target.id || '', name: target.getAttribute('name') || '',
+      type: target.getAttribute('type') || '', ariaLabel: target.getAttribute('aria-label') || '',
+      text: (target.innerText || target.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 160),
+      href: target.getAttribute('href') || '', value: 'value' in target ? String(target.value) : '',
+      checked: 'checked' in target ? Boolean(target.checked) : false
+    };
+  };
+  const controls = () => {
+    const result = {};
+    for (const el of document.querySelectorAll('input,select,textarea')) {
+      const value = { value: String(el.value), checked: Boolean(el.checked) };
+      const key = el.id || (el.type === 'radio' ? el.name + ':' + el.value : el.name || el.type || el.tagName);
+      result[key] = value;
+      if (el.type === 'radio' && el.checked) result[el.name] = value;
+    }
+    return result;
+  };
+  const send = (kind, target, targetSummary, controlState, actionId) => {
+    const data = { path: location.pathname.replace(/^\/__attempt\/[A-Za-z0-9_-]+/, '') || '/', kind, documentId, actionId, target: targetSummary || summarize(target), controls: controlState || controls(), text: (document.body?.innerText || '').replace(/\s+/g, ' ').slice(0, 5000) };
+    fetch('/__verify/' + encodeURIComponent(token), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(data), keepalive: true }).catch(() => {});
+  };
+  send('load', document.documentElement);
+  for (const kind of ['click','input','change','submit','scroll']) {
+    document.addEventListener(kind, (event) => {
+      const actionId = ++actionSerial;
+      const summary = summarize(event.target);
+      const state = controls();
+      send(kind, event.target, summary, state, actionId);
+      setTimeout(() => send('settled', event.target, summary, state, actionId), 0);
+    }, true);
+  }
+})();
+</script>`;
+
+function instrument(html: string): string {
+  const bootstrapped = html.includes('</head>') ? html.replace('</head>', `${attemptBootstrap}</head>`) : `${attemptBootstrap}${html}`;
+  return bootstrapped.includes('</body>') ? bootstrapped.replace('</body>', `${observer}</body>`) : `${bootstrapped}${observer}`;
+}
+
+interface AttemptState { taskId: string; events: FixtureObservation[] }
+
 const page = (title: string, body: string, script = ''): string =>
   `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${title}</title></head><body>${body}${script ? `<script>${script}</script>` : ''}</body></html>`;
 
@@ -17,12 +90,19 @@ const login = page(
     <input id="email" type="email" required>
     <label for="pw">Password</label>
     <input id="pw" type="password" required>
+    <p id="err" role="alert"></p>
     <button type="submit">Sign in</button>
     <p>Forgot your password? <a href="/reset">Reset it</a></p>
   </form>
 </main>`,
   `document.getElementById('f').addEventListener('submit', (e) => {
     e.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('pw').value;
+    if (email !== 'agent@example.com' || password !== 'correct-horse-battery') {
+      document.getElementById('err').textContent = 'Email or password is incorrect.';
+      return;
+    }
     document.title = 'Welcome — Acme';
     document.querySelector('h1').textContent = 'Signed in';
   });`,
@@ -131,23 +211,74 @@ function route(path: string): string | null {
   return null;
 }
 
-/** Start the fixture server on a random localhost port. */
-export async function startFixtures(): Promise<{ base: string; close: () => Promise<void> }> {
+/** Start the fixture server on a random localhost port. Each attempt token has isolated evidence. */
+export async function startFixtures(options: { checks?: FixtureCheckEntry[] } = {}): Promise<{
+  base: string;
+  baseFor: (taskId: string, attemptId: string) => string;
+  verify: (taskId: string, attemptId?: string) => Promise<FixtureCheckResult | null>;
+  close: () => Promise<void>;
+}> {
+  const checks = new Map((options.checks ?? []).map((entry) => [entry.taskId, entry.check]));
+  const attempts = new Map<string, AttemptState>();
   const server: Server = createServer((req, res) => {
-    const path = new URL(req.url ?? '/', 'http://x').pathname;
+    const url = new URL(req.url ?? '/', 'http://x');
+    if (req.method === 'POST' && url.pathname.startsWith('/__verify/')) {
+      const token = decodeURIComponent(url.pathname.slice('/__verify/'.length));
+      let body = '';
+      req.setEncoding('utf8');
+      req.on('data', (part: string) => { body += part; });
+      req.on('end', () => {
+        try {
+          const event = JSON.parse(body) as FixtureObservation;
+          const state = attempts.get(token);
+          if (state && event && typeof event.path === 'string' && Array.isArray(state.events)) state.events.push(event);
+        } catch { /* malformed observation is ignored */ }
+        res.writeHead(204).end();
+      });
+      return;
+    }
+    let path = url.pathname;
+    const attemptPrefix = path.match(/^\/__attempt\/([A-Za-z0-9_-]+)(\/.*)?$/);
+    if (attemptPrefix) {
+      const token = attemptPrefix[1]!;
+      path = attemptPrefix[2] || '/';
+      if (!attempts.has(token)) attempts.set(token, { taskId: '', events: [] });
+    }
     const more = moreRoute(path);
     if (more) {
-      res.writeHead(200, { 'content-type': more.type }).end(more.body);
+      res.writeHead(200, { 'content-type': more.type }).end(more.type.startsWith('text/html') ? instrument(more.body) : more.body);
       return;
     }
     const html = route(path);
     if (html === null) {
       res.writeHead(404, { 'content-type': 'text/html' }).end(page('Not found', '<h1>Not found</h1>'));
     } else {
-      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(html);
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(instrument(html));
     }
   });
   await new Promise<void>((ok) => server.listen(0, '127.0.0.1', ok));
   const { port } = server.address() as AddressInfo;
-  return { base: `http://127.0.0.1:${port}`, close: () => new Promise((ok) => server.close(() => ok())) };
+  const base = `http://127.0.0.1:${port}`;
+  return {
+    base,
+    baseFor: (taskId, attemptId) => {
+      if (!/^[A-Za-z0-9_-]+$/.test(attemptId)) throw new Error('attemptId must contain only letters, numbers, hyphens, and underscores');
+      attempts.set(attemptId, { taskId, events: [] });
+      return `${base}/__attempt/${encodeURIComponent(attemptId)}`;
+    },
+    verify: async (taskId, attemptId) => {
+      if (attemptId === undefined) return null;
+      const check = checks.get(taskId);
+      if (!check) { attempts.delete(attemptId); return null; }
+      // Let the final keepalive observation finish after the agent closes its browser.
+      await new Promise((resolve) => setTimeout(resolve, 75));
+      const state = attempts.get(attemptId);
+      if (state && state.taskId !== taskId) return { ok: false, details: 'attempt belongs to a different task' };
+      const events = state?.events ?? [];
+      const result = check(events);
+      attempts.delete(attemptId);
+      return typeof result === 'boolean' ? { ok: result, details: result ? undefined : `fixture check failed (${events.length} observations)` } : result;
+    },
+    close: () => new Promise((ok) => server.close(() => ok())),
+  };
 }

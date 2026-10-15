@@ -206,11 +206,14 @@ actually succeed more often**. Work, in order:
 
 **Then**
 
-10. ✅ **Real-agent eval, first full run** (`bench/results/agent.md`): Claude Sonnet, 22 tasks,
-    Mantis vs Chrome DevTools MCP vs Playwright MCP vs browser-use vs screenshots. All five
-    solved all 22. Mantis used the fewest tool calls (91 vs 103–230), tokens (1.07M vs
-    1.31M–3.02M) and time, and was cheapest on 17 of 22 tasks. Losses: the chart task
-    (screenshots read the image in one look) and forms (Chrome DevTools MCP level).
+10. ✅ **Real-agent eval harness and first full run.** The historical result in
+    [`bench/results/agent.md`](../bench/results/agent.md) compares Claude Sonnet across 22 tasks
+    and five approaches. All five solved all 22; Mantis used the fewest tool calls (91 vs 103–230),
+    tokens (1.07M vs 1.31M–3.02M) and time, and was cheapest on 17 of 22 tasks. The chart task
+    favored screenshots and forms were level with Chrome DevTools MCP. Those published numbers
+    predate the integrity fixes to retry accounting, independent fixture grading, usage reporting,
+    and resumable-result validation. Treat them as historical; rerun before relying on a fresh
+    comparison.
 11. **Next:** several runs per task (variance), harder tasks that separate tools on success,
     not only cost, and Codex as a second agent.
 

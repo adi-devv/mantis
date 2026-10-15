@@ -15,7 +15,7 @@ See `PLAN.md` for the full plan.
 - [x] M7 — Never lose what the accessibility tree has
 - [x] M8 — Faster than the accessibility tree
 - [x] M9 — Better than the accessibility tree (names from Chrome tried, dropped: too slow)
-- [ ] M10 — Real-agent eval (first full run done: 22 tasks x 5 approaches, all correct; repeats + harder tasks next)
+- [ ] M10 — Real-agent eval (first full run is historical; harness integrity and fixture grading added before fresh comparisons)
 - [ ] M11 — Launch (0.1.1, README top, demo video)
 
 ## Next steps
@@ -129,3 +129,11 @@ Kept current: updated whenever work lands or a decision changes direction.
   way: slow-starting servers (browser-use) left Claude with no tools, so the harness now pre-starts
   and warms each server and connects Claude through bench/agent/bridge.mjs; results saved after
   every run (AGENT_RESUME=1); per-run temp folders deleted after each run.
+- 2026-10-15: Benchmark integrity fixes completed. The old published real-agent result is now
+  marked historical because it predates independent fixture grading, retry cost accounting,
+  separated cache token counts, startup/CLI timing boundaries, and source/config-checked resume.
+  Validation: build passed; benchmark TypeScript check passed; 197 tests passed; parser matched
+  saved input/output token and tool-call counts across all 110 historical streams; offline fake-CLI
+  crash, resume, and overwrite checks passed. Compatible resume correctly found zero missing runs,
+  while a changed timeout fingerprint was rejected. No paid Claude eval was run. Historical JSON
+  outputs predate schema 2 and cannot be resumed; rerun before publishing updated comparisons.
