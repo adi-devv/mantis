@@ -70,6 +70,22 @@ const TRACKER = `(() => {
     try { return send.apply(this, arguments); } catch (e) { done(); throw e; }
   };
   window.__mantisBusy = () => timers > 0 || net > 0;
+  // Elements given a click-type listener in script: clickable even without a role, link or tabindex.
+  const clicky = new WeakSet();
+  window.__mantisClick = clicky;
+  const CLICK_EVENTS = new Set(['click', 'mousedown', 'mouseup', 'pointerdown', 'pointerup', 'touchstart']);
+  const add = EventTarget.prototype.addEventListener;
+  EventTarget.prototype.addEventListener = function (type, fn, opts) {
+    if (CLICK_EVENTS.has(type) && this instanceof Element) clicky.add(this);
+    return add.call(this, type, fn, opts);
+  };
+  const onclick = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'onclick');
+  if (onclick && onclick.set) {
+    Object.defineProperty(HTMLElement.prototype, 'onclick', {
+      ...onclick,
+      set(fn) { if (fn) clicky.add(this); return onclick.set.call(this, fn); },
+    });
+  }
   // Bumped by anything that can change what a scan sees, so an unchanged page can reuse its last scan.
   window.__mantisMut = 0;
   const bump = () => { window.__mantisMut++; };

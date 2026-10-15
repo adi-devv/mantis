@@ -144,3 +144,16 @@ describe('shadow DOM', () => {
     expect(res).toContain('title: "Shadow" → "Shadow clicked"');
   });
 });
+
+describe('clickables made only by script', () => {
+  it('shows elements with a click listener or a pointer cursor, not plain text or the listening root', async () => {
+    const view = await b.open(fixture('jsclick.html'));
+    expect(view).toMatch(/#\d+ clickable "Basic plan \$5"/);
+    expect(view).toMatch(/#\d+ clickable "Pro plan \$15"/);
+    expect(view).toMatch(/#\d+ clickable "Open menu"/);
+    expect(view).not.toMatch(/clickable "Just some text"/);
+    expect(view).not.toMatch(/clickable "Plans/);
+    expect(await b.click(idOf(view, '"Pro plan'))).toContain('"Chose pro"');
+    expect(await b.click(idOf(view, '"Open menu"'))).toContain('"Menu opened"');
+  });
+});

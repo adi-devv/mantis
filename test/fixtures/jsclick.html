@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Script clickables</title>
+<style>.card { cursor: pointer; padding: 8px; width: 200px; } #app { width: 600px; }</style></head>
+<body>
+  <main id="app">
+    <h1>Plans</h1>
+    <div class="card" data-plan="basic"><span>Basic plan</span> <small>$5</small></div>
+    <div class="card" data-plan="pro"><span>Pro plan</span> <small>$15</small></div>
+    <div id="listened" style="width:120px">Open menu</div>
+    <div id="plain">Just some text</div>
+    <p id="out"></p>
+  </main>
+  <script>
+    // framework-style: one listener at the root, cards only show a pointer cursor
+    document.getElementById('app').addEventListener('click', (e) => {
+      const c = e.target.closest('.card');
+      if (c) document.getElementById('out').textContent = 'Chose ' + c.dataset.plan;
+    });
+    document.getElementById('listened').addEventListener('click', () => { document.getElementById('out').textContent = 'Menu opened'; });
+  </script>
+</body>
+</html>

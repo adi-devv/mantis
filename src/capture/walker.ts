@@ -76,6 +76,8 @@ export function walker(): WalkResult {
   }
   const win = window as unknown as { __mantis?: Registry };
   const reg: Registry = (win.__mantis ??= { ids: new WeakMap(), next: 1, byId: new Map() });
+  /** Elements given a click-type listener by page script (recorded by Mantis's init script, if loaded). */
+  const clickListeners = (window as unknown as { __mantisClick?: WeakSet<Element> }).__mantisClick;
 
   const MAX_NODES = 3000;
   const SKIP = new Set([
@@ -206,6 +208,9 @@ export function walker(): WalkResult {
   }
 
   /** Role if this element is an interactive control, else ''. */
+  const SCRIPT_CLICK_NEVER = new Set(['html', 'body', 'label', 'main', 'nav', 'header', 'footer', 'aside', 'section', 'article', 'form', 'ul', 'ol', 'table', 'tbody', 'tr']);
+  const CONTAINER_SEL = 'h1,h2,h3,h4,h5,h6,p,ul,ol,table,form,section,article,main,nav,header,footer,aside';
+
   function interactiveRole(el: Element, explicit: string, cs: CSSStyleDeclaration): string {
     const t = el.localName;
     const native =
@@ -220,7 +225,22 @@ export function walker(): WalkResult {
       el.hasAttribute('onclick') ||
       (el.hasAttribute('tabindex') && (el as HTMLElement).tabIndex >= 0 && cs.cursor === 'pointer');
     if (clickish && !el.querySelector(INTERACTIVE_SEL)) return 'clickable';
-    return '';
+    // Made clickable only by script (no role, link or tabindex; invisible to the accessibility tree):
+    // a click listener on the element itself, or where a pointer cursor starts (frameworks that
+    // listen once at the root). Only small elements with content and nothing interactive inside.
+    if (SCRIPT_CLICK_NEVER.has(t) || el.querySelector(INTERACTIVE_SEL)) return '';
+    const listener = clickListeners?.has(el) === true;
+    const pointerStart = cs.cursor === 'pointer' && (!el.parentElement || getComputedStyle(el.parentElement).cursor !== 'pointer');
+    if (!listener && !pointerStart) return '';
+    // A container (event delegation root, a section of the page) is not one clickable thing.
+    if (el.querySelector(CONTAINER_SEL)) return '';
+    if (listener && cs.cursor !== 'pointer') {
+      for (const d of Array.from(el.querySelectorAll('*')).slice(0, 60)) if (getComputedStyle(d).cursor === 'pointer') return '';
+    }
+    const b = el.getBoundingClientRect();
+    if (b.width * b.height > 0.25 * vw * vh || b.width < 4 || b.height < 4) return '';
+    if (!collapse(el.textContent || '') && !el.querySelector('img,svg,i,[class*=icon]')) return '';
+    return 'clickable';
   }
 
   function accName(el: Element, role: string): string {
@@ -245,12 +265,7 @@ export function walker(): WalkResult {
         if (n) return cap(n, 80);
       }
     } else {
-      n = deepText(el, 200);
-      const ic = iconFontText(el);
-      if (n && ic) {
-        // Ligature icon fonts (material-icons "delete") render their name as text: not a real label.
-        n = n === ic ? '' : collapse(n.startsWith(ic) ? n.slice(ic.length) : n.endsWith(ic) ? n.slice(0, -ic.length) : n);
-      }
+      n = withoutIconText(el, deepText(el, 200));
       if (n) return cap(n, 80);
     }
     n = collapse(el.getAttribute('title') || '');
@@ -296,6 +311,13 @@ export function walker(): WalkResult {
 
   function classOf(e: Element): string {
     return e.getAttribute('class') || '';
+  }
+
+  /** Ligature icon fonts (material-icons "delete") render their name as text: not a real label. */
+  function withoutIconText(el: Element, n: string): string {
+    const ic = n ? iconFontText(el) : '';
+    if (!ic) return n;
+    return n === ic ? '' : collapse(n.startsWith(ic) ? n.slice(ic.length) : n.endsWith(ic) ? n.slice(0, -ic.length) : n);
   }
 
   /** Text that comes from ligature icon fonts (class material-icons ...) inside `el`. */
