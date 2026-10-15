@@ -39,7 +39,8 @@
     "test": "vitest run",
     "prepublishOnly": "npm run build",
     "dev:read": "tsx src/cli.ts read",
-    "bench": "npm run build && tsx bench/run.ts"
+    "bench": "npm run build && tsx bench/run.ts",
+    "bench:agent": "npm run build && tsx bench/agent/run.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",

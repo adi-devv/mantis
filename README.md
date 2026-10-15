@@ -89,7 +89,9 @@ Mantis never solves CAPTCHAs; `read()` flags them and suggests `ask_human`.
 | Median time per step (local pages) | 247 ms | 315 ms | 1,066 ms |
 
 This is a scripted replay with no LLM in the loop: it measures what an agent receives, not
-whether it succeeds. A real-agent eval is in progress (`bench/agent/`).
+whether it succeeds. A real-agent eval with Claude is in progress: in a 2-task pilot all
+three got both right, with Mantis using the fewest tokens (64k vs 109k vs 304k)
+([pilot results](bench/results/agent-pilot.md), [how to run](bench/README.md)).
 
 ## How it works
 
@@ -123,7 +125,8 @@ npm install
 npx playwright install chromium
 npm run build
 npm test          # includes a check that nothing in Chrome's accessibility tree is lost
-npm run bench     # token/time benchmark
+npm run bench     # token/time benchmark (see bench/README.md)
+npm run bench:agent  # real-agent eval with Claude (uses your plan)
 npx tsx src/cli.ts read https://example.com
 ```
 

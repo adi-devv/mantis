@@ -5,7 +5,8 @@
  *
  *   npx tsx bench/agent/run.ts                          # pilot: 2 tasks x 3 approaches x 1 run
  *   AGENT_TASKS=all AGENT_RUNS=3 npx tsx bench/agent/run.ts
- *   AGENT_MODEL=sonnet AGENT_APPROACHES=mantis,tree npx tsx bench/agent/run.ts
+ *   AGENT_TASKS=cat:forms AGENT_APPROACHES=mantis,tree npx tsx bench/agent/run.ts
+ *   AGENT_MODEL=sonnet AGENT_CONCURRENCY=3 ...   (defaults)
  *
  * Needs a logged-in Claude Code CLI (`claude auth login`). Uses your plan's usage.
  */
@@ -15,6 +16,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { chromiumForMcp } from '../adapters.js';
 import { startFixtures } from '../fixtures.js';
+import { PILOT, TASKS } from './tasks.js';
+import type { AgentTask } from './tasks.js';
 
 const REPO = path.resolve(import.meta.dirname, '..', '..');
 const OUT = path.join(REPO, 'bench', 'results');
@@ -24,46 +27,6 @@ const TIMEOUT_MS = Number(process.env.AGENT_TIMEOUT_S ?? 600) * 1000;
 /** Runs in flight at once. Each run is its own claude process, MCP server and browser. */
 const CONCURRENCY = Math.max(1, Number(process.env.AGENT_CONCURRENCY ?? 3));
 
-interface AgentTask { id: string; prompt: (base: string) => string; expect: RegExp }
-
-const TASKS: AgentTask[] = [
-  {
-    id: 'form-subscribe',
-    prompt: (b) => `Open ${b}/form. Subscribe from Canada and opt in to the weekly newsletter. What confirmation message does the page show?`,
-    expect: /Subscribed from Canada \(weekly: yes\)/i,
-  },
-  {
-    id: 'wikipedia-birthdate',
-    prompt: () => 'Open https://en.wikipedia.org/wiki/Alan_Turing. On what date was Alan Turing born?',
-    expect: /23 June,? 1912|June 23,? 1912/i,
-  },
-  {
-    id: 'login',
-    prompt: (b) => `Open ${b}/login and sign in with email agent@example.com and password correct-horse-battery. What is the page heading after signing in?`,
-    expect: /Signed in/i,
-  },
-  {
-    id: 'cookie-cart',
-    prompt: (b) => `Open ${b}/cookie and add the product to the cart. What message confirms it?`,
-    expect: /Added to cart/i,
-  },
-  {
-    id: 'longlist-item',
-    prompt: (b) => `Open ${b}/longlist and open "Item 150". What is the heading of the page it leads to?`,
-    expect: /Detail for item 150/i,
-  },
-  {
-    id: 'pricing-team',
-    prompt: (b) => `Open ${b}/site/home, go to the pricing page and find the price of the Team plan.`,
-    expect: /\$29/,
-  },
-  {
-    id: 'dashboard-refresh',
-    prompt: (b) => `Open ${b}/dashboard, refresh the data, and tell me what the "Last updated" line says now. Also: what is the amount for Initech 3?`,
-    expect: /just now[\s\S]*\$4,218|\$4,218[\s\S]*just now/i,
-  },
-];
-const PILOT = ['form-subscribe', 'wikipedia-birthdate'];
 
 type Approach = 'mantis' | 'tree' | 'screenshot';
 const node = process.execPath;
@@ -211,7 +174,10 @@ function report(results: RunResult[], approaches: Approach[], tasks: AgentTask[]
 }
 
 const want = process.env.AGENT_TASKS ?? PILOT.join(',');
-const tasks = want === 'all' ? TASKS : TASKS.filter((t) => want.split(',').includes(t.id));
+// "all", task ids, or categories ("cat:forms"), comma-separated.
+const picks = want.split(',');
+const tasks = want === 'all' ? TASKS : TASKS.filter((t) => picks.includes(t.id) || picks.includes(`cat:${t.category}`));
+if (!tasks.length) throw new Error(`no tasks match AGENT_TASKS=${want}; ids: ${TASKS.map((t) => t.id).join(', ')}`);
 const approaches = (process.env.AGENT_APPROACHES ?? 'mantis,tree,screenshot').split(',') as Approach[];
 const fx = await startFixtures();
 const jobs: { t: AgentTask; a: Approach; run: number }[] = [];
