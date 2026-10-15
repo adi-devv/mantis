@@ -162,20 +162,44 @@ Read this honestly:
 
 ```mermaid
 flowchart LR
-    A["Never lose what the<br/>tree has (14/14)"] --> B["Real-agent eval:<br/>Claude × Mantis / tree / screenshots"] --> C["Publish the<br/>proven claim"]
+    A["✅ Never lose what<br/>the tree has (14/14)"] --> B["Faster<br/>(latency per step)"] --> C["Better<br/>(beat the tree)"] --> D["Real-agent eval:<br/>Claude × Mantis / tree / screenshots"] --> E["Publish the<br/>proven claim"]
 ```
 
-Active work, in order:
+Token cost is solved. Two things are not proven yet: **is it fast**, and **does an agent
+actually succeed more often**. Work, in order:
+
+**Done**
 
 1. ✅ **No information loss.** Short standalone text (list items, status messages, footers)
    is kept; collapsed lists name their items compactly; `find("text")` reaches anything
    that was trimmed.
-2. **Names from Chrome.** Take roles and names from the browser's own accessibility
-   tree (spec-correct) and only infer (`~`) when it has none.
-3. ✅ **A permanent check.** For every benchmark page, every name in Chrome's accessibility
-   tree must be reachable through Mantis (in the view, via `read({region})`, or via
-   `find`). A change that breaks this does not ship, however many tokens it saves.
-4. **Real-agent eval.** Success rate, steps, total tokens and cost for Claude with each
-   of the three approaches, several runs per task, failures published.
+2. ✅ **A permanent check.** On every test and benchmark page, every name in Chrome's
+   accessibility tree must be reachable through Mantis (`test/coverage.test.ts`). A change
+   that breaks this does not ship, however many tokens it saves.
 
-The test for every change: **lose nothing the tree has · use fewer tokens · add meaning.**
+**Faster** (the benchmark measures tokens but not time yet)
+
+3. **Time every step in the benchmark**, next to tokens, for all three approaches.
+4. **Shorter wait after actions.** Settling waits for a quiet DOM window; return as soon as
+   the page has been still briefly instead of waiting out the full window.
+5. **One page scan per action, not two.** Reuse the scan from the previous reply as the
+   "before" state of the diff instead of scanning again.
+6. **Cheaper page scan.** Fewer style lookups per element.
+
+**Better** (things the accessibility tree can't do, or does more correctly)
+
+7. **Names from Chrome.** Take accessible names from Chrome's own tree (spec-correct)
+   and only infer (`~`) when it has none.
+8. **Clickables made only by JavaScript.** Elements with a click listener but no role,
+   link or tabindex are invisible to the tree and to Mantis today; Chrome can list event
+   listeners, so Mantis can show them.
+9. **Iframes.** Embedded frames (payment forms, logins, widgets) are skipped today.
+
+**Then**
+
+10. **Real-agent eval.** Success rate, steps, total tokens, time and cost for Claude with
+    each of the three approaches, several runs per task, failures published. Start with a
+    small pilot to measure usage before the full run.
+
+The test for every change: **lose nothing the tree has · use fewer tokens · add meaning ·
+don't get slower.**

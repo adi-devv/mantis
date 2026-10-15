@@ -79,3 +79,7 @@ See `PLAN.md` for the full plan.
   176 tests green. Benchmark: 14/14 tasks (was 10/14); median 28 tokens/step vs 131 Playwright MCP
   vs 1,366 screenshot; totals 11,464 / 578,028 / 40,980. Next: real-agent eval (Claude in the loop),
   names from Chrome's AX tree instead of re-deriving them, publish 0.1.1.
+- Next (2026-10-15), in order — see docs/APPROACH.md §4: faster (time per step in the benchmark;
+  shorter settle wait; reuse the previous scan as the diff's "before"; cheaper scan), then better
+  (names from Chrome's AX tree; JS-only clickables via CDP event listeners; iframes), then a
+  real-agent eval (pilot first to size usage), then publish 0.1.1.
