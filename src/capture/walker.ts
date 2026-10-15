@@ -790,6 +790,18 @@ export function walker(): WalkResult {
     }
   }
 
+  /** A visible canvas (a chart or drawing) gets one line, so the agent knows media()/data() can read it. */
+  function canvasMark(el: Element, parent: number, depth: number): void {
+    if (el.getAttribute('aria-hidden') === 'true') return;
+    const cs = getComputedStyle(el);
+    if (cs.display === 'none' || cs.visibility !== 'visible' || parseFloat(cs.opacity) === 0) return;
+    const r = el.getBoundingClientRect();
+    if (r.width < 80 || r.height < 40 || !inDoc(r)) return;
+    const label = collapse(el.getAttribute('aria-label') || el.getAttribute('title') || '');
+    const name = `[canvas${label ? ` "${label}"` : ''} ${Math.round(r.width)}×${Math.round(r.height)}: chart or drawing; media() and data() read it]`;
+    nodes.push(stamp({ kind: 'text', role: 'text', name, states: [], parent, depth, inViewport: inView(r), covered: false }, r));
+  }
+
   /** A visible iframe becomes a region placeholder; capture() fills it with the frame's own nodes. */
   function frameMark(el: Element, parent: number, depth: number): void {
     if (el.getAttribute('aria-hidden') === 'true') return;
@@ -810,6 +822,7 @@ export function walker(): WalkResult {
 
   function visit(el: Element, parent: number, depth: number, box: DOMRect): void {
     if (nodes.length >= MAX_NODES) { truncated = true; return; }
+    if (el.localName === 'canvas') { canvasMark(el, parent, depth); return; }
     if (SKIP.has(el.localName)) return;
     if (el.localName === 'iframe' || el.localName === 'frame') { frameMark(el, parent, depth); return; }
     if (el.getAttribute('aria-hidden') === 'true' || (el as HTMLElement).inert) return;

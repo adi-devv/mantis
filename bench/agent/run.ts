@@ -28,14 +28,15 @@ const TIMEOUT_MS = Number(process.env.AGENT_TIMEOUT_S ?? 600) * 1000;
 const CONCURRENCY = Math.max(1, Number(process.env.AGENT_CONCURRENCY ?? 3));
 
 
-type Approach = 'mantis' | 'tree' | 'screenshot';
+type Approach = 'mantis' | 'tree' | 'devtools' | 'browseruse' | 'screenshot';
 const node = process.execPath;
 const MCP_CHROMIUM = chromiumForMcp();
+const VENV_PY = path.join(REPO, 'bench', 'agent', '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
 const TSX = import.meta.resolve('tsx');
-const APPROACHES: Record<Approach, { label: string; server: (mem: string) => object; allow: string[]; deny?: string[] }> = {
+const APPROACHES: Record<Approach, { label: string; server: (dir: string) => object; allow: string[]; deny?: string[] }> = {
   mantis: {
     label: 'Mantis',
-    server: (mem) => ({ mantis: { command: node, args: [path.join(REPO, 'dist', 'server.js')], env: { MANTIS_MEMORY_DIR: mem } } }),
+    server: (dir) => ({ mantis: { command: node, args: [path.join(REPO, 'dist', 'server.js')], env: { MANTIS_MEMORY_DIR: path.join(dir, 'mem') } } }),
     allow: ['mcp__mantis'],
   },
   tree: {
@@ -56,6 +57,53 @@ const APPROACHES: Record<Approach, { label: string; server: (mem: string) => obj
     ].map((t) => `mcp__playwright__browser_${t}`),
     // Running page JavaScript would bypass the approach being measured.
     deny: ['mcp__playwright__browser_evaluate', 'mcp__playwright__browser_run_code_unsafe'],
+  },
+  devtools: {
+    label: 'Chrome DevTools MCP',
+    // Main script directly: the bin wrapper refuses Node < 20.19, the server itself runs fine.
+    server: () => ({
+      devtools: {
+        command: node,
+        args: [
+          path.join(REPO, 'node_modules', 'chrome-devtools-mcp', 'build', 'src', 'bin', 'chrome-devtools-mcp-main.js'),
+          '--headless', '--isolated', ...(MCP_CHROMIUM ? ['--executablePath', MCP_CHROMIUM] : []), '--viewport', '1280x800',
+          // Same rule as the other tools: no page JavaScript; only navigation and input tools.
+          '--javascriptEvaluation=false', '--categoryPerformance=false', '--categoryNetwork=false', '--categoryDebugging=false',
+          '--categoryMemory=false', '--categoryEmulation=false', '--usageStatistics=false', '--performanceCrux=false', '--pageIdRouting=false',
+        ],
+        env: { CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS: '1' },
+      },
+    }),
+    allow: ['mcp__devtools'],
+  },
+  browseruse: {
+    label: 'browser-use (MCP)',
+    server: (dir) => {
+      // Per-run config: headless, temp profile, no telemetry or extension downloads. It finds Playwright's
+      // Chromium itself (an explicit executable_path fails to start on Windows).
+      const cfgDir = path.join(dir, 'browseruse');
+      mkdirSync(cfgDir, { recursive: true });
+      writeFileSync(path.join(cfgDir, 'config.json'), JSON.stringify({
+        browser_profile: { bench: {
+          id: 'bench', default: true, headless: true, user_data_dir: path.join(dir, 'bu-profile'),
+          window_size: { width: 1280, height: 800 },
+        } },
+        llm: {}, agent: {},
+      }));
+      return {
+        browseruse: {
+          command: VENV_PY,
+          args: ['-m', 'browser_use.mcp'],
+          env: {
+            BROWSER_USE_CONFIG_DIR: cfgDir, BROWSER_USE_HEADLESS: 'true', ANONYMIZED_TELEMETRY: 'false',
+            BROWSER_USE_CLOUD_SYNC: 'false', BROWSER_USE_DISABLE_EXTENSIONS: 'true', BROWSER_USE_VERSION_CHECK: 'false',
+          },
+        },
+      };
+    },
+    allow: ['mcp__browseruse'],
+    // Tools that need an OpenAI key (an LLM inside the tool), and raw HTML, which bypasses its page view.
+    deny: ['mcp__browseruse__browser_extract_content', 'mcp__browseruse__retry_with_browser_use_agent', 'mcp__browseruse__browser_get_html'],
   },
   screenshot: {
     label: 'Screenshots (click by x,y)',
@@ -86,7 +134,7 @@ interface RunResult {
 async function runOnce(task: AgentTask, approach: Approach, base: string, run: number): Promise<RunResult> {
   const dir = mkdtempSync(path.join(os.tmpdir(), 'mantis-agent-'));
   const cfg = path.join(dir, 'mcp.json');
-  writeFileSync(cfg, JSON.stringify({ mcpServers: APPROACHES[approach].server(path.join(dir, 'mem')) }));
+  writeFileSync(cfg, JSON.stringify({ mcpServers: APPROACHES[approach].server(dir) }));
   const prompt = `${task.prompt(base)}\n\nUse only the browser tools you have. When you are done, end your reply with one line: ANSWER: <answer>`;
   const a = APPROACHES[approach];
   const args = [

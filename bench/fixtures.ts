@@ -2,6 +2,7 @@
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import type { Server } from 'node:http';
+import { moreRoute } from './fixtures-more.js';
 
 const page = (title: string, body: string, script = ''): string =>
   `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${title}</title></head><body>${body}${script ? `<script>${script}</script>` : ''}</body></html>`;
@@ -133,7 +134,13 @@ function route(path: string): string | null {
 /** Start the fixture server on a random localhost port. */
 export async function startFixtures(): Promise<{ base: string; close: () => Promise<void> }> {
   const server: Server = createServer((req, res) => {
-    const html = route(new URL(req.url ?? '/', 'http://x').pathname);
+    const path = new URL(req.url ?? '/', 'http://x').pathname;
+    const more = moreRoute(path);
+    if (more) {
+      res.writeHead(200, { 'content-type': more.type }).end(more.body);
+      return;
+    }
+    const html = route(path);
     if (html === null) {
       res.writeHead(404, { 'content-type': 'text/html' }).end(page('Not found', '<h1>Not found</h1>'));
     } else {

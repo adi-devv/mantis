@@ -52,6 +52,7 @@
     "@playwright/mcp": "0.0.83",
     "@types/node": "^26.6.5",
     "chart.js": "^4.5.1",
+    "chrome-devtools-mcp": "1.10.1",
     "js-tiktoken": "1.0.21",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
