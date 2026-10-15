@@ -69,3 +69,13 @@ See `PLAN.md` for the full plan.
   Why small: M3 already shrinks chrome; nested navs inside `[main]` are never collapsed; per-page state
   ("current", counts, breadcrumbs) changes signatures. Next: collapse nested regions, ignore "current"/counts in
   signatures. Note: a second read() of the same page also collapses chrome.
+- 2026-10-15: M5 done. Skill (`skill/SKILL.md`) + deterministic replay benchmark (`bench/`, no LLM).
+  Info-loss fixes so Mantis never loses what the accessibility tree has: short standalone text kept
+  (prices, status lines, footers, table cells; was dropped unless next to a control); collapsed runs
+  name hidden items compactly (`#8 "Item 6" · …`, cap per trim level, always when ≤6 left) then
+  `…and N more (#a–#b); find("text") locates one`; new `find(text)` tool searches the untrimmed page;
+  memory never collapses regions holding a text input. New `test/coverage.test.ts`: every name in
+  Chrome's accessibility tree (CDP getFullAXTree) is reachable via read/find/media+data on 29 pages.
+  176 tests green. Benchmark: 14/14 tasks (was 10/14); median 28 tokens/step vs 131 Playwright MCP
+  vs 1,366 screenshot; totals 11,464 / 578,028 / 40,980. Next: real-agent eval (Claude in the loop),
+  names from Chrome's AX tree instead of re-deriving them, publish 0.1.1.

@@ -131,3 +131,19 @@ describe('action diffs: new document', () => {
     expect(res).toContain('link "Go to login"');
   });
 });
+
+describe('plain text away from controls', () => {
+  it('is part of the view (list items, footer), not only text next to a control', async () => {
+    const view = await b.open(fixture('plaintext.html'));
+    expect(view).toContain('"Starter: $9 per month"');
+    expect(view).toContain('"Team: $29 per month"');
+    expect(view).toContain('"© Example Corp"');
+  });
+
+  it('shows up in the diff when it appears after an action', async () => {
+    const view = await b.open(fixture('plaintext.html'));
+    await b.select(idOf(view, 'combobox "Country"'), 'Canada');
+    const res = await b.click(idOf(view, 'button "Subscribe"'));
+    expect(diffOf(res)).toContain('+ [main] "Subscribed from Canada."');
+  });
+});

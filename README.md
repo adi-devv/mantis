@@ -70,15 +70,21 @@ Page: Hacker News  (https://news.ycombinator.com/)
 [top bar]
   #1 link ~"home"
   #2 link "Hacker News"
-  …and 8 more links (#3–#10)
+  #3 link "new"
+  #4 link "past"
+  #5 link "comments"
+  #6 "ask" · #7 "show" · #8 "jobs" · #9 "submit" · #10 "login"
 [main]
-  1. #11 link ~"upvote" · #12 "Better HTTP/1 connection reuse in Go 1.27" · #13 "go.dev" · 70 points · #14 "allddd" · #15 "1 hour ago" · #16 "hide" · #17 "8 comments"
-  2. #18 ~"upvote" · #19 "Submarine cable resilience" · #20 "apnic.net" · 76 points · …
+  …
+  3. #25 ~"upvote" · #26 "OpenCode 2.0" · #27 "anoma.ly" · 703 points · #28 "gmays" · #29 "16 hours ago" · #30 "hide" · #31 "295 comments"
   …
 ```
 
-`read({region: "nav"})` reads just one part of a page; `read({full: true})`
-turns off all trimming.
+Long lists name the first items in full, the next ones compactly, and point
+to `find` for the rest: `…and 158 more links (#45–#202); find("text") locates one`.
+`find("Item 150")` searches the whole page, trimmed parts included, and returns
+the matches with their numbers. `read({region: "nav"})` reads just one part of
+a page; `read({full: true})` turns off all trimming.
 
 After an action, Mantis replies with only what changed, not the whole page
 again (real output from test fixtures):
@@ -132,6 +138,9 @@ asks:
 
 ## How it works
 
+Diagrams, and how this compares with agents that read the accessibility tree:
+[docs/APPROACH.md](docs/APPROACH.md).
+
 ```
 Agent (Claude, Cursor, …)
       │  MCP
@@ -146,7 +155,8 @@ Playwright        drives a real Chromium
    name, state (disabled, checked, required, value…), whether it's visible,
    and whether something else is covering it.
 2. **Clean up.** Hidden, decorative and empty wrapper elements are dropped.
-   Long repetitive lists are collapsed (`…and 55 more links (#6–#60)`).
+   Long repetitive lists are shortened, never silently: hidden items are named
+   compactly while they fit, and `find` reaches the rest.
 3. **Number.** Every useful element gets a stable `#N`. An element keeps its
    number for as long as it stays on the page, so numbers don't shift under
    the agent when the page re-renders.
@@ -168,7 +178,7 @@ progress in [PROGRESS.md](PROGRESS.md)).
 | M3 | Names for icon-only buttons, error/primary flags, regions on pages without landmarks, compact dense pages, article text | ✅ Done |
 | M4 | Fallback ladder: hidden text & chart data → OCR → one-element image → hand off to a human (CAPTCHA, 2FA) | ✅ Done |
 | M6 | Site memory: headers/menus already seen on a site are shortened to one line | ✅ Done |
-| M5 | Claude skill + public benchmark vs. Playwright MCP and screenshots | 🚧 In progress |
+| M5 | Claude skill + public benchmark vs. Playwright MCP and screenshots | ✅ Done |
 
 Known gaps today: iframes are skipped and closed shadow roots can't be read;
 inferred names are heuristics (always `~`-marked) with a small icon
@@ -185,8 +195,11 @@ Playwright MCP also gives agents a text view of the page and is a great tool.
 Mantis aims to go further on token cost and on reporting what a human would
 notice: changes-only replies after actions, stable numbers, covered/blocked
 elements, visual meaning (error, primary) as words, and a text-first fallback
-ladder. The M5 benchmark will measure this — until then, treat it as a goal,
-not a result.
+ladder. The benchmark ([bench/results/latest.md](bench/results/latest.md)) replays
+14 fixed tasks through all three: Mantis completes 14/14 with a median of 28
+tokens per step, vs 131 for Playwright MCP and ~1,366 per screenshot. It has no
+LLM in the loop: it measures what an agent receives, not whether an agent
+succeeds. A real-agent eval is next.
 
 ## Quick start
 
@@ -219,6 +232,7 @@ claude mcp add mantis -- node /abs/path/to/mantis/dist/server.js
 |---|---|
 | `open(url)` | Go to a page and return its text view |
 | `read(region?, full?, fresh?)` | Text view of the current page, or one region of it |
+| `find(text)` | Search the whole page (trimmed parts included); returns matches with numbers |
 | `click(id)` | Click element `#id` |
 | `type(id, text, submit?)` | Type into a field, optionally press Enter |
 | `select(id, option)` | Pick an option in a dropdown |
@@ -236,7 +250,8 @@ Set `MANTIS_HEADLESS=0` to watch the browser. OCR language data is downloaded
 on first use and cached in `~/.cache/mantis/tessdata` (or set
 `MANTIS_TESSDATA`). Site memory stores only hashes of page layout (never page
 text) in `~/.cache/mantis/sites`; turn it off with `MANTIS_MEMORY=0`. Run the
-tests with `npm test`.
+tests with `npm test`; they include a check that every name in Chrome's own
+accessibility tree, on every test page, is reachable through Mantis (`test/coverage.test.ts`).
 
 ## Contributing
 

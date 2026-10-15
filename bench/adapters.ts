@@ -24,6 +24,8 @@ export interface TextAdapter {
   select(e: Elem, label: string, option: string): Promise<Reply>;
   press(key: string): Promise<Reply>;
   back(): Promise<Reply>;
+  /** Search the whole page for text (Mantis `find`); for targets a trimmed view does not list. */
+  search?(text: string): Promise<Reply>;
   /**
    * True if action replies describe what changed on the page (Mantis diffs), so ids and
    * text from the previous view stay usable. False if replies carry no page content.
@@ -90,6 +92,7 @@ export function mantisAdapter(): TextAdapter {
     select: (e, _l, option) => mcp.call('select', { id: Number(e.handle), option }),
     press: (key) => mcp.call('press', { key }),
     back: () => mcp.call('back', {}),
+    search: (text) => mcp.call('find', { text }),
     deltaReplies: true,
     // Mantis views start with a "Page:" header (also returned after an action that
     // lands on a new page); change summaries do not.

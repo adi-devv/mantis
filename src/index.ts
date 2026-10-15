@@ -2,7 +2,7 @@ export { MantisBrowser } from './browser.js';
 export type { MantisOptions } from './browser.js';
 export { capture, resolve } from './capture/index.js';
 export type { Snapshot, RawNode, NodeKind, Resolved } from './capture/index.js';
-export { translate, estimateTokens, BUDGET_CHARS } from './translate.js';
+export { translate, findInSnapshot, estimateTokens, BUDGET_CHARS } from './translate.js';
 export { createServer } from './server.js';
 export { SiteMemory, originOf, regionSignature } from './memory.js';
 export type { MemoryOptions } from './memory.js';

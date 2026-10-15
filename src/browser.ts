@@ -2,7 +2,7 @@ import { chromium } from 'playwright';
 import type { Browser, BrowserContext, ElementHandle, Page } from 'playwright';
 import { capture, resolve } from './capture/index.js';
 import type { Snapshot } from './capture/index.js';
-import { translate } from './translate.js';
+import { findInSnapshot, translate } from './translate.js';
 import type { ReadOptions } from './translate.js';
 import { SiteMemory, originOf } from './memory.js';
 import { NO_CHANGE, diffSnapshots, headerLines } from './diff.js';
@@ -157,6 +157,15 @@ export class MantisBrowser {
    */
   async read(opts: ReadOptions = {}): Promise<string> {
     return this.guard(async () => this.view(await this.activePage(), opts));
+  }
+
+  /** Search the whole page, including parts read() trimmed or summarised, for controls and text. */
+  async find(query: string): Promise<string> {
+    return this.guard(async () => {
+      const snap = await capture(await this.activePage());
+      this.remember(snap);
+      return findInSnapshot(snap, query);
+    });
   }
 
   /** Clear what site memory holds about the current site (this session and on disk). */

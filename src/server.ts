@@ -37,6 +37,16 @@ export function createServer(browser: MantisBrowser = new MantisBrowser()): McpS
     async ({ region, full, fresh }) => reply(await browser.read({ region, full, fresh })),
   );
   server.registerTool(
+    'find',
+    {
+      description:
+        'Search the whole current page, including parts read() trimmed or summarised ("…and N more", "same as before"), ' +
+        'for controls and text containing this text (case-insensitive). Returns the matches with their #numbers and region.',
+      inputSchema: { text: z.string().describe('Text to look for, e.g. "Pull requests" or "Item 150"') },
+    },
+    async ({ text }) => reply(await browser.find(text)),
+  );
+  server.registerTool(
     'forget',
     {
       description: 'Clear what Mantis remembers about the current site (regions already seen), so the next read shows everything in full.',

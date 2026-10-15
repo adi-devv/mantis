@@ -40,6 +40,13 @@ function find(elems: Elem[], t: Target): Elem | undefined {
 
 const labelOf = (e: Elem): string => `${e.role} "${e.name}"`;
 
+/** The plain text a target's name pattern stands for (`/^Item 150$/` -> "Item 150"); null if it is a real pattern. */
+const literal = (re: string | RegExp): string | null => {
+  if (typeof re === 'string') return re;
+  const s = re.source.replace(/^\^/, '').replace(/\$$/, '');
+  return /[\[\](){}.*+?|^$]/.test(s) ? null : s;
+};
+
 /**
  * Replay a task through a text tool. Per step the agent receives the action call's
  * reply; if it then needs a page view it does not have, one observe call is counted too.
@@ -128,6 +135,14 @@ export async function runTextTask(adapter: TextAdapter, task: Task, base: string
           fresh = false;
           v = await ensureView();
           el = v === null ? undefined : find(adapter.parse(v), step.target);
+        }
+        const wanted = literal(step.target.name);
+        if (v !== null && !el && adapter.search && wanted) {
+          // The view says part of the page was trimmed; the agent searches for what it is after.
+          const r = await adapter.search(wanted);
+          observe = addCost(observe, costOf(r.text));
+          if (!r.isError) el = find(adapter.parse(r.text), step.target);
+          if (el) note = `found with find("${wanted}")`;
         }
         if (v !== null && !el) {
           fail(`target ${describeTarget(step.target)} not in what the agent receives`);

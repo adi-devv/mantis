@@ -84,7 +84,7 @@ describe('session memory', () => {
     expect(v3).toContain('[header] same as before');
     expect(v3).toContain('[footer] same as before');
     expect(v3).not.toContain('[nav "Primary"] same as before');
-    expect(v3).toContain('…and 4 more links (#10–#13)'); // 9 links now
+    expect(v3).toContain('#10 "Blog" · #11 "Community" · #12 "Careers" · #13 "Roadmap"'); // 9 links now
     expect(v3).toContain('#5 link "Overview"');
   });
 
@@ -233,7 +233,7 @@ describe('persistent memory', () => {
     const v = await b.open(page(3));
     expect(v).toContain('[header] (known layout)');
     expect(v).not.toContain('[nav "Primary"] (known layout)');
-    expect(v).toContain('…and 4 more links (#10–#13)');
+    expect(v).toContain('#10 "Blog" · #11 "Community" · #12 "Careers" · #13 "Roadmap"');
     expect(await b.read({ region: 'nav', full: true })).toContain('#13 link "Roadmap"');
   });
 

@@ -21,12 +21,14 @@ describe('translate', () => {
     const eight = translate(snap(Array.from({ length: 8 }, (_, i) => link(i + 1, `L${i + 1}`))));
     expect(eight).not.toContain('more');
     const nine = translate(snap(Array.from({ length: 9 }, (_, i) => link(i + 1, `L${i + 1}`))));
-    expect(nine).toContain('…and 4 more links (#6–#9)');
+    // the hidden part is still named, compactly, while it fits
+    expect(nine).toContain('#6 "L6" · #7 "L7" · #8 "L8" · #9 "L9"');
+    expect(nine).not.toContain('…and');
   });
 
   it('pluralises -x roles with es', () => {
-    const boxes: RawNode[] = Array.from({ length: 10 }, (_, i) => ({ ...link(i + 1, `B${i}`), role: 'textbox' }));
-    expect(translate(snap(boxes))).toContain('more textboxes (#6–#10)');
+    const boxes: RawNode[] = Array.from({ length: 80 }, (_, i) => ({ ...link(i + 1, `A rather long field label number ${i}`), role: 'textbox' }));
+    expect(translate(snap(boxes))).toMatch(/…and \d+ more textboxes \(#\d+–#80\); find\("text"\) locates one/);
   });
 
   it('drops offscreen text first and notes the trim once over budget', () => {

@@ -51,16 +51,18 @@ interface Level {
   dropOffscreenAll: boolean;
   /** Longest name inside a compacted row line. */
   rowName: number;
+  /** Chars spent naming the hidden part of a collapsed run (`#8 "Item 6" · #9 "Item 7"`) before "…and N more". */
+  listChars: number;
 }
 
 const LEVELS: Level[] = [
-  { over: 8, keep: 5, dropOffscreenText: false, dropOffscreenAll: false, rowName: 60 },
-  { over: 8, keep: 5, dropOffscreenText: false, dropOffscreenAll: false, rowName: 44 },
-  { over: 8, keep: 5, dropOffscreenText: true, dropOffscreenAll: false, rowName: 44 },
-  { over: 4, keep: 3, dropOffscreenText: true, dropOffscreenAll: false, rowName: 40 },
-  { over: 3, keep: 2, dropOffscreenText: true, dropOffscreenAll: true, rowName: 40 },
+  { over: 8, keep: 5, dropOffscreenText: false, dropOffscreenAll: false, rowName: 60, listChars: 600 },
+  { over: 8, keep: 5, dropOffscreenText: false, dropOffscreenAll: false, rowName: 44, listChars: 400 },
+  { over: 8, keep: 5, dropOffscreenText: true, dropOffscreenAll: false, rowName: 44, listChars: 300 },
+  { over: 4, keep: 3, dropOffscreenText: true, dropOffscreenAll: false, rowName: 40, listChars: 150 },
+  { over: 3, keep: 2, dropOffscreenText: true, dropOffscreenAll: true, rowName: 40, listChars: 0 },
 ];
-const FULL_LEVEL: Level = { over: Infinity, keep: 0, dropOffscreenText: false, dropOffscreenAll: false, rowName: 0 };
+const FULL_LEVEL: Level = { over: Infinity, keep: 0, dropOffscreenText: false, dropOffscreenAll: false, rowName: 0, listChars: 0 };
 
 export const quote = (s: string): string => s.replace(/"/g, "'");
 const norm = (s: string): string => s.toLowerCase().replace(/[\s:*]+$/g, '').trim();
@@ -420,9 +422,25 @@ function renderBody(nodes: RawNode[], lvl: Level, ctx: Ctx): { lines: string[]; 
         const runLen = j - k + 1;
         if (runLen > lvl.over && runLen - lvl.keep >= 2) {
           for (let m = k; m < k + lvl.keep; m++) out.push(pad + line(nodes[items[m]]));
-          const first = nodes[items[k + lvl.keep]].id;
-          const last = nodes[items[j]].id;
-          out.push(`${pad}…and ${runLen - lvl.keep} more ${plural(n.role)} (#${first}–#${last})`);
+          // Name the rest compactly while it fits, so collapsing does not hide what the run contains.
+          const rest = items.slice(k + lvl.keep, j + 1);
+          const named: string[] = [];
+          let used = 0;
+          // A short rest (a nav's last few tabs) is always named: hiding it saves almost nothing.
+          const cap = rest.length <= 6 ? Infinity : lvl.listChars;
+          for (const ix of rest) {
+            const s = line(nodes[ix], { omitRole: true, maxName: 40 });
+            if (used + s.length + 3 > cap) break;
+            named.push(s);
+            used += s.length + 3;
+          }
+          if (named.length) out.push(pad + named.join(' · '));
+          const left = rest.slice(named.length);
+          if (left.length) {
+            const first = nodes[left[0]].id;
+            const last = nodes[left[left.length - 1]].id;
+            out.push(`${pad}…and ${left.length} more ${plural(n.role)} (#${first}–#${last}); find("text") locates one`);
+          }
           k = j + 1;
         } else {
           out.push(pad + line(n));
@@ -575,4 +593,41 @@ export function translate(snap: Snapshot, budget: number = BUDGET_CHARS, opts: R
   }
   if (!lines.length) lines = ['(no visible content)'];
   return [...head, ...lines, ...tail, ...(note ? [note] : [])].join('\n');
+}
+
+// ---- find ------------------------------------------------------------------
+
+/**
+ * Search the whole page (nothing trimmed or summarised) for controls and text containing `query`,
+ * case-insensitive. Exact name matches first, then page order; each hit says which region it is in.
+ */
+export function findInSnapshot(snap: Snapshot, query: string, max = 20): string {
+  const q = query.toLowerCase().replace(/\s+/g, ' ').trim();
+  if (!q) return 'error: give the text to find';
+  const nodes = deriveRegions(snap);
+  const hits = nodes
+    .map((n, i) => ({ n, i }))
+    .filter(({ n }) => n.kind !== 'region' && (n.name.toLowerCase().includes(q) || (!n.secret && !!n.value?.toLowerCase().includes(q))))
+    .sort((a, b) => Number(norm(b.n.name) === q) - Number(norm(a.n.name) === q) || a.i - b.i);
+  if (!hits.length) return `no control or text containing "${quote(query)}" on this page`;
+
+  const where = (i: number): string => {
+    const path: string[] = [];
+    for (let p = nodes[i].parent; p >= 0; p = nodes[p].parent) if (nodes[p].kind === 'region') path.unshift(regionLine(nodes[p]));
+    return path.length ? `  in ${path.join(' › ')}` : '';
+  };
+  const snippet = (s: string): string => {
+    const at = s.toLowerCase().indexOf(q);
+    if (s.length <= 120 || at < 60) return clip(s, 120);
+    return '…' + clip(s.slice(at - 40), 119);
+  };
+  const lines = hits.slice(0, max).map(({ n, i }) => {
+    const body =
+      n.kind === 'interactive' ? interactiveLine(n, { maxName: 80 })
+        : n.kind === 'heading' ? `${'#'.repeat(Math.min(n.level ?? 1, 4))} ${quote(clip(n.name, 120))}`
+          : `"${quote(snippet(n.name))}"`;
+    return `${body}${n.inViewport ? '' : ' (offscreen)'}${where(i)}`;
+  });
+  const head = `found ${hits.length} match${hits.length === 1 ? '' : 'es'} for "${quote(query)}"${hits.length > max ? ` (first ${max} shown)` : ''}`;
+  return [head, ...lines].join('\n');
 }

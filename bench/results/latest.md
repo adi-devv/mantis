@@ -4,8 +4,8 @@
 
 ## Setup
 
-- Date: 2026-10-14
-- Mantis: git `8b61afc` (**src/ had uncommitted changes**); numbers reflect Mantis at this commit and will change as it changes
+- Date: 2026-10-15
+- Mantis: git `e4961ef` (**src/ had uncommitted changes**); numbers reflect Mantis at this commit and will change as it changes
 - Playwright MCP: `@playwright/mcp@0.0.83` (default config, headless, isolated profile, viewport 1280x800)
 - Playwright (screenshot baseline + Mantis): `1.64.1`; Chromium 156.0.8078.4; viewport 1280x800 for all three
 - Machine: win32 10.0.26200, 12 logical cores, 7 GB RAM; Node v20.14.0
@@ -14,6 +14,7 @@
 ## How the cost per step is counted
 
 - **Mantis / Playwright MCP:** every call is made over MCP stdio, as an agent would. Per step we sum (a) the text returned by the action call and (b) one *observe* call (Mantis `read`, Playwright MCP `browser_snapshot`) if the agent needs a page view it does not already hold. The harness (not the measured agent) looks targets up in each tool's own output: Mantis `#N`, Playwright MCP `[ref=eN]`.
+- If a click/type target is not in the Mantis view (a long list collapsed to `…and N more`), the harness calls Mantis `find` with the plain name of the target, as the view tells the agent to, and counts that reply as part of the observe cost of the step. Playwright MCP never needs this: its snapshot lists every element.
 - A page view is "held" if the last reply contained it (Mantis `open`, or an action that lands on a new page), or if the previous reply was a change summary (Mantis diffs: ids stay stable, new ids appear in the diff). After a click / Enter / back the view is considered stale unless the reply carried it. Typing into a field or choosing an option does not make the view stale.
 - In `@playwright/mcp` 0.0.83 default mode, action replies contain only a short log plus a *link to a snapshot file*, not the page. We therefore count `browser_snapshot` (inline) whenever the agent needs to see the page. The file would hold the same content.
 - **Screenshot baseline:** one 1280x800 viewport PNG per open/action step (`read` steps add none). Actions are performed by the harness with role+name locators (an oracle), so this baseline does not test whether an agent could find targets from pixels, and it ignores scrolling for below-the-fold content: **it under-counts a real screenshot agent**. Tokens = `ceil(w*h/750)` after downscaling to <=1568 px longest side and <=~1.15 MP (Anthropic's published image-token formula; an estimate). For 1280x800 that is 1,366 tokens per screenshot.
@@ -24,23 +25,23 @@
 
 | | Mantis | Playwright MCP | Screenshot (est.) |
 |---|---:|---:|---:|
-| Total tokens (chars/4) | 11,348 | 459,008 | 40,980 |
-| Total tokens (cl100k) | 15,352 | 489,715 | 40,980 |
-| Median tokens per step (chars/4) | 51 | 131 | 1,366 |
-| Steps ok / total | 40 / 45 | 45 / 45 | 30 / 30 (+15 n/a) |
-| Tasks fully completed | 10 / 14 | 14 / 14 | 14 / 14 |
+| Total tokens (chars/4) | 11,464 | 578,028 | 40,980 |
+| Total tokens (cl100k) | 15,949 | 601,475 | 40,980 |
+| Median tokens per step (chars/4) | 28 | 131 | 1,366 |
+| Steps ok / total | 45 / 45 | 45 / 45 | 30 / 30 (+15 n/a) |
+| Tasks fully completed | 14 / 14 | 14 / 14 | 14 / 14 |
 
 Totals include tokens spent on failed steps, and exclude tokens a tool would have cost had a failed step succeeded, so a tool that fails early can look cheaper than it is. For a like-for-like view see the next table.
 
-## Summary (only tasks where all three tools completed every step: 10 of 14)
+## Summary (only tasks where all three tools completed every step: 14 of 14)
 
 | | Mantis | Playwright MCP | Screenshot (est.) |
 |---|---:|---:|---:|
-| Total tokens (chars/4) | 9,028 | 438,838 | 27,320 |
-| Total tokens (cl100k) | 12,427 | 467,769 | 27,320 |
-| Median tokens per step (chars/4) | 29 | 112 | 1,366 |
+| Total tokens (chars/4) | 11,464 | 578,028 | 40,980 |
+| Total tokens (cl100k) | 15,949 | 601,475 | 40,980 |
+| Median tokens per step (chars/4) | 28 | 131 | 1,366 |
 
-Tasks: example-read, hn-front-read, hn-open-comments, wikipedia-article-read, wikipedia-search, mdn-read, local-login, local-cookie, local-longlist-filter, local-dashboard
+Tasks: example-read, hn-front-read, hn-open-comments, wikipedia-article-read, wikipedia-search, github-repo-read, mdn-read, local-login, local-cookie, local-longlist-find, local-longlist-filter, local-form-select, local-nav-back, local-dashboard
 
 ## Fixed per-session cost: tool definitions
 
@@ -48,7 +49,7 @@ The tool list an agent carries in context for the whole session (not included in
 
 | Tool | # tools | chars | tokens (chars/4) | tokens (cl100k) |
 |---|---:|---:|---:|---:|
-| mantis | 14 | 6,539 | 1,635 | 1,586 |
+| mantis | 15 | 7,058 | 1,765 | 1,706 |
 | playwright-mcp | 25 | 20,286 | 5,072 | 4,310 |
 
 ## Per task (tokens, chars/4)
@@ -56,29 +57,23 @@ The tool list an agent carries in context for the whole session (not included in
 | Task | Steps | Mantis | Playwright MCP | Screenshot (est.) |
 |---|---:|---:|---:|---:|
 | `example-read` (live) | 2 | 190 | 370 | 1,366 |
-| `hn-front-read` (live) | 2 | 1,444 | 12,160 | 1,366 |
-| `hn-open-comments` (live) | 3 | 1,945 | 114,160 | 2,732 |
-| `wikipedia-article-read` (live) | 2 | 639 | 152,754 | 1,366 |
-| `wikipedia-search` (live) | 3 | 1,973 | 113,898 | 2,732 |
-| `github-repo-read` (live) | 2 | 1,620 ⚠ 1 failed | 12,927 | 1,366 |
-| `mdn-read` (live) | 2 | 1,176 | 29,518 | 1,366 |
+| `hn-front-read` (live) | 2 | 1,467 | 12,050 | 1,366 |
+| `hn-open-comments` (live) | 3 | 1,941 | 256,718 | 2,732 |
+| `wikipedia-article-read` (live) | 2 | 688 | 152,727 | 1,366 |
+| `wikipedia-search` (live) | 3 | 2,258 | 112,547 | 2,732 |
+| `github-repo-read` (live) | 2 | 908 | 13,942 | 1,366 |
+| `mdn-read` (live) | 2 | 1,427 | 6,453 | 1,366 |
 | `local-login` (local) | 5 | 141 | 487 | 5,464 |
 | `local-cookie` (local) | 4 | 119 | 438 | 4,098 |
-| `local-longlist-find` (local) | 3 | 201 ⚠ 2 failed | 5,813 | 2,732 |
-| `local-longlist-filter` (local) | 4 | 170 | 5,838 | 4,098 |
-| `local-form-select` (local) | 5 | 207 ⚠ 1 failed | 677 | 5,464 |
-| `local-nav-back` (local) | 5 | 292 ⚠ 1 failed | 753 | 4,098 |
-| `local-dashboard` (local) | 3 | 1,231 | 9,215 | 2,732 |
+| `local-longlist-find` (local) | 3 | 340 | 5,813 | 2,732 |
+| `local-longlist-filter` (local) | 4 | 181 | 5,838 | 4,098 |
+| `local-form-select` (local) | 5 | 142 | 677 | 5,464 |
+| `local-nav-back` (local) | 5 | 270 | 753 | 4,098 |
+| `local-dashboard` (local) | 3 | 1,392 | 9,215 | 2,732 |
 
 ## Failures
 
-| Task | Tool | Step | Reason |
-|---|---|---|---|
-| `github-repo-read` | mantis | 2. read (expect /Pull requests/i) | expected /Pull requests/i not found in what the agent receives |
-| `local-longlist-find` | mantis | 2. click link /^Item 150$/ | target link /^Item 150$/ not in what the agent receives |
-| `local-longlist-find` | mantis | 3. read (expect /Detail for item 150/) | expected /Detail for item 150/ not found in what the agent receives |
-| `local-form-select` | mantis | 5. read (expect /Subscribed from Canada \(weekly: yes\)/) | expected /Subscribed from Canada \(weekly: yes\)/ not found in what the agent receives |
-| `local-nav-back` | mantis | 3. read (expect /\$29 per month/) | expected /\$29 per month/ not found in what the agent receives |
+None.
 
 ## Per-step detail
 
@@ -95,45 +90,45 @@ Cells are `action + observe` tokens (chars/4); `FAIL` marks a failed step; `n/a`
 
 | # | Step | Mantis | Playwright MCP | Screenshot (est.) |
 |---:|---|---:|---:|---:|
-| 1 | open https://news.ycombinator.com/ | 1,444 + 0 | 56 + 0 | 0 + 1,366 |
-| 2 | read (expect /\d+\s*comments?/) | 0 + 0 | 0 + 12,104 | n/a (0 + 0) |
+| 1 | open https://news.ycombinator.com/ | 1,467 + 0 | 56 + 0 | 0 + 1,366 |
+| 2 | read (expect /\d+\s*comments?/) | 0 + 0 | 0 + 11,994 | n/a (0 + 0) |
 
 ### `hn-open-comments` — Hacker News: open the first story's comment thread
 
 | # | Step | Mantis | Playwright MCP | Screenshot (est.) |
 |---:|---|---:|---:|---:|
-| 1 | open https://news.ycombinator.com/ | 1,436 + 0 | 56 + 0 | 0 + 1,366 |
-| 2 | click link /^\d+\s*comments?$/ | 509 + 0 | 83 + 12,105 | 0 + 1,366 |
-| 3 | read (expect /add comment/i) | 0 + 0 | 0 + 101,916 | n/a (0 + 0) |
+| 1 | open https://news.ycombinator.com/ | 1,451 + 0 | 56 + 0 | 0 + 1,366 |
+| 2 | click link /^\d+\s*comments?$/ | 490 + 0 | 73 + 11,994 | 0 + 1,366 |
+| 3 | read (expect /add comment/i) | 0 + 0 | 0 + 244,595 | n/a (0 + 0) |
 
 ### `wikipedia-article-read` — Read the Wikipedia article on Alan Turing
 
 | # | Step | Mantis | Playwright MCP | Screenshot (est.) |
 |---:|---|---:|---:|---:|
-| 1 | open https://en.wikipedia.org/wiki/Alan_Turing | 639 + 0 | 65 + 0 | 0 + 1,366 |
-| 2 | read (expect /English mathematician\|computer scientist/i) | 0 + 0 | 0 + 152,689 | n/a (0 + 0) |
+| 1 | open https://en.wikipedia.org/wiki/Alan_Turing | 688 + 0 | 65 + 0 | 0 + 1,366 |
+| 2 | read (expect /English mathematician\|computer scientist/i) | 0 + 0 | 0 + 152,662 | n/a (0 + 0) |
 
 ### `wikipedia-search` — Search Wikipedia for "Ada Lovelace" and read the result
 
 | # | Step | Mantis | Playwright MCP | Screenshot (est.) |
 |---:|---|---:|---:|---:|
-| 1 | open https://en.wikipedia.org/wiki/Main_Page | 1,258 + 0 | 66 + 0 | 0 + 1,366 |
-| 2 | type "Ada Lovelace" into textbox /search/i + Enter | 715 + 0 | 92 + 16,079 | 0 + 1,366 |
+| 1 | open https://en.wikipedia.org/wiki/Main_Page | 1,483 + 0 | 66 + 0 | 0 + 1,366 |
+| 2 | type "Ada Lovelace" into textbox /search/i + Enter | 775 + 0 | 92 + 14,728 | 0 + 1,366 |
 | 3 | read (expect /Ada Lovelace/) | 0 + 0 | 0 + 97,661 | n/a (0 + 0) |
 
 ### `github-repo-read` — Read the microsoft/playwright GitHub repo page
 
 | # | Step | Mantis | Playwright MCP | Screenshot (est.) |
 |---:|---|---:|---:|---:|
-| 1 | open https://github.com/microsoft/playwright | 841 + 0 | 99 + 0 | 0 + 1,366 |
-| 2 | read (expect /Pull requests/i) | FAIL (0 + 779) | 0 + 12,828 | n/a (0 + 0) |
+| 1 | open https://github.com/microsoft/playwright | 908 + 0 | 99 + 0 | 0 + 1,366 |
+| 2 | read (expect /Pull requests/i) | 0 + 0 | 0 + 13,843 | n/a (0 + 0) |
 
 ### `mdn-read` — Read the MDN Fetch API page
 
 | # | Step | Mantis | Playwright MCP | Screenshot (est.) |
 |---:|---|---:|---:|---:|
-| 1 | open https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API | 1,176 + 0 | 93 + 0 | 0 + 1,366 |
-| 2 | read (expect /interface for fetching resources/i) | 0 + 0 | 0 + 29,425 | n/a (0 + 0) |
+| 1 | open https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API | 1,427 + 0 | 93 + 0 | 0 + 1,366 |
+| 2 | read (expect /interface for fetching resources/i) | 0 + 0 | 0 + 6,360 | n/a (0 + 0) |
 
 ### `local-login` — Fill email + password and submit a login form (local fixture)
 
@@ -158,17 +153,17 @@ Cells are `action + observe` tokens (chars/4); `FAIL` marks a failed step; `n/a`
 
 | # | Step | Mantis | Playwright MCP | Screenshot (est.) |
 |---:|---|---:|---:|---:|
-| 1 | open <local>/longlist | 60 + 0 | 55 + 0 | 0 + 1,366 |
-| 2 | click link /^Item 150$/ | FAIL (0 + 47) | 58 + 5,636 | 0 + 1,366 |
-| 3 | read (expect /Detail for item 150/) | FAIL (0 + 94) | 0 + 64 | n/a (0 + 0) |
+| 1 | open <local>/longlist | 219 + 0 | 55 + 0 | 0 + 1,366 |
+| 2 | click link /^Item 150$/ | 48 + 73 | 58 + 5,636 | 0 + 1,366 |
+| 3 | read (expect /Detail for item 150/) | 0 + 0 | 0 + 64 | n/a (0 + 0) |
 
 ### `local-longlist-filter` — Use the filter box to reach "Item 150" and open it (local fixture)
 
 | # | Step | Mantis | Playwright MCP | Screenshot (est.) |
 |---:|---|---:|---:|---:|
-| 1 | open <local>/longlist | 51 + 0 | 55 + 0 | 0 + 1,366 |
+| 1 | open <local>/longlist | 57 + 0 | 55 + 0 | 0 + 1,366 |
 | 2 | type "Item 150" into textbox /filter/i | 32 + 0 | 26 + 5,636 | 0 + 1,366 |
-| 3 | click link /^Item 150$/ | 48 + 39 | 57 + 0 | 0 + 1,366 |
+| 3 | click link /^Item 150$/ | 48 + 44 | 57 + 0 | 0 + 1,366 |
 | 4 | read (expect /Detail for item 150/) | 0 + 0 | 0 + 64 | n/a (0 + 0) |
 
 ### `local-form-select` — Pick a country, tick a checkbox, submit (local fixture)
@@ -178,24 +173,24 @@ Cells are `action + observe` tokens (chars/4); `FAIL` marks a failed step; `n/a`
 | 1 | open <local>/form | 70 + 0 | 55 + 0 | 0 + 1,366 |
 | 2 | select "Canada" in combobox /country/i | 24 + 0 | 57 + 140 | 0 + 1,366 |
 | 3 | click checkbox /newsletter/i | 28 + 0 | 64 + 0 | 0 + 1,366 |
-| 4 | click button /subscribe/i | 13 + 0 | 59 + 145 | 0 + 1,366 |
-| 5 | read (expect /Subscribed from Canada \(weekly: yes\)/) | FAIL (0 + 72) | 0 + 157 | n/a (0 + 0) |
+| 4 | click button /subscribe/i | 20 + 0 | 59 + 145 | 0 + 1,366 |
+| 5 | read (expect /Subscribed from Canada \(weekly: yes\)/) | 0 + 0 | 0 + 157 | n/a (0 + 0) |
 
 ### `local-nav-back` — Navigate Home → Pricing, read, go back (local fixture)
 
 | # | Step | Mantis | Playwright MCP | Screenshot (est.) |
 |---:|---|---:|---:|---:|
-| 1 | open <local>/site/home | 65 + 0 | 60 + 0 | 0 + 1,366 |
-| 2 | click link /^pricing$/i | 84 + 0 | 66 + 183 | 0 + 1,366 |
-| 3 | read (expect /\$29 per month/) | FAIL (0 + 55) | 0 + 203 | n/a (0 + 0) |
-| 4 | back | 88 + 0 | 52 + 0 | 0 + 1,366 |
+| 1 | open <local>/site/home | 72 + 0 | 60 + 0 | 0 + 1,366 |
+| 2 | click link /^pricing$/i | 103 + 0 | 66 + 183 | 0 + 1,366 |
+| 3 | read (expect /\$29 per month/) | 0 + 0 | 0 + 203 | n/a (0 + 0) |
+| 4 | back | 95 + 0 | 52 + 0 | 0 + 1,366 |
 | 5 | read (expect /Welcome to Example Corp/) | 0 + 0 | 0 + 189 | n/a (0 + 0) |
 
 ### `local-dashboard` — Large dashboard (60-row table): click Refresh and confirm (local fixture)
 
 | # | Step | Mantis | Playwright MCP | Screenshot (est.) |
 |---:|---|---:|---:|---:|
-| 1 | open <local>/dashboard | 1,211 + 0 | 60 + 0 | 0 + 1,366 |
+| 1 | open <local>/dashboard | 1,372 + 0 | 60 + 0 | 0 + 1,366 |
 | 2 | click button /^refresh$/i | 20 + 0 | 62 + 4,546 | 0 + 1,366 |
 | 3 | read (expect /Last updated: just now/) | 0 + 0 | 0 + 4,547 | n/a (0 + 0) |
 

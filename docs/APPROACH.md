@@ -144,17 +144,18 @@ stands in for the accessibility tree; full method in
 
 | | Mantis | Accessibility tree (Playwright MCP) | Screenshots (est.) |
 |---|---:|---:|---:|
-| Median tokens per step | 29 | 112 | 1,366 |
-| Tokens, tasks all three completed | 9,028 | 438,838 | 27,320 |
-| Tasks completed | 10 / 14 | 14 / 14 | 14 / 14 |
+| Median tokens per step | 28 | 131 | 1,366 |
+| Tokens, all 14 tasks | 11,464 | 578,028 | 40,980 |
+| Tasks completed | 14 / 14 | 14 / 14 | 14 / 14 |
 
 Read this honestly:
 
-- The **typical step is ~4× smaller**. The 49× total is driven by a few huge pages, and on
+- The **typical step is ~4.7× smaller**. The ~50× total is driven by a few huge pages, and on
   some of them Mantis shows a trimmed view while the tree sends everything.
-- **The tree still completes more tasks.** It never hides anything; Mantis's 4 failures all
-  come from trimming hiding what the agent needed (a long list collapsed to
-  `…and 195 more`, short text such as a price list or a confirmation message dropped).
+- **Same tasks completed.** Mantis used to fail 4 because trimming hid what the agent
+  needed; short text is now kept, long lists name their items, and `find` reaches the rest.
+  A test (`test/coverage.test.ts`) checks that every name in Chrome's accessibility tree is
+  reachable through Mantis on 29 pages.
 - Whether an agent actually *succeeds* more often with Mantis is **not measured yet**.
 
 ## 4. Where we're going
@@ -166,12 +167,12 @@ flowchart LR
 
 Active work, in order:
 
-1. **No information loss.** Short standalone text (list items, status messages, footers)
-   is kept; collapsed lists still name every item compactly; a `find("text")` tool
-   reaches anything that was trimmed.
+1. ✅ **No information loss.** Short standalone text (list items, status messages, footers)
+   is kept; collapsed lists name their items compactly; `find("text")` reaches anything
+   that was trimmed.
 2. **Names from Chrome.** Take roles and names from the browser's own accessibility
    tree (spec-correct) and only infer (`~`) when it has none.
-3. **A permanent check.** For every benchmark page, every name in Chrome's accessibility
+3. ✅ **A permanent check.** For every benchmark page, every name in Chrome's accessibility
    tree must be reachable through Mantis (in the view, via `read({region})`, or via
    `find`). A change that breaks this does not ship, however many tokens it saves.
 4. **Real-agent eval.** Success rate, steps, total tokens and cost for Claude with each

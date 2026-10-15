@@ -889,13 +889,9 @@ export function walker(): WalkResult {
 
   markPrimary();
 
-  // Plain text is only worth its tokens next to a control (labels, hints, errors).
+  // Visible text is kept even away from controls (prices, status lines, table cells): dropping it
+  // silently loses what the accessibility tree would have shown. Budgets trim it later, with a note.
   const keep = nodes.map(() => true);
-  nodes.forEach((n, i) => {
-    if (n.kind !== 'text' || n.live) return;
-    const adjacent = (m: RawNode | undefined): boolean => !!m && m.kind === 'interactive' && m.parent === n.parent;
-    keep[i] = adjacent(nodes[i - 1]) || adjacent(nodes[i + 1]);
-  });
   // Drop regions left with no content, then compact indices.
   const filled = nodes.map(() => false);
   for (let i = nodes.length - 1; i >= 0; i--) {

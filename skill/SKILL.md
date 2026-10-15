@@ -25,16 +25,19 @@ Mantis turns a web page into short numbered text. You act on elements by their
 - `(covered)` means another element is on top. A line like `[dialog "..." - covers page]`
   tells you what; deal with the dialog first (accept, close, Escape), then retry.
 - States appear in brackets: `(checked)`, `(disabled)`, `(required)`, `(collapsed)`.
-- `...and 8 more links (#3-#10)` is a collapsed run: those elements exist, but you can't see
-  which number is which. Never guess one - expand first with `read({region: "..."})` or
-  `read({full: true})`.
+- Long lists are shortened: the first few in full, then more names compactly
+  (`#8 "Item 6" · #9 "Item 7"`), then `…and 158 more links (#45-#202); find("text") locates one`.
+  The hidden ones exist, but you can't see which number is which. Never guess one: call
+  `find("Item 150")`, which searches the whole page (trimmed parts included) and returns the
+  matches with their numbers. `read({region: "..."})` or `read({full: true})` also expand.
 - `[nav] same as before — 8 links (#5-#12)` (or `(known layout)`) means site memory shortened
-  a header/menu you've already seen on this site. Expand it with `read({region: "nav"})` if you
-  need a link from it; `read({fresh: true})` shows everything once, `forget()` clears the memory.
+  a header/menu you've already seen on this site. `find("text")` reaches a link in it, or expand it
+  with `read({region: "nav"})`; `read({fresh: true})` shows everything once, `forget()` clears the memory.
 - `⚠ CAPTCHA detected` means stop and call `ask_human` (see below).
 
 ## Keep token use low
 
+- Looking for one thing? `find("text")` is cheaper than reading more of the page.
 - Big page? `read({region: "nav"})` (or "main", "sidebar", "top bar") reads one part.
   Use `read({full: true})` only when the trimmed view hides what you need.
 - Prefer one targeted `read` over repeated full reads. Do not re-read after an action
@@ -43,7 +46,7 @@ Mantis turns a web page into short numbered text. You act on elements by their
 
 ## Tools
 
-Page tools: `open`, `read`, `click`, `type`, `select`, `press`, `scroll`, `back`, `forget`.
+Page tools: `open`, `read`, `find`, `click`, `type`, `select`, `press`, `scroll`, `back`, `forget`.
 
 Fallback ladder, only when `read` is not enough. Go in order and stop at the first that works:
 

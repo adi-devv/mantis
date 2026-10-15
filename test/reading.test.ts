@@ -112,13 +112,26 @@ describe('cookie dialog', () => {
 });
 
 describe('long lists', () => {
-  it('collapses 60 links to the first five plus a range', async () => {
+  it('collapses 60 links: five in full, the next ones named compactly, then a range and a find() hint', async () => {
     const view = await b.open(fixture('longlist.html'));
     expect(view).toContain('[nav "Docs"]');
     expect((view.match(/link "Item \d+"/g) ?? []).length).toBe(5);
     expect(view).toContain('link "Item 5"');
-    expect(view).not.toContain('"Item 6"');
-    expect(view).toContain('…and 55 more links (#6–#60)');
+    expect(view).toContain('#6 "Item 6" · #7 "Item 7"');
+    expect(view).toMatch(/…and \d+ more links \(#\d+–#60\); find\("text"\) locates one/);
+  });
+
+  it('find() reaches an item hidden by collapsing, with its number and region', async () => {
+    await b.open(fixture('longlist.html'));
+    const res = await b.find('item 59');
+    expect(res).toMatch(/^found 1 match for "item 59"/);
+    expect(res).toMatch(/#59 link "Item 59".*in \[nav "Docs"\]/);
+    expect(await b.click(59)).toContain('clicked #59 link "Item 59"');
+  });
+
+  it('find() says so when nothing matches', async () => {
+    await b.open(fixture('longlist.html'));
+    expect(await b.find('no such thing')).toBe('no control or text containing "no such thing" on this page');
   });
 });
 
