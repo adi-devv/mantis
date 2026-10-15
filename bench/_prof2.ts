@@ -1,0 +1,24 @@
+import { chromium } from 'playwright';
+import { capture } from '../dist/capture/index.js';
+const br = await chromium.launch();
+const page = await br.newPage({ viewport: { width: 1280, height: 800 } });
+await page.goto(process.argv[2] ?? 'https://en.wikipedia.org/wiki/Alan_Turing');
+await capture(page);
+const cdp = await page.context().newCDPSession(page);
+await cdp.send('Profiler.enable');
+await cdp.send('Profiler.setSamplingInterval', { interval: 100 });
+await cdp.send('Profiler.start');
+for (let i = 0; i < 3; i++) await capture(page);
+const { profile } = await cdp.send('Profiler.stop') as any;
+const self = new Map<string, number>();
+const dt = profile.timeDeltas as number[];
+const byId = new Map(profile.nodes.map((n: any) => [n.id, n]));
+profile.samples.forEach((id: number, i: number) => {
+  const n: any = byId.get(id);
+  const k = `${n.callFrame.functionName || '(anon)'}:${n.callFrame.lineNumber}`;
+  self.set(k, (self.get(k) ?? 0) + (dt[i] ?? 0));
+});
+const tot = [...self.values()].reduce((a, b) => a + b, 0);
+for (const [k, v] of [...self.entries()].sort((a, b) => b[1] - a[1]).slice(0, 18)) console.log((v / 1000 / 3).toFixed(0).padStart(5), 'ms', k);
+console.log('total', (tot / 1000 / 3).toFixed(0), 'ms per capture');
+await br.close();

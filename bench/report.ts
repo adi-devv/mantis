@@ -46,13 +46,19 @@ export interface ToolSummary {
   stepsFailed: number;
   stepsNa: number;
   medianStepT4: number;
+  /** Wall-clock time of the tool calls, all steps (ms). */
+  totalMs: number;
+  /** Median time per step on local fixture pages only (no network noise), ms. */
+  medianLocalStepMs: number;
   tasksCompleted: number;
   tasks: number;
 }
 
 export function summarize(r: Results, tool: ToolName, only?: (id: string) => boolean): ToolSummary {
-  const runs = r.tasks.filter((t) => !only || only(t.task.id)).map((t) => t.runs[tool]);
+  const picked = r.tasks.filter((t) => !only || only(t.task.id));
+  const runs = picked.map((t) => t.runs[tool]);
   const all = runs.flatMap((x) => x.steps);
+  const local = picked.filter((t) => t.task.site === 'local').flatMap((t) => t.runs[tool].steps).filter((s) => s.ok !== null);
   return {
     t4: runs.reduce((a, x) => a + sumKey(x, 't4'), 0),
     tik: runs.reduce((a, x) => a + sumKey(x, 'tik'), 0),
@@ -61,6 +67,8 @@ export function summarize(r: Results, tool: ToolName, only?: (id: string) => boo
     stepsFailed: all.filter((s) => s.ok === false).length,
     stepsNa: all.filter((s) => s.ok === null).length,
     medianStepT4: median(all.map((s) => stepCost(s, 't4'))),
+    totalMs: all.reduce((a, s) => a + s.ms, 0),
+    medianLocalStepMs: median(local.map((s) => s.ms)),
     tasksCompleted: runs.filter((x) => x.completed).length,
     tasks: runs.length,
   };
@@ -108,6 +116,7 @@ export function toMarkdown(r: Results): string {
   L.push('- In `@playwright/mcp` 0.0.83 default mode, action replies contain only a short log plus a *link to a snapshot file*, not the page. We therefore count `browser_snapshot` (inline) whenever the agent needs to see the page. The file would hold the same content.');
   L.push('- **Screenshot baseline:** one 1280x800 viewport PNG per open/action step (`read` steps add none). Actions are performed by the harness with role+name locators (an oracle), so this baseline does not test whether an agent could find targets from pixels, and it ignores scrolling for below-the-fold content: **it under-counts a real screenshot agent**. Tokens = `ceil(w*h/750)` after downscaling to <=1568 px longest side and <=~1.15 MP (Anthropic\'s published image-token formula; an estimate). For 1280x800 that is 1,366 tokens per screenshot.');
   L.push('- **Text tokens:** primary estimator is `chars/4` (rounded up), used for every text tool. Secondary: OpenAI `cl100k_base` via js-tiktoken. Both are approximations; Claude\'s tokenizer differs. The image estimate is the same in both columns.');
+  L.push('- **Time:** wall-clock time of each step as measured by the harness: the tool call(s), including any wait for the page to settle, and the observe call when one is counted. Local fixture pages give the steadiest number; live pages add network time. The screenshot baseline acts through Playwright directly (no MCP hop, no settle logic) and takes one PNG, so its time is a lower bound for a real screenshot agent.');
   L.push('- Steps run to the end even after a failure (failed steps are shown, never dropped). One run per task; live sites change over time, so live-site numbers are a snapshot.');
   L.push('');
   L.push('## Summary (all tasks)');
@@ -118,6 +127,8 @@ export function toMarkdown(r: Results): string {
   L.push(row('Total tokens (chars/4)', (s) => fmt(s.t4)));
   L.push(row('Total tokens (cl100k)', (s) => fmt(s.tik)));
   L.push(row('Median tokens per step (chars/4)', (s) => fmt(s.medianStepT4)));
+  L.push(row('Median time per step, local pages (ms)', (s) => fmt(s.medianLocalStepMs)));
+  L.push(row('Total time, all steps (s)', (s) => (s.totalMs / 1000).toFixed(1)));
   L.push(row('Steps ok / total', (s) => `${s.stepsOk} / ${s.steps - s.stepsNa}${s.stepsNa ? ` (+${s.stepsNa} n/a)` : ''}`));
   L.push(row('Tasks fully completed', (s) => `${s.tasksCompleted} / ${s.tasks}`));
   L.push('');

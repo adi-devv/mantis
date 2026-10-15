@@ -70,6 +70,13 @@ const TRACKER = `(() => {
     try { return send.apply(this, arguments); } catch (e) { done(); throw e; }
   };
   window.__mantisBusy = () => timers > 0 || net > 0;
+  // Bumped by anything that can change what a scan sees, so an unchanged page can reuse its last scan.
+  window.__mantisMut = 0;
+  const bump = () => { window.__mantisMut++; };
+  new MutationObserver(bump).observe(document, { subtree: true, childList: true, attributes: true, characterData: true });
+  for (const ev of ['scroll', 'input', 'change', 'focusin', 'focusout', 'resize', 'load', 'mouseover', 'mouseout', 'toggle', 'transitionend', 'animationend']) {
+    addEventListener(ev, bump, { capture: true, passive: true });
+  }
 })();`;
 
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
@@ -85,6 +92,8 @@ function brief(e: unknown): string {
  * numbered view of the page.
  */
 export class MantisBrowser {
+  /** Last scan and the page state it was taken at (see observe / unchanged). */
+  private last: { page: Page; doc: string; mut: number; snap: Snapshot } | null = null;
   private browser: Browser | null = null;
   private context: BrowserContext | null = null;
   private page: Page | null = null;
@@ -162,7 +171,7 @@ export class MantisBrowser {
   /** Search the whole page, including parts read() trimmed or summarised, for controls and text. */
   async find(query: string): Promise<string> {
     return this.guard(async () => {
-      const snap = await capture(await this.activePage());
+      const { snap } = await this.observe(await this.activePage());
       this.remember(snap);
       return findInSnapshot(snap, query);
     });
@@ -464,7 +473,7 @@ export class MantisBrowser {
   private act(fn: (page: Page) => Promise<string>, opts: { quiet?: boolean } = {}): Promise<string> {
     return this.guard(async () => {
       const page = await this.activePage();
-      const before = await this.observe(page).catch(() => null);
+      const before = (await this.unchanged(page)) ?? (await this.observe(page).catch(() => null));
       if (before) this.remember(before.snap);
       const msg = await fn(page);
       await this.settle(page);
@@ -490,16 +499,33 @@ export class MantisBrowser {
     });
   }
 
+  /** Scan the page; remembered so the next action can skip its "before" scan if nothing changed. */
   private async observe(page: Page): Promise<{ snap: Snapshot; doc: string | null }> {
+    const before = await this.pageState(page); // read first: a change during the scan must not be missed
     const snap = await capture(page);
-    const doc = await page
-      .evaluate(() => (window as unknown as { __mantisDoc?: string }).__mantisDoc ?? null)
-      .catch(() => null);
-    return { snap, doc };
+    this.last = before.doc && before.mut >= 0 ? { page, doc: before.doc, mut: before.mut, snap } : null;
+    return { snap, doc: before.doc };
+  }
+
+  /** The last scan, if this page has not changed since (DOM, scroll, input, focus, size, hover). */
+  private async unchanged(page: Page): Promise<{ snap: Snapshot; doc: string | null } | null> {
+    const l = this.last;
+    if (!l || l.page !== page) return null;
+    const now = await this.pageState(page);
+    return now.doc === l.doc && now.mut === l.mut ? { snap: l.snap, doc: l.doc } : null;
+  }
+
+  private async pageState(page: Page): Promise<{ doc: string | null; mut: number }> {
+    return page
+      .evaluate(() => {
+        const w = window as unknown as { __mantisDoc?: string; __mantisMut?: number };
+        return { doc: w.__mantisDoc ?? null, mut: w.__mantisMut ?? -1 };
+      })
+      .catch(() => ({ doc: null, mut: -1 }));
   }
 
   private async view(page: Page, opts: ReadOptions = {}): Promise<string> {
-    let text = this.render(await capture(page), opts);
+    let text = this.render((await this.observe(page)).snap, opts);
     const captcha = await detectCaptcha(page);
     if (captcha) text += `\n${captcha}`;
     return this.notes.length ? `${text}\n${this.notes.splice(0).join('\n')}` : text;
@@ -602,7 +628,7 @@ export class MantisBrowser {
   }
 
   /**
-   * Wait for load, then for the page to go quiet: no DOM mutation for 300ms (3s cap) and no short
+   * Wait for load, then for the page to go quiet: no DOM mutation for 150ms (3s cap) and no short
    * timer or request still pending (1.5s cap), so delayed effects of an action are included.
    */
   private async settle(page: Page): Promise<void> {
@@ -634,7 +660,7 @@ export class MantisBrowser {
               timer = st(check, quiet);
               const cap = st(finish, max);
             }),
-          { quiet: 300, max: 3000, busyMax: 1500 },
+          { quiet: 150, max: 3000, busyMax: 1500 },
         );
         return;
       } catch {
