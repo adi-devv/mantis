@@ -10,7 +10,9 @@
  *
  * Needs a logged-in Claude Code CLI (`claude auth login`). Uses your plan's usage.
  */
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
+import type { ChildProcess } from 'node:child_process';
+import net from 'node:net';
 import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -33,7 +35,38 @@ const node = process.execPath;
 const MCP_CHROMIUM = chromiumForMcp();
 const VENV_PY = path.join(REPO, 'bench', 'agent', '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
 const TSX = import.meta.resolve('tsx');
-const APPROACHES: Record<Approach, { label: string; server: (dir: string) => object; allow: string[]; deny?: string[] }> = {
+interface ServerSpec { command: string; args: string[]; env?: Record<string, string> }
+
+/**
+ * Start the approach's MCP server ourselves, let it warm up, and expose it on a local port. Claude
+ * Code then launches bench/agent/bridge.mjs, which connects instantly. Without this, a slow-starting
+ * server (browser-use: ~6 s of Python imports) is still "pending" when Claude starts, the model gets
+ * no tools and imitates tool calls as text. Startup time stays out of every approach's measured time.
+ */
+async function startServer(spec: ServerSpec, warmMs: number, log: string): Promise<{ port: number; stop: () => void }> {
+  const child: ChildProcess = spawn(spec.command, spec.args, { stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, ...(spec.env ?? {}) } });
+  let stderr = '';
+  child.stderr?.on('data', (d) => { stderr += d; });
+  const srv = net.createServer((sock) => {
+    sock.pipe(child.stdin!);
+    child.stdout!.pipe(sock);
+  });
+  await new Promise<void>((ok) => srv.listen(0, '127.0.0.1', ok));
+  await new Promise((ok) => setTimeout(ok, warmMs));
+  const port = (srv.address() as net.AddressInfo).port;
+  return {
+    port,
+    stop: () => {
+      srv.close();
+      writeFileSync(log, stderr);
+      // The server may have started a browser: end the whole process tree.
+      if (process.platform === 'win32' && child.pid) spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore' });
+      else child.kill('SIGKILL');
+    },
+  };
+}
+
+const APPROACHES: Record<Approach, { label: string; server: (dir: string) => Record<string, ServerSpec>; warmMs?: number; allow: string[]; deny?: string[] }> = {
   mantis: {
     label: 'Mantis',
     server: (dir) => ({ mantis: { command: node, args: [path.join(REPO, 'dist', 'server.js')], env: { MANTIS_MEMORY_DIR: path.join(dir, 'mem') } } }),
@@ -101,6 +134,7 @@ const APPROACHES: Record<Approach, { label: string; server: (dir: string) => obj
         },
       };
     },
+    warmMs: 12_000,
     allow: ['mcp__browseruse'],
     // Tools that need an OpenAI key (an LLM inside the tool), and raw HTML, which bypasses its page view.
     deny: ['mcp__browseruse__browser_extract_content', 'mcp__browseruse__retry_with_browser_use_agent', 'mcp__browseruse__browser_get_html'],
@@ -134,7 +168,12 @@ interface RunResult {
 async function runOnce(task: AgentTask, approach: Approach, base: string, run: number): Promise<RunResult> {
   const dir = mkdtempSync(path.join(os.tmpdir(), 'mantis-agent-'));
   const cfg = path.join(dir, 'mcp.json');
-  writeFileSync(cfg, JSON.stringify({ mcpServers: APPROACHES[approach].server(dir) }));
+  const [name, spec] = Object.entries(APPROACHES[approach].server(dir))[0]!;
+  const logDir = path.join(OUT, 'agent-logs', process.env.AGENT_OUT ?? 'latest');
+  mkdirSync(logDir, { recursive: true });
+  const server = await startServer(spec, APPROACHES[approach].warmMs ?? 2_000, path.join(logDir, `${task.id}--${approach}--${run}.server.log`));
+  const bridge = { command: node, args: [path.join(REPO, 'bench', 'agent', 'bridge.mjs'), String(server.port)] };
+  writeFileSync(cfg, JSON.stringify({ mcpServers: { [name]: bridge } }));
   const prompt = `${task.prompt(base)}\n\nUse only the browser tools you have. When you are done, end your reply with one line: ANSWER: <answer>`;
   const a = APPROACHES[approach];
   const args = [
@@ -144,14 +183,18 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
   const t0 = Date.now();
   const out = await new Promise<string>((done) => {
     // Wait for MCP servers to connect before the first turn (otherwise the model may start with no tools).
-    const env = { ...process.env, MCP_CONNECTION_NONBLOCKING: 'false' };
+    // Longer connect timeout: several servers starting at once can be slow under parallel load.
+    const env = { ...process.env, MCP_CONNECTION_NONBLOCKING: 'false', MCP_TIMEOUT: '60000' };
     const p = spawn(claudeBin(), args, { cwd: dir, stdio: ['ignore', 'pipe', 'pipe'], env });
     let s = '';
     p.stdout.on('data', (d) => (s += d));
     const timer = setTimeout(() => p.kill(), TIMEOUT_MS);
     p.on('close', () => { clearTimeout(timer); done(s); });
   });
+  server.stop();
   const ms = Date.now() - t0;
+  // Raw event stream per run, for debugging a failed or odd run (git-ignored).
+  writeFileSync(path.join(logDir, `${task.id}--${approach}--${run}.jsonl`), out);
   const base0 = { task: task.id, approach, run, ms };
   let connected = false;
   let toolCalls = 0;
@@ -236,7 +279,9 @@ try {
   const worker = async (): Promise<void> => {
     while (next < jobs.length) {
       const { t, a, run } = jobs[next++]!;
-      const r = await runOnce(t, a, fx.base, run);
+      let r = await runOnce(t, a, fx.base, run);
+      // A tool that never connected says nothing about the approach: try that run once more.
+      if (!r.valid) r = await runOnce(t, a, fx.base, run);
       results.push(r);
       console.log(`[agent] ${t.id} / ${a} / run ${run} ... ${!r.valid ? 'INVALID' : r.ok ? 'ok' : 'FAIL'} · ${r.toolCalls} tool calls · ${fmt(r.inputTokens)} in · ${(r.ms / 1000).toFixed(0)}s${r.error ? ` · ${r.error}` : ''}`);
     }

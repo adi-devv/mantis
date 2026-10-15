@@ -7,3 +7,4 @@ test-results/
 bench/results/partial.*
 bench/_*.ts
 bench/agent/.venv/
+bench/results/agent-logs/
