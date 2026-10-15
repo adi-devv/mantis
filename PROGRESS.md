@@ -15,20 +15,21 @@ See `PLAN.md` for the full plan.
 - [x] M7 — Never lose what the accessibility tree has
 - [x] M8 — Faster than the accessibility tree
 - [x] M9 — Better than the accessibility tree (names from Chrome tried, dropped: too slow)
-- [ ] M10 — Real-agent eval (pilot done; 22-task set + 2 competitors built; smoke test running)
+- [ ] M10 — Real-agent eval (first full run done: 22 tasks x 5 approaches, all correct; repeats + harder tasks next)
 - [ ] M11 — Launch (0.1.1, README top, demo video)
 
 ## Next steps
 
 Kept current: updated whenever work lands or a decision changes direction.
 
-1. Finish the smoke test (Chrome DevTools MCP and browser-use on 3 tasks each); fix the
-   devtools run that did not connect (tool startup under parallel load).
-2. Full real-agent run: 22 tasks x 5 approaches (Mantis, Playwright MCP, Chrome DevTools MCP,
-   browser-use, screenshots), 1 run each, 3 in parallel; check usage, then 3 runs each.
-3. Write up results (by category, losses included) in README, APPROACH and bench/README.
-4. Add Chrome DevTools MCP and browser-use to the token replay benchmark too.
-5. Publish 0.1.1 to npm with the tested numbers (needs the user's go-ahead and 2FA).
+1. Repeat the full eval with 3 runs per task (variance), now that one run is in.
+2. Harder tasks that separate tools on success, not only cost: very long pages, messy real
+   sites, icon-only controls, covered buttons, error recovery, multi-tab, several live sites.
+3. Look at Mantis's two losses: forms (level with Chrome DevTools MCP) and the chart task
+   (screenshots read it in one look; Mantis needs media() + data()).
+4. Add Chrome DevTools MCP and browser-use to the token replay benchmark.
+5. GitHub release v0.1.0 to match npm (awaiting the user's go-ahead); then publish 0.1.1 with
+   these numbers (npm 2FA by the user) and a matching GitHub release.
 6. Later: the same eval with Codex as a second agent; fallback tools inside iframes.
 
 ## Log
@@ -120,3 +121,11 @@ Kept current: updated whenever work lands or a decision changes direction.
   git-ignored venv; it finds Playwright's Chromium itself). Same fairness rules for all: no page
   JavaScript, no LLM-backed tools inside the browser tool. Mantis: canvas gets a line pointing to
   media()/data(). README trimmed to essentials; bench/README.md documents both benchmarks.
+- 2026-10-15: First full real-agent eval (bench/results/agent.md): Claude Sonnet, 22 tasks x 5
+  approaches, 1 run each, 110/110 valid and correct. Mantis 91 tool calls / 1.07M tokens / 360 s /
+  $0.86; Chrome DevTools MCP 103 / 1.31M / 469 s; Playwright MCP 123 / 1.78M / 406 s; browser-use
+  161 / 2.07M / 569 s; screenshots 230 / 3.02M / 677 s. Mantis cheapest on 17/22 tasks; lost the
+  chart task to screenshots and was level with Chrome DevTools MCP on forms. Harness fixes on the
+  way: slow-starting servers (browser-use) left Claude with no tools, so the harness now pre-starts
+  and warms each server and connects Claude through bench/agent/bridge.mjs; results saved after
+  every run (AGENT_RESUME=1); per-run temp folders deleted after each run.

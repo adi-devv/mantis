@@ -14,7 +14,7 @@
 import { spawn, spawnSync } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
 import net from 'node:net';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { chromiumForMcp } from '../adapters.js';
@@ -193,6 +193,8 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
     p.on('close', () => { clearTimeout(timer); done(s); });
   });
   server.stop();
+  // The run's temp folder holds browser profiles; logs are already copied to agent-logs.
+  setTimeout(() => rmSync(dir, { recursive: true, force: true }), 2000);
   const ms = Date.now() - t0;
   // Raw event stream per run, for debugging a failed or odd run (git-ignored).
   writeFileSync(path.join(logDir, `${task.id}--${approach}--${run}.jsonl`), out);

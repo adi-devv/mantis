@@ -88,10 +88,20 @@ Mantis never solves CAPTCHAs; `read()` flags them and suggests `ask_human`.
 | Median tokens per step | 28 | 131 | ~1,366 |
 | Median time per step (local pages) | 247 ms | 315 ms | 1,066 ms |
 
-This is a scripted replay with no LLM in the loop: it measures what an agent receives, not
-whether it succeeds. A real-agent eval with Claude is in progress: in a 2-task pilot all
-three got both right, with Mantis using the fewest tokens (64k vs 109k vs 304k)
-([pilot results](bench/results/agent-pilot.md), [how to run](bench/README.md)).
+That is a scripted replay with no LLM in the loop. With a real agent (Claude Sonnet via
+`claude -p`, 22 tasks across forms, reading, lists, overlays, navigation, dynamic widgets,
+iframes and a chart; [results](bench/results/agent.md), [how to run](bench/README.md)):
+
+| | Mantis | Chrome DevTools MCP | Playwright MCP | browser-use | Screenshots |
+|---|---:|---:|---:|---:|---:|
+| Correct | 22 / 22 | 22 / 22 | 22 / 22 | 22 / 22 | 22 / 22 |
+| Tool calls | **91** | 103 | 123 | 161 | 230 |
+| Tokens read | **1.07M** | 1.31M | 1.78M | 2.07M | 3.02M |
+| Time | **360 s** | 469 s | 406 s | 569 s | 677 s |
+
+Mantis was cheapest on 17 of 22 tasks; screenshots won the chart task and Chrome DevTools
+MCP was level on forms. One run per task so far; every approach solved every task, so these
+tasks separate the tools on cost, not yet on success.
 
 ## How it works
 
