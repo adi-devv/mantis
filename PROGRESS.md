@@ -12,6 +12,24 @@ See `PLAN.md` for the full plan.
 - [x] M4 — Fallback ladder
 - [x] M5 — Skill + benchmark
 - [x] M6 — Site memory
+- [x] M7 — Never lose what the accessibility tree has
+- [x] M8 — Faster than the accessibility tree
+- [x] M9 — Better than the accessibility tree (names from Chrome tried, dropped: too slow)
+- [ ] M10 — Real-agent eval (pilot done; 22-task set + 2 competitors built; smoke test running)
+- [ ] M11 — Launch (0.1.1, README top, demo video)
+
+## Next steps
+
+Kept current: updated whenever work lands or a decision changes direction.
+
+1. Finish the smoke test (Chrome DevTools MCP and browser-use on 3 tasks each); fix the
+   devtools run that did not connect (tool startup under parallel load).
+2. Full real-agent run: 22 tasks x 5 approaches (Mantis, Playwright MCP, Chrome DevTools MCP,
+   browser-use, screenshots), 1 run each, 3 in parallel; check usage, then 3 runs each.
+3. Write up results (by category, losses included) in README, APPROACH and bench/README.
+4. Add Chrome DevTools MCP and browser-use to the token replay benchmark too.
+5. Publish 0.1.1 to npm with the tested numbers (needs the user's go-ahead and 2FA).
+6. Later: the same eval with Codex as a second agent; fallback tools inside iframes.
 
 ## Log
 
@@ -92,3 +110,13 @@ See `PLAN.md` for the full plan.
   slower scan, reverted. human.html timers moved past 1s (test was timing the settle window).
   183 tests. Full benchmark: 14/14; median 28 vs 131 tokens/step; 247 vs 315 ms/step local.
   Next: real-agent eval (pilot first), fallback tools inside iframes, publish 0.1.1.
+- 2026-10-15: Real-agent eval. bench/agent/run.ts runs headless `claude -p` (Sonnet) per task and
+  approach, isolated (own MCP server and browser, built-in tools off, no user settings), waits for
+  MCP to connect (runs where the tool never connected are marked invalid), counts tool calls,
+  runs 3 in parallel. Pilot (2 tasks): all correct; Mantis 64k tokens, Playwright MCP 109k,
+  screenshots 304k; 5 / 7 / 22 tool calls. Task set grown to 22 tasks in 7 categories
+  (bench/agent/tasks.ts, pages in bench/fixtures-more.ts). Added Chrome DevTools MCP 1.10.1 (main
+  script run directly: its wrapper wants Node 20.19+) and browser-use 0.13.10 (MCP server in a
+  git-ignored venv; it finds Playwright's Chromium itself). Same fairness rules for all: no page
+  JavaScript, no LLM-backed tools inside the browser tool. Mantis: canvas gets a line pointing to
+  media()/data(). README trimmed to essentials; bench/README.md documents both benchmarks.

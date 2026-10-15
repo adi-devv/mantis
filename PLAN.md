@@ -116,5 +116,31 @@ url: /login → /dashboard
 ### M6 — Site memory
 - Per-domain cache of page structure so repeat visits are near-free.
 
+### M7 — Never lose what the accessibility tree has
+- The accessibility tree is the floor: everything it exposes must be reachable through
+  Mantis (in `read()`, via `find()`, or via the fallback tools). Trimming may shorten, never hide.
+- Keep standalone text; name collapsed list items; `find(text)` over the untrimmed page.
+- A permanent check against Chrome's own tree on every test and benchmark page.
+
+### M8 — Faster than the accessibility tree
+- Time every step in the benchmark next to tokens.
+- Cheap page scan, one scan per action when nothing changed, short settle wait.
+
+### M9 — Better than the accessibility tree
+- Show what the tree can't: script-only clickables, iframes inline, a pointer to canvas charts.
+- Names stay Mantis's own (Chrome's per-element names were too slow), checked against Chrome.
+
+### M10 — Real-agent eval
+- Claude (`claude -p`) does tasks with each approach: Mantis, Playwright MCP (tree), Chrome
+  DevTools MCP, browser-use, screenshots. Measure correct answers, tool calls, tokens, time, cost.
+- A task set in the repo covering common agent work (forms, reading, lists, overlays,
+  navigation, dynamic widgets, iframes, charts), mostly local pages with checkable answers.
+  New failures become new tasks. Publish losses too.
+- Later: the same tasks with Codex as a second agent.
+
+### M11 — Launch
+- Publish 0.1.1 with the eval's headline numbers; README top section; demo video.
+- Distribution plan in `docs/LAUNCH.md` (private).
+
 ## Stack
 TypeScript (ESM, Node ≥20), Playwright, `@modelcontextprotocol/sdk`, zod, vitest.
