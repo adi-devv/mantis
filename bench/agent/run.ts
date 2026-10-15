@@ -13,6 +13,7 @@ import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { chromiumForMcp } from '../adapters.js';
 import { startFixtures } from '../fixtures.js';
 
 const REPO = path.resolve(import.meta.dirname, '..', '..');
@@ -20,6 +21,8 @@ const OUT = path.join(REPO, 'bench', 'results');
 const MODEL = process.env.AGENT_MODEL ?? 'sonnet';
 const RUNS = Number(process.env.AGENT_RUNS ?? 1);
 const TIMEOUT_MS = Number(process.env.AGENT_TIMEOUT_S ?? 600) * 1000;
+/** Runs in flight at once. Each run is its own claude process, MCP server and browser. */
+const CONCURRENCY = Math.max(1, Number(process.env.AGENT_CONCURRENCY ?? 3));
 
 interface AgentTask { id: string; prompt: (base: string) => string; expect: RegExp }
 
@@ -64,6 +67,8 @@ const PILOT = ['form-subscribe', 'wikipedia-birthdate'];
 
 type Approach = 'mantis' | 'tree' | 'screenshot';
 const node = process.execPath;
+const MCP_CHROMIUM = chromiumForMcp();
+const TSX = import.meta.resolve('tsx');
 const APPROACHES: Record<Approach, { label: string; server: (mem: string) => object; allow: string[]; deny?: string[] }> = {
   mantis: {
     label: 'Mantis',
@@ -75,7 +80,11 @@ const APPROACHES: Record<Approach, { label: string; server: (mem: string) => obj
     server: () => ({
       playwright: {
         command: node,
-        args: [path.join(REPO, 'node_modules', '@playwright', 'mcp', 'cli.js'), '--headless', '--isolated', '--viewport-size', '1280x800'],
+        // Same browser binary as the token benchmark (Playwright MCP otherwise looks for an installed Chrome).
+        args: [
+          path.join(REPO, 'node_modules', '@playwright', 'mcp', 'cli.js'), '--headless', '--isolated', '--viewport-size', '1280x800',
+          ...(MCP_CHROMIUM ? ['--executable-path', MCP_CHROMIUM] : []),
+        ],
       },
     }),
     allow: [
@@ -87,7 +96,8 @@ const APPROACHES: Record<Approach, { label: string; server: (mem: string) => obj
   },
   screenshot: {
     label: 'Screenshots (click by x,y)',
-    server: () => ({ screenshot: { command: node, args: ['--import', 'tsx', path.join(REPO, 'bench', 'agent', 'screenshot-mcp.ts')] } }),
+    // tsx by absolute URL: runs start in an empty temp folder where a bare 'tsx' does not resolve.
+    server: () => ({ screenshot: { command: node, args: ['--import', TSX, path.join(REPO, 'bench', 'agent', 'screenshot-mcp.ts')] } }),
     allow: ['mcp__screenshot'],
   },
 };
@@ -98,9 +108,16 @@ function claudeBin(): string {
   return process.platform === 'win32' && existsSync(win) ? win : 'claude';
 }
 
+interface ResultEvent {
+  is_error: boolean; result: string; num_turns: number; total_cost_usd: number;
+  usage: { input_tokens: number; cache_creation_input_tokens: number; cache_read_input_tokens: number; output_tokens: number };
+}
+
 interface RunResult {
   task: string; approach: Approach; run: number; ok: boolean; error: string; answer: string;
-  turns: number; inputTokens: number; outputTokens: number; costUsd: number; ms: number;
+  /** False if the browser tool never connected: the run says nothing about the approach. */
+  valid: boolean;
+  turns: number; toolCalls: number; inputTokens: number; outputTokens: number; costUsd: number; ms: number;
 }
 
 async function runOnce(task: AgentTask, approach: Approach, base: string, run: number): Promise<RunResult> {
@@ -110,12 +127,14 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
   const prompt = `${task.prompt(base)}\n\nUse only the browser tools you have. When you are done, end your reply with one line: ANSWER: <answer>`;
   const a = APPROACHES[approach];
   const args = [
-    '-p', prompt, '--output-format', 'json', '--model', MODEL, '--tools', '', '--strict-mcp-config', '--mcp-config', cfg,
+    '-p', prompt, '--output-format', 'stream-json', '--verbose', '--model', MODEL, '--tools', '', '--strict-mcp-config', '--mcp-config', cfg,
     '--setting-sources', '', '--allowedTools', ...a.allow, ...(a.deny ? ['--disallowedTools', ...a.deny] : []),
   ];
   const t0 = Date.now();
   const out = await new Promise<string>((done) => {
-    const p = spawn(claudeBin(), args, { cwd: dir, stdio: ['ignore', 'pipe', 'pipe'] });
+    // Wait for MCP servers to connect before the first turn (otherwise the model may start with no tools).
+    const env = { ...process.env, MCP_CONNECTION_NONBLOCKING: 'false' };
+    const p = spawn(claudeBin(), args, { cwd: dir, stdio: ['ignore', 'pipe', 'pipe'], env });
     let s = '';
     p.stdout.on('data', (d) => (s += d));
     const timer = setTimeout(() => p.kill(), TIMEOUT_MS);
@@ -123,22 +142,28 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
   });
   const ms = Date.now() - t0;
   const base0 = { task: task.id, approach, run, ms };
-  try {
-    const j = JSON.parse(out) as {
-      is_error: boolean; result: string; num_turns: number; total_cost_usd: number;
-      usage: { input_tokens: number; cache_creation_input_tokens: number; cache_read_input_tokens: number; output_tokens: number };
-    };
-    const answer = (/ANSWER:\s*(.+)/i.exec(j.result ?? '')?.[1] ?? (j.result ?? '').slice(-200)).trim();
-    const u = j.usage;
-    return {
-      ...base0, ok: !j.is_error && task.expect.test(j.result ?? ''), error: j.is_error ? (j.result ?? '').slice(0, 160) : '',
-      answer: answer.slice(0, 160), turns: j.num_turns,
-      inputTokens: u.input_tokens + u.cache_creation_input_tokens + u.cache_read_input_tokens, outputTokens: u.output_tokens,
-      costUsd: j.total_cost_usd,
-    };
-  } catch {
-    return { ...base0, ok: false, error: out ? `unparsable output: ${out.slice(0, 160)}` : 'no output (timeout or crash)', answer: '', turns: 0, inputTokens: 0, outputTokens: 0, costUsd: 0 };
+  let connected = false;
+  let toolCalls = 0;
+  let final = null as ResultEvent | null;
+  for (const line of out.split('\n')) {
+    let j: { type?: string; subtype?: string; mcp_servers?: { status: string }[]; message?: { content?: { type: string }[] } } & Record<string, unknown>;
+    try { j = JSON.parse(line); } catch { continue; }
+    if (j.type === 'system' && j.subtype === 'init') connected = (j.mcp_servers ?? []).length > 0 && (j.mcp_servers ?? []).every((m) => m.status === 'connected');
+    else if (j.type === 'assistant') toolCalls += (j.message?.content ?? []).filter((c) => c.type === 'tool_use').length;
+    else if (j.type === 'result') final = j as unknown as ResultEvent;
   }
+  if (!final) {
+    return { ...base0, ok: false, valid: false, error: out ? `no result: ${out.slice(-160)}` : 'no output (timeout or crash)', answer: '', turns: 0, toolCalls, inputTokens: 0, outputTokens: 0, costUsd: 0 };
+  }
+  const answer = (/ANSWER:\s*(.+)/i.exec(final.result ?? '')?.[1] ?? (final.result ?? '').slice(-200)).trim();
+  const u = final.usage;
+  return {
+    ...base0, valid: connected, ok: connected && !final.is_error && task.expect.test(final.result ?? ''),
+    error: !connected ? 'browser tool did not connect (run invalid)' : final.is_error ? (final.result ?? '').slice(0, 160) : '',
+    answer: answer.slice(0, 160), turns: final.num_turns, toolCalls,
+    inputTokens: u.input_tokens + u.cache_creation_input_tokens + u.cache_read_input_tokens, outputTokens: u.output_tokens,
+    costUsd: final.total_cost_usd,
+  };
 }
 
 const fmt = (n: number): string => n.toLocaleString('en-US');
@@ -151,7 +176,8 @@ function report(results: RunResult[], approaches: Approach[], tasks: AgentTask[]
     '"ok" = the final reply contains the expected answer. Tokens are everything the model read (input incl. cached) and wrote, ' +
     'as reported by Claude Code; cost is its API-price estimate. An LLM is in the loop, so numbers vary run to run.');
   L.push('');
-  L.push(`- Date: ${new Date().toISOString().slice(0, 10)}; runs per task and approach: ${RUNS}`);
+  L.push(`- Date: ${new Date().toISOString().slice(0, 10)}; runs per task and approach: ${RUNS}; ${CONCURRENCY} runs in parallel ` +
+    '(times are wall-clock per run and include contention between parallel runs)');
   L.push('- Mantis: all its tools. Accessibility tree: Playwright MCP 0.0.83 (headless, isolated) without its JavaScript-running tools. ' +
     'Screenshots: a minimal computer-use-style server (bench/agent/screenshot-mcp.ts): screenshot, click(x,y), type, key, scroll, back.');
   L.push('- No skill, no system prompt beyond the task; built-in tools off.');
@@ -161,8 +187,10 @@ function report(results: RunResult[], approaches: Approach[], tasks: AgentTask[]
   L.push(`| | ${approaches.map((a) => APPROACHES[a].label).join(' | ')} |`);
   L.push(`|---|${approaches.map(() => '---:').join('|')}|`);
   const by = (a: Approach): RunResult[] => results.filter((r) => r.approach === a);
-  const sum = (rs: RunResult[], k: 'inputTokens' | 'outputTokens' | 'turns' | 'ms' | 'costUsd'): number => rs.reduce((s, r) => s + r[k], 0);
-  L.push(`| Correct | ${approaches.map((a) => `${by(a).filter((r) => r.ok).length} / ${by(a).length}`).join(' | ')} |`);
+  const sum = (rs: RunResult[], k: 'inputTokens' | 'outputTokens' | 'turns' | 'toolCalls' | 'ms' | 'costUsd'): number => rs.reduce((s, r) => s + r[k], 0);
+  L.push(`| Correct | ${approaches.map((a) => `${by(a).filter((r) => r.ok).length} / ${by(a).filter((r) => r.valid).length}`).join(' | ')} |`);
+  L.push(`| Invalid runs (tool did not connect) | ${approaches.map((a) => by(a).filter((r) => !r.valid).length).join(' | ')} |`);
+  L.push(`| Tool calls (total) | ${approaches.map((a) => fmt(sum(by(a), 'toolCalls'))).join(' | ')} |`);
   L.push(`| Turns (total) | ${approaches.map((a) => fmt(sum(by(a), 'turns'))).join(' | ')} |`);
   L.push(`| Input tokens (total) | ${approaches.map((a) => fmt(sum(by(a), 'inputTokens'))).join(' | ')} |`);
   L.push(`| Output tokens (total) | ${approaches.map((a) => fmt(sum(by(a), 'outputTokens'))).join(' | ')} |`);
@@ -171,12 +199,12 @@ function report(results: RunResult[], approaches: Approach[], tasks: AgentTask[]
   L.push('');
   L.push('## Per run');
   L.push('');
-  L.push('| Task | Approach | Run | OK | Turns | Input tok | Output tok | Time (s) | Answer / error |');
+  L.push('| Task | Approach | Run | OK | Tool calls | Input tok | Output tok | Time (s) | Answer / error |');
   L.push('|---|---|---:|:-:|---:|---:|---:|---:|---|');
   for (const t of tasks) {
     for (const r of results.filter((x) => x.task === t.id)) {
       const note = (r.error || r.answer).replace(/\|/g, '\\|').replace(/\s+/g, ' ');
-      L.push(`| \`${r.task}\` | ${APPROACHES[r.approach].label} | ${r.run} | ${r.ok ? '✅' : '❌'} | ${r.turns} | ${fmt(r.inputTokens)} | ${fmt(r.outputTokens)} | ${(r.ms / 1000).toFixed(0)} | ${note} |`);
+      L.push(`| \`${r.task}\` | ${APPROACHES[r.approach].label} | ${r.run} | ${!r.valid ? '⚠' : r.ok ? '✅' : '❌'} | ${r.toolCalls} | ${fmt(r.inputTokens)} | ${fmt(r.outputTokens)} | ${(r.ms / 1000).toFixed(0)} | ${note} |`);
     }
   }
   return L.join('\n') + '\n';
@@ -186,21 +214,27 @@ const want = process.env.AGENT_TASKS ?? PILOT.join(',');
 const tasks = want === 'all' ? TASKS : TASKS.filter((t) => want.split(',').includes(t.id));
 const approaches = (process.env.AGENT_APPROACHES ?? 'mantis,tree,screenshot').split(',') as Approach[];
 const fx = await startFixtures();
+const jobs: { t: AgentTask; a: Approach; run: number }[] = [];
+for (const t of tasks) for (let run = 1; run <= RUNS; run++) for (const a of approaches) jobs.push({ t, a, run });
 const results: RunResult[] = [];
 try {
-  for (const t of tasks) {
-    for (let run = 1; run <= RUNS; run++) {
-      for (const a of approaches) {
-        process.stdout.write(`[agent] ${t.id} / ${a} / run ${run} ... `);
-        const r = await runOnce(t, a, fx.base, run);
-        results.push(r);
-        console.log(`${r.ok ? 'ok' : 'FAIL'} · ${r.turns} turns · ${fmt(r.inputTokens)} in · ${(r.ms / 1000).toFixed(0)}s${r.error ? ` · ${r.error}` : ''}`);
-      }
+  let next = 0;
+  const worker = async (): Promise<void> => {
+    while (next < jobs.length) {
+      const { t, a, run } = jobs[next++]!;
+      const r = await runOnce(t, a, fx.base, run);
+      results.push(r);
+      console.log(`[agent] ${t.id} / ${a} / run ${run} ... ${!r.valid ? 'INVALID' : r.ok ? 'ok' : 'FAIL'} · ${r.toolCalls} tool calls · ${fmt(r.inputTokens)} in · ${(r.ms / 1000).toFixed(0)}s${r.error ? ` · ${r.error}` : ''}`);
     }
-  }
+  };
+  console.log(`[agent] ${jobs.length} runs, ${Math.min(CONCURRENCY, jobs.length)} at a time, model ${MODEL}`);
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, jobs.length) }, worker));
 } finally {
   await fx.close();
 }
+// Report in a stable order regardless of which run finished first.
+const order = (r: RunResult): number => jobs.findIndex((j) => j.t.id === r.task && j.a === r.approach && j.run === r.run);
+results.sort((x, y) => order(x) - order(y));
 mkdirSync(OUT, { recursive: true });
 const name = process.env.AGENT_OUT ?? (want === PILOT.join(',') ? 'agent-pilot' : 'agent');
 writeFileSync(path.join(OUT, `${name}.json`), JSON.stringify({ model: MODEL, runs: RUNS, results }, null, 2));
