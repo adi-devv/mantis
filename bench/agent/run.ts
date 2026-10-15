@@ -1,5 +1,5 @@
 /**
- * Real-agent eval: Claude (headless `claude -p`) does each task with one browser approach at a time
+ * Real-agent eval: Codex CLI (`codex exec`) or Claude Code does each task with one browser approach at a time
  * and we record whether it got the answer right, turns, tokens, cost and time. Unlike bench/run.ts
  * this has an LLM in the loop, so results vary run to run; repeat runs to see the spread.
  *
@@ -7,14 +7,14 @@
  *   AGENT_TASKS=all AGENT_RUNS=3 npx tsx bench/agent/run.ts
  *   AGENT_TASKS=cat:forms AGENT_APPROACHES=mantis,tree npx tsx bench/agent/run.ts
  *   AGENT_RESUME=1 ...                                   (continue a stopped run)
- *   AGENT_MODEL=claude-sonnet-4-6 AGENT_CONCURRENCY=3 ...   (defaults)
+ *   AGENT_PROVIDER=codex AGENT_MODEL=gpt-6.1-sol AGENT_REASONING=medium ... (defaults)
  *
- * Needs a logged-in Claude Code CLI (`claude auth login`). Uses your plan's usage.
+ * Needs a logged-in Codex CLI (default) or Claude Code CLI. Codex reports token usage but no USD cost.
  */
 import { spawn, spawnSync } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
 import net from 'node:net';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { createWriteStream, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { chromiumForMcp } from '../adapters.js';
@@ -23,14 +23,23 @@ import { PILOT, TASKS } from './tasks.js';
 import type { AgentTask } from './tasks.js';
 import { aggregateUsage, assertCompatibleResume, classifyAttempt, hashSources, makeMetadata, parseClaudeStream, validateFlag, validatePositiveInt } from './integrity.js';
 import type { AttemptStatus, RunMetadata, StreamUsage } from './integrity.js';
+import { codexArgs, rawMcpToolName } from './codex-config.js';
+import { parseCodexStream } from './codex.js';
+import type { ParsedCodexStream } from './codex.js';
 
 const REPO = path.resolve(import.meta.dirname, '..', '..');
 const OUT = path.join(REPO, 'bench', 'results');
-const MODEL = process.env.AGENT_MODEL ?? 'claude-sonnet-4-6';
+type Provider = 'codex' | 'claude';
+const PROVIDER_VALUE = process.env.AGENT_PROVIDER ?? 'codex';
+if (PROVIDER_VALUE !== 'codex' && PROVIDER_VALUE !== 'claude') throw new Error(`AGENT_PROVIDER must be codex or claude; received ${JSON.stringify(PROVIDER_VALUE)}.`);
+const PROVIDER: Provider = PROVIDER_VALUE;
+const MODEL = process.env.AGENT_MODEL ?? (PROVIDER === 'codex' ? 'gpt-6.1-sol' : 'claude-sonnet-4-6');
+const REASONING = process.env.AGENT_REASONING ?? 'medium';
+if (PROVIDER === 'codex' && !['low', 'medium', 'high', 'xhigh', 'max'].includes(REASONING)) throw new Error(`AGENT_REASONING must be low, medium, high, xhigh, or max; received ${JSON.stringify(REASONING)}.`);
 const RUNS = validatePositiveInt('AGENT_RUNS', process.env.AGENT_RUNS, 1, 1000);
 const TIMEOUT_S = validatePositiveInt('AGENT_TIMEOUT_S', process.env.AGENT_TIMEOUT_S, 600, 86_400);
 const TIMEOUT_MS = TIMEOUT_S * 1000;
-/** Runs in flight at once. Each run is its own claude process, MCP server and browser. */
+/** Runs in flight at once. Each run is its own provider CLI process, MCP server and browser. */
 const CONCURRENCY = validatePositiveInt('AGENT_CONCURRENCY', process.env.AGENT_CONCURRENCY, 3, 64);
 const RESUME = validateFlag('AGENT_RESUME', process.env.AGENT_RESUME);
 const OVERWRITE = validateFlag('AGENT_OVERWRITE', process.env.AGENT_OVERWRITE);
@@ -41,6 +50,7 @@ if (!MODEL.trim() || /[\r\n\0]/.test(MODEL)) throw new Error(`AGENT_MODEL must b
 type Approach = 'mantis' | 'tree' | 'devtools' | 'browseruse' | 'screenshot';
 const node = process.execPath;
 const MCP_CHROMIUM = chromiumForMcp();
+const CODEX_BIN = process.env.CODEX_BIN ?? 'codex';
 const VENV_PY = path.join(REPO, 'bench', 'agent', '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
 const TSX = import.meta.resolve('tsx');
 interface ServerSpec { command: string; args: string[]; env?: Record<string, string> }
@@ -55,7 +65,7 @@ function sourceFilesUnder(folder: string): string[] {
 /**
  * Start the approach's MCP server ourselves, let it warm up, and expose it on a local port. Claude
  * Code then launches bench/agent/bridge.mjs, which connects instantly. Without this, a slow-starting
- * server (browser-use: ~6 s of Python imports) is still "pending" when Claude starts, the model gets
+ * server (browser-use: ~6 s of Python imports) is still "pending" when the agent starts, the model gets
  * no tools and imitates tool calls as text. Startup time stays out of every approach's measured time.
  */
 async function startServer(spec: ServerSpec, warmMs: number, log: string): Promise<{ port: number; stop: () => void; failure: () => string | null }> {
@@ -63,6 +73,7 @@ async function startServer(spec: ServerSpec, warmMs: number, log: string): Promi
   let stderr = '';
   let stopping = false;
   let childFailure: string | null = null;
+  const sockets = new Set<net.Socket>();
   const failed = new Promise<never>((_, reject) => {
     child.once('error', (error) => { childFailure = error.message; reject(error); });
     child.once('exit', (code, signal) => {
@@ -74,9 +85,18 @@ async function startServer(spec: ServerSpec, warmMs: number, log: string): Promi
   });
   void failed.catch(() => {});
   child.stderr?.on('data', (d) => { stderr += d; });
+  child.stdin?.on('error', () => { /* a reconnecting MCP client may close its socket */ });
+  child.stdout?.on('error', (error) => { if (!stopping) childFailure = `server stdout failed: ${error.message}`; });
   const srv = net.createServer((sock) => {
-    sock.pipe(child.stdin!);
-    child.stdout!.pipe(sock);
+    sockets.add(sock);
+    sock.on('error', () => { /* MCP clients can disconnect while the child remains healthy */ });
+    sock.on('close', () => {
+      sockets.delete(sock);
+      sock.unpipe(child.stdin!);
+      child.stdout!.unpipe(sock);
+    });
+    sock.pipe(child.stdin!, { end: false });
+    child.stdout!.pipe(sock, { end: false });
   });
   try {
     await new Promise<void>((ok, fail) => {
@@ -102,6 +122,9 @@ async function startServer(spec: ServerSpec, warmMs: number, log: string): Promi
       stopped = true;
       stopping = true;
       srv.close();
+      for (const sock of sockets) sock.destroy();
+      child.stdout?.unpipe();
+      child.stdin?.end();
       writeFileSync(log, stderr);
       // The server may have started a browser: end the whole process tree.
       if (process.platform === 'win32' && child.pid) spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true });
@@ -200,7 +223,7 @@ function preflightApproaches(approaches: Approach[]): void {
     screenshot: path.join(REPO, 'bench', 'agent', 'screenshot-mcp.ts'),
   };
   const missing = [path.join(REPO, 'dist', 'server.js'), ...approaches.map((a) => requirements[a])].filter((p, i, list) => list.indexOf(p) === i && !existsSync(p));
-  if (missing.length) throw new Error(`Benchmark preflight failed; required approach dependencies are missing: ${missing.join(', ')}. Install/build them before starting Claude.`);
+  if (missing.length) throw new Error(`Benchmark preflight failed; required approach dependencies are missing: ${missing.join(', ')}. Install/build them before starting the selected agent CLI.`);
   if (!existsSync(node)) throw new Error(`Benchmark preflight failed; Node executable is missing: ${node}`);
   if (MCP_CHROMIUM && !existsSync(MCP_CHROMIUM)) throw new Error(`Benchmark preflight failed; Playwright Chromium is missing: ${MCP_CHROMIUM}`);
 }
@@ -225,6 +248,7 @@ interface AttemptResult {
   toolErrors: number;
   observationChars: number;
   observationImages: number;
+  totalInputTokens: number | null;
   usageComplete: boolean;
   usage: StreamUsage;
   timings: { mcpStartupMs: number; cliStartupMs: number | null; cliExecutionMs: number | null; cliWallMs: number | null; verificationMs: number; cleanupMs: number };
@@ -232,6 +256,7 @@ interface AttemptResult {
   signal: string | null;
   timedOut: boolean;
   fixtureCheck: { ok: boolean | null; details?: string } | null;
+  diagnostics: string[];
 }
 
 interface RunResult {
@@ -266,7 +291,7 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
   let fixtureCheck: AttemptResult['fixtureCheck'] = null;
   let verificationMs = 0;
   let cleanupMs = 0;
-  let parsed = parseClaudeStream('');
+  let parsed: ReturnType<typeof parseClaudeStream> | ReturnType<typeof parseCodexStream> = parseClaudeStream('');
   try {
     const cfg = path.join(dir, 'mcp.json');
     const [name, spec] = Object.entries(APPROACHES[approach].server(dir))[0]!;
@@ -278,17 +303,27 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
     const taskBase = task.site === 'local' ? fixtures.baseFor(task.id, attemptId) : base;
     const prompt = `${task.prompt(taskBase)}\n\nUse only the browser tools you have. When you are done, end your reply with one line: ANSWER: <answer>`;
     const a = APPROACHES[approach];
-    const args = [
-      '-p', prompt, '--output-format', 'stream-json', '--verbose', '--model', MODEL, '--tools', '', '--strict-mcp-config', '--mcp-config', cfg,
-      '--setting-sources', '', '--allowedTools', ...a.allow, ...(a.deny ? ['--disallowedTools', ...a.deny] : []),
-    ];
+    const codexServer = {
+      name, command: node, args: bridge.args,
+      enabledTools: a.allow.map((tool) => rawMcpToolName(name, tool)).filter((tool): tool is string => tool !== null),
+      disabledTools: (a.deny ?? []).map((tool) => rawMcpToolName(name, tool)).filter((tool): tool is string => tool !== null),
+    };
+    const cliCommand = PROVIDER === 'codex' ? CODEX_BIN : claudeBin();
+    const args = PROVIDER === 'codex'
+      ? codexArgs({ model: MODEL, reasoning: REASONING, prompt, cwd: dir, server: codexServer })
+      : [
+        '-p', prompt, '--output-format', 'stream-json', '--verbose', '--model', MODEL, '--tools', '', '--strict-mcp-config', '--mcp-config', cfg,
+        '--setting-sources', '', '--allowedTools', ...a.allow, ...(a.deny ? ['--disallowedTools', ...a.deny] : []),
+      ];
     cliStart = Date.now();
     processResult = await new Promise<typeof processResult>((done) => {
       // Wait for MCP servers to connect before the first turn (otherwise the model may start with no tools).
       const env = { ...process.env, MCP_CONNECTION_NONBLOCKING: 'false', MCP_TIMEOUT: '60000' };
-      const p = spawn(claudeBin(), args, { cwd: dir, stdio: ['ignore', 'pipe', 'pipe'], env });
+      const p = spawn(cliCommand, args, { cwd: dir, stdio: ['ignore', 'pipe', 'pipe'], env });
       let stream = '';
       let stderr = '';
+      const stdoutLog = createWriteStream(path.join(logDir, `${unique}.jsonl`));
+      stdoutLog.on('error', () => { /* keep the attempt alive if the diagnostic log cannot be written */ });
       let timedOut = false;
       let settled = false;
       let initAt: number | null = null;
@@ -301,7 +336,10 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
       };
       p.stdout.on('data', (d) => {
         stream += String(d);
-        if (initAt === null && /"type"\s*:\s*"system".*"subtype"\s*:\s*"init"/.test(stream)) initAt = Date.now();
+        stdoutLog.write(d);
+        if (initAt === null && (PROVIDER === 'codex'
+          ? /"type"\s*:\s*"thread\.started"/.test(stream)
+          : /"type"\s*:\s*"system".*"subtype"\s*:\s*"init"/.test(stream))) initAt = Date.now();
       });
       p.stderr.on('data', (d) => { stderr += String(d); });
       const terminateTree = (): void => {
@@ -314,23 +352,27 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
         timedOut = true;
         terminateTree();
         // A descendant can keep stdout open; stop waiting after bounded tree termination.
-        killGrace = setTimeout(() => finish({ out: stream, exitCode: null, signal: 'termination-timeout', timedOut, launchError: null, initAt, exitAt: Date.now() }), 5_000);
+        killGrace = setTimeout(() => {
+          const result = { out: stream, exitCode: null, signal: 'termination-timeout', timedOut, launchError: null, initAt, exitAt: Date.now() };
+          stdoutLog.end(() => finish(result));
+        }, 5_000);
       }, TIMEOUT_MS);
       p.on('error', (error) => {
         clearTimeout(timer);
         if (killGrace) clearTimeout(killGrace);
-        finish({ out: stream, exitCode: null, signal: null, timedOut, launchError: error.message, initAt, exitAt: Date.now() });
+        const result = { out: stream, exitCode: null, signal: null, timedOut, launchError: error.message, initAt, exitAt: Date.now() };
+        stdoutLog.end(() => finish(result));
       });
       p.on('close', (code, signal) => {
         clearTimeout(timer);
         if (killGrace) clearTimeout(killGrace);
         const exitAt = Date.now();
         try { writeFileSync(path.join(logDir, `${unique}.stderr.log`), stderr); } catch { /* event JSON remains available */ }
-        finish({ out: stream, exitCode: code, signal, timedOut, launchError: null, initAt, exitAt });
+        const result = { out: stream, exitCode: code, signal, timedOut, launchError: null, initAt, exitAt };
+        stdoutLog.end(() => finish(result));
       });
     });
-    parsed = parseClaudeStream(processResult.out);
-    writeFileSync(path.join(logDir, `${unique}.jsonl`), processResult.out);
+    parsed = PROVIDER === 'codex' ? parseCodexStream(processResult.out, name) : parseClaudeStream(processResult.out);
     if (task.site === 'local' && task.check) {
       const verifyStart = Date.now();
       fixtureCheck = await fixtures.verify(task.id, attemptId);
@@ -349,17 +391,25 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
   const answer = (/ANSWER:\s*(.+)/i.exec(parsed.resultText ?? '')?.[1] ?? (parsed.resultText ?? '').slice(-200)).trim().slice(0, 160);
   const connected = parsed.connected;
   const connectionState = connected ? 'connected' : parsed.sawInit ? 'failed' : 'unknown';
-  const status = classifyAttempt({
+  let status = classifyAttempt({
     sawInit: parsed.sawInit, connected, sawResult: parsed.sawResult, resultError: parsed.resultError,
     timedOut: processResult.timedOut, launchError: processResult.launchError ?? startupError,
     exitCode: processResult.exitCode, answerMatches: task.expect.test(parsed.resultText ?? ''),
     hasFixtureCheck: !!task.check, fixtureOk: fixtureCheck?.ok ?? null,
   });
+  const codexConfigFailure = PROVIDER === 'codex' && (parsed as ParsedCodexStream).diagnostics.some((message: string) =>
+    /Code Mode is unavailable|codex-code-mode-host/i.test(message));
+  if (codexConfigFailure) status = 'cli_error';
+  if (PROVIDER === 'codex' && 'policyViolation' in parsed && parsed.policyViolation) status = 'cli_error';
   let error = '';
   if (status === 'connection_failure') error = `MCP connection failed: ${parsed.mcpStatuses.join(', ') || 'no server reported connected'}`;
   else if (status === 'timeout') error = `timed out after ${TIMEOUT_S}s`;
-  else if (status === 'crash') error = processResult.launchError || startupError || `Claude CLI exited with code ${processResult.exitCode ?? 'unknown'}`;
-  else if (status === 'cli_error') error = (parsed.resultText ?? 'Claude CLI returned no result').slice(0, 200);
+  else if (status === 'crash') error = processResult.launchError || startupError || `${PROVIDER} CLI exited with code ${processResult.exitCode ?? 'unknown'}`;
+  else if (status === 'cli_error') error = codexConfigFailure
+    ? 'Codex Code Mode host is unavailable; check the installed CLI companion executable and configuration.'
+    : PROVIDER === 'codex' && 'policyViolation' in parsed && parsed.policyViolation
+    ? 'Codex used a local command tool outside the browser MCP comparison.'
+    : (parsed.resultText ?? `${PROVIDER} CLI returned no result`).slice(0, 200);
   else if (status === 'wrong_answer') error = fixtureCheck?.details || 'answer did not match the expected result';
   const cliExitAt = processResult.exitAt;
   const cliWallMs = cliStart === null || cliExitAt === null ? null : cliExitAt - cliStart;
@@ -367,6 +417,9 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
     attempt, status, connected, connectionState, error, answer, initModel: parsed.initModel, resolvedModels: parsed.resolvedModels,
     turns: parsed.turns, toolCalls: parsed.toolCalls, toolErrors: parsed.toolErrors,
     observationChars: parsed.observationChars, observationImages: parsed.observationImages,
+    totalInputTokens: PROVIDER === 'codex' ? (parsed as ReturnType<typeof parseCodexStream>).totalInputTokens :
+      ([parsed.usage.inputTokens, parsed.usage.cacheWriteTokens, parsed.usage.cacheReadTokens].some((n) => n === null)
+        ? null : (parsed.usage.inputTokens ?? 0) + (parsed.usage.cacheWriteTokens ?? 0) + (parsed.usage.cacheReadTokens ?? 0)),
     usageComplete: parsed.usageComplete, usage: parsed.usage,
     timings: {
       mcpStartupMs, cliStartupMs: processResult.initAt === null || cliStart === null ? null : processResult.initAt - cliStart,
@@ -374,6 +427,7 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
       cliWallMs, verificationMs, cleanupMs,
     },
     exitCode: processResult.exitCode, signal: processResult.signal, timedOut: processResult.timedOut, fixtureCheck,
+    diagnostics: PROVIDER === 'codex' ? (parsed as ParsedCodexStream).diagnostics : [],
   };
 }
 
@@ -384,17 +438,17 @@ function report(results: RunResult[], approaches: Approach[], tasks: AgentTask[]
   const L: string[] = [];
   L.push('# Real-agent eval');
   L.push('');
-  L.push(`> Claude Code (\`claude -p\`, requested model \`${MODEL}\`) does each task with one browser approach at a time. ` +
-    'Correctness uses the expected answer and, for instrumented local fixtures, a page-state check. Token and cost values come from Claude Code; unknown values stay unknown. An LLM is in the loop, so numbers vary run to run.');
+  L.push(`> ${PROVIDER === 'codex' ? 'Codex CLI (`codex exec`)' : 'Claude Code (`claude -p`)'} (requested model \`${MODEL}\`${PROVIDER === 'codex' ? `, reasoning ${REASONING}` : ''}) does each task with one browser approach at a time. ` +
+    `Correctness uses the expected answer and, for instrumented local fixtures, a page-state check. Token values come from the ${PROVIDER === 'codex' ? 'Codex event stream' : 'Claude stream'}; ${PROVIDER === 'codex' ? 'Codex does not report USD cost, so cost remains unknown' : 'reported cost is retained'}; missing values stay unknown. An LLM is in the loop, so numbers vary run to run.`);
   L.push('');
   L.push(`- Date: ${new Date().toISOString().slice(0, 10)}; runs per task and approach: ${RUNS}; ${CONCURRENCY} runs in parallel.`);
   L.push(`- Scope: ${tasks.length} tasks × ${approaches.length} approaches × ${RUNS} runs = ${tasks.length * approaches.length * RUNS} logical runs; ${results.length} recorded so far; ${results.reduce((n, r) => n + r.attempts.length, 0)} total attempts including retries.`);
-  L.push(`- Claude CLI version: ${metadata.cliVersion ?? 'unknown'}; resolved model(s): ${[...new Set(results.flatMap((r) => r.attempts.flatMap((a) => a.resolvedModels)))].join(', ') || 'unknown'}.`);
-  L.push('- MCP startup (spawn + warm-up) is separate from Claude CLI wall time. CLI wall time runs from process launch to exit; CLI startup is launch to first init event, and CLI execution is init to exit. Fixture verification and cleanup are timed separately. These include contention from parallel runs. No tool-time vs model-time split is reported because the stream does not provide a reliable decomposition.');
-  L.push('- Browser observation size counts text characters and image blocks returned by browser MCP tools. It is a separate diagnostic from Claude-reported input tokens; the benchmark does not subtract it to estimate overhead.');
+  L.push(`- ${PROVIDER === 'codex' ? 'Codex' : 'Claude'} CLI version: ${metadata.cliVersion ?? 'unknown'}; resolved model(s): ${[...new Set(results.flatMap((r) => r.attempts.flatMap((a) => a.resolvedModels)))].join(', ') || 'unknown'}.`);
+  L.push(`- MCP startup (spawn + warm-up) is separate from ${PROVIDER === 'codex' ? 'Codex' : 'Claude'} CLI wall time. CLI wall time runs from process launch to exit; CLI startup is launch to first ${PROVIDER === 'codex' ? '`thread.started`' : 'init'} event, and CLI execution is that event to process exit. Fixture verification and cleanup are timed separately. These include contention from parallel runs. No tool-time vs model-time split is reported because the stream does not provide a reliable decomposition.`);
+  L.push(`- Browser observation size counts text characters and image blocks returned by browser MCP tools. It is a separate diagnostic from ${PROVIDER === 'codex' ? 'Codex-reported' : 'Claude-reported'} input tokens; the benchmark does not subtract it to estimate overhead.`);
   L.push('- Mantis: all its tools. Accessibility tree: Playwright MCP 0.0.83 (headless, isolated) without its JavaScript-running tools. ' +
     'Screenshots: a minimal computer-use-style server (bench/agent/screenshot-mcp.ts): screenshot, click(x,y), type, key, scroll, back.');
-  L.push('- No skill, no system prompt beyond the task; built-in tools off.');
+  L.push(`- No skill, no system prompt beyond the task; built-in tools off. ${PROVIDER === 'codex' ? 'Codex shell, web, app, skill-discovery, browser, computer, and image-view tools are disabled; only the selected approach MCP server is configured.' : ''}`);
   L.push('- A retry after an MCP connection failure is retained as a separate attempt and its measured cost is included. Connection failures are excluded from the correctness denominator; timeouts, CLI failures, and wrong answers after connection count as attempted failures.');
   L.push('');
   L.push('## Summary');
@@ -463,7 +517,8 @@ const validApproaches: Approach[] = ['mantis', 'tree', 'devtools', 'browseruse',
 if (!approaches.length || approaches.some((a) => !validApproaches.includes(a)) || new Set(approaches).size !== approaches.length) {
   throw new Error(`AGENT_APPROACHES must be a comma-separated unique list from: ${validApproaches.join(', ')}`);
 }
-const rawName = process.env.AGENT_OUT ?? (want === PILOT.join(',') ? 'agent-pilot' : 'agent');
+const providerPrefix = PROVIDER === 'codex' ? 'codex' : 'claude';
+const rawName = process.env.AGENT_OUT ?? `${providerPrefix}-agent-verified${want === PILOT.join(',') ? '-pilot' : ''}`;
 if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/.test(rawName) || rawName === '.' || rawName === '..') throw new Error(`invalid AGENT_OUT name: ${JSON.stringify(rawName)}`);
 const name = rawName;
 const jobs: { t: AgentTask; a: Approach; run: number }[] = [];
@@ -481,16 +536,23 @@ if (outputExists && !RESUME && !OVERWRITE) {
 }
 if (!existsSync(jsonPath) && RESUME) throw new Error(`AGENT_RESUME=1 requested, but ${jsonPath} does not exist.`);
 const settings = {
-  tasks: tasks.map((t) => t.id), approaches, runs: RUNS, model: MODEL, timeoutMs: TIMEOUT_MS, concurrency: CONCURRENCY,
-  toolRestrictions: Object.fromEntries(approaches.map((a) => [a, { allow: APPROACHES[a].allow, deny: APPROACHES[a].deny ?? [] }])),
+  provider: PROVIDER,
+  tasks: tasks.map((t) => t.id), approaches, runs: RUNS, model: MODEL, reasoning: PROVIDER === 'codex' ? REASONING : 'not-applicable', timeoutMs: TIMEOUT_MS, concurrency: CONCURRENCY,
+  toolRestrictions: {
+    builtins: PROVIDER === 'codex'
+      ? ['shell', 'apps', 'plugins', 'multi_agent', 'goals', 'sleep_tool', 'skill_search', 'view_image', 'browser_use', 'computer_use', 'in_app_browser', 'web_search']
+      : ['Claude built-ins disabled by --tools ""'],
+    approaches: Object.fromEntries(approaches.map((a) => [a, { allow: APPROACHES[a].allow, deny: APPROACHES[a].deny ?? [] }])),
+  },
   runtime: { nodeVersion: process.version, platform: process.platform, arch: process.arch },
   environment: {
     MANTIS_MEMORY: process.env.MANTIS_MEMORY ?? null,
     MANTIS_HEADLESS: process.env.MANTIS_HEADLESS ?? null,
     BENCH_CHROMIUM: process.env.BENCH_CHROMIUM ?? null,
     PLAYWRIGHT_BROWSERS_PATH: process.env.PLAYWRIGHT_BROWSERS_PATH ?? null,
+    CODEX_BIN: process.env.CODEX_BIN ?? null,
     CLAUDE_BIN: process.env.CLAUDE_BIN ?? null,
-    resolvedClaudeCommand: claudeBin(),
+    resolvedCliCommand: PROVIDER === 'codex' ? CODEX_BIN : claudeBin(),
   },
   browserPaths: {
     chromiumForMcp: MCP_CHROMIUM ?? null,
@@ -500,14 +562,16 @@ const settings = {
 preflightApproaches(approaches);
 const sourceFiles = [
   'bench/agent/run.ts', 'bench/agent/integrity.ts', 'bench/agent/tasks.ts', 'bench/agent/bridge.mjs',
+  'bench/agent/codex.ts', 'bench/agent/codex-config.ts',
   'bench/agent/screenshot-mcp.ts', 'bench/fixtures.ts', 'bench/fixtures-more.ts', 'bench/adapters.ts',
   ...sourceFilesUnder('src'), ...sourceFilesUnder('dist'), 'package-lock.json',
 ];
 const sourceHashes = hashSources(REPO, sourceFiles);
-const cliProbe = spawnSync(claudeBin(), ['--version'], { encoding: 'utf8', timeout: 15_000, windowsHide: true });
-if (cliProbe.error || cliProbe.status !== 0) throw new Error(`Benchmark preflight failed; Claude CLI version could not be read: ${cliProbe.error?.message ?? cliProbe.stderr ?? `exit ${cliProbe.status}`}`);
+const selectedCliCommand = PROVIDER === 'codex' ? CODEX_BIN : claudeBin();
+const cliProbe = spawnSync(selectedCliCommand, ['--version'], { encoding: 'utf8', timeout: 15_000, windowsHide: true });
+if (cliProbe.error || cliProbe.status !== 0) throw new Error(`Benchmark preflight failed; ${PROVIDER} CLI version could not be read: ${cliProbe.error?.message ?? cliProbe.stderr ?? `exit ${cliProbe.status}`}`);
 const cliVersion = (cliProbe.stdout || cliProbe.stderr).trim().slice(0, 200) || null;
-if (!cliVersion) throw new Error('Benchmark preflight failed; Claude CLI returned an empty version string.');
+if (!cliVersion) throw new Error(`Benchmark preflight failed; ${PROVIDER} CLI returned an empty version string.`);
 const metadata = makeMetadata(settings, sourceHashes, cliVersion);
 if (existsSync(jsonPath) && RESUME) {
   const saved: unknown = JSON.parse(readFileSync(jsonPath, 'utf8'));
@@ -551,8 +615,8 @@ try {
         observationChars: attempts.reduce((s, x) => s + x.observationChars, 0),
         observationImages: attempts.reduce((s, x) => s + x.observationImages, 0),
         inputTokens: nullableSum('inputTokens'), cacheWriteTokens: nullableSum('cacheWriteTokens'), cacheReadTokens: nullableSum('cacheReadTokens'),
-        totalInputTokens: [usage.inputTokens, usage.cacheWriteTokens, usage.cacheReadTokens].some((x) => x === null) ? null :
-          (usage.inputTokens ?? 0) + (usage.cacheWriteTokens ?? 0) + (usage.cacheReadTokens ?? 0),
+        totalInputTokens: attempts.some((x) => !x.usageComplete || x.totalInputTokens === null)
+          ? null : attempts.reduce((sum, x) => sum + (x.totalInputTokens ?? 0), 0),
         outputTokens: nullableSum('outputTokens'), costUsd: nullableSum('costUsd'),
         timings: {
           mcpStartupMs: attempts.reduce((s, x) => s + x.timings.mcpStartupMs, 0),
@@ -569,7 +633,7 @@ try {
       console.log(`[agent] (${results.length}/${jobs.length}) ${t.id} / ${a} / run ${run} ... ${r.status} · ${r.toolCalls} tool calls · ${fmtMaybe(r.totalInputTokens)} input · ${r.timings.cliWallMs === null ? 'CLI time unknown' : `${(r.timings.cliWallMs / 1000).toFixed(1)}s`}${r.error ? ` · ${r.error}` : ''}`);
     }
   };
-  console.log(`[agent] ${todo.length} runs to do (${done.size} kept), ${Math.min(CONCURRENCY, todo.length)} at a time, model ${MODEL}, CLI ${cliVersion ?? 'unknown'}`);
+  console.log(`[agent] ${todo.length} runs to do (${done.size} kept), ${Math.min(CONCURRENCY, todo.length)} at a time, provider ${PROVIDER}, model ${MODEL}, CLI ${cliVersion ?? 'unknown'}`);
   await Promise.all(Array.from({ length: Math.min(CONCURRENCY, todo.length) }, worker));
 } finally {
   await fx.close();

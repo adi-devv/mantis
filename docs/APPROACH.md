@@ -166,7 +166,7 @@ Read this honestly:
 
 ```mermaid
 flowchart LR
-    A["✅ Never lose what<br/>the tree has (14/14)"] --> B["Faster<br/>(latency per step)"] --> C["Better<br/>(beat the tree)"] --> D["Real-agent eval:<br/>Claude × Mantis / tree / screenshots"] --> E["Publish the<br/>proven claim"]
+    A["✅ Never lose what<br/>the tree has (14/14)"] --> B["Faster<br/>(latency per step)"] --> C["Better<br/>(beat the tree)"] --> D["Real-agent eval:<br/>Codex × five browser approaches"] --> E["Publish the<br/>proven claim"]
 ```
 
 Token cost is solved. Two things are not proven yet: **is it fast**, and **does an agent
@@ -213,9 +213,11 @@ actually succeed more often**. Work, in order:
     favored screenshots and forms were level with Chrome DevTools MCP. Those published numbers
     predate the integrity fixes to retry accounting, independent fixture grading, usage reporting,
     and resumable-result validation. Treat them as historical; rerun before relying on a fresh
-    comparison.
-11. **Next:** several runs per task (variance), harder tasks that separate tools on success,
-    not only cost, and Codex as a second agent.
+    comparison. The harness now defaults to Codex (`gpt-6.1-sol`, medium reasoning), isolates
+    only the selected browser MCP server, captures Codex stream usage, and leaves USD cost unknown.
+    The published Claude run remains historical; no Codex results have been published yet.
+11. **Next:** several Codex runs per task (variance), harder tasks that separate tools on success,
+    not only cost.
 
 The test for every change: **lose nothing the tree has · use fewer tokens · add meaning ·
 don't get slower.**

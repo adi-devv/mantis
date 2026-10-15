@@ -6,11 +6,11 @@ with screenshots.
 | | Token replay | Real-agent eval |
 |---|---|---|
 | Question | What does an agent *receive* per step? | Does an agent *succeed*, and at what cost? |
-| LLM in the loop | No (deterministic) | Yes (Claude Code, `claude -p`) |
-| Measures | tokens and time per step, tasks completed | correct answers, tool calls, tokens, time, cost |
+| LLM in the loop | No (deterministic) | Yes (Codex CLI by default; optional Claude Code) |
+| Measures | tokens and time per step, tasks completed | correct answers, tool calls, tokens, time, and cost when available |
 | Code | `bench/run.ts`, `bench/tasks.ts` | `bench/agent/run.ts`, `bench/agent/tasks.ts` |
-| Results | `results/latest.md` | `results/agent-pilot.md`, `results/agent.md` |
-| Uses your Claude plan | No | Yes |
+| Results | `results/latest.md` | historical Claude: `results/agent-pilot.md`, `results/agent.md`; new runs: `results/codex-agent-verified*` |
+| Uses an agent account | No | Yes (Codex ChatGPT sign-in by default) |
 
 Local tasks run against fixture pages served by `bench/fixtures.ts` (deterministic, known
 answers). Live tasks (Wikipedia, Hacker News, GitHub, MDN) change over time; their numbers
@@ -29,44 +29,52 @@ top of `results/latest.md`.
 
 ## Real-agent eval
 
-Needs a logged-in Claude Code CLI (`claude auth login`).
+Needs a logged-in Codex CLI (`codex login`) by default. `AGENT_PROVIDER=claude` opts into Claude Code.
 
 ```bash
-AGENT_OUT=agent-verified-pilot npm run bench:agent                                      # pilot: 2 tasks x 5 approaches
-AGENT_OUT=agent-verified-all AGENT_TASKS=all AGENT_RUNS=3 npm run bench:agent          # every task, 3 runs each
-AGENT_OUT=agent-verified-forms AGENT_TASKS=cat:forms,login npm run bench:agent          # by category and/or id
-AGENT_OUT=agent-verified-subset AGENT_APPROACHES=mantis,tree npm run bench:agent        # some approaches only
+AGENT_OUT=codex-verified-pilot npm run bench:agent                                      # pilot: 2 tasks x 5 approaches
+AGENT_OUT=codex-verified-all AGENT_TASKS=all AGENT_RUNS=3 npm run bench:agent          # every task, 3 runs each
+AGENT_OUT=codex-verified-forms AGENT_TASKS=cat:forms,login npm run bench:agent          # by category and/or id
+AGENT_OUT=codex-verified-subset AGENT_APPROACHES=mantis,tree npm run bench:agent        # some approaches only
 ```
 
 | Variable | Default | Meaning |
 |---|---|---|
+| `AGENT_PROVIDER` | `codex` | `codex` or `claude` |
 | `AGENT_TASKS` | pilot | `all`, task ids, or `cat:<category>`, comma-separated |
 | `AGENT_APPROACHES` | all five approaches | `mantis,tree,devtools,browseruse,screenshot` |
 | `AGENT_RUNS` | 1 | runs per task and approach |
-| `AGENT_MODEL` | `claude-sonnet-4-6` | model passed to `claude -p` |
+| `AGENT_MODEL` | `gpt-6.1-sol` for Codex; `claude-sonnet-4-6` for Claude | selected provider's model |
+| `AGENT_REASONING` | `medium` | Codex reasoning effort (`low`, `medium`, `high`, `xhigh`, `max`) |
+| `CODEX_BIN` | installed Codex CLI | optional path override for `codex.exe` / `codex` |
 | `AGENT_CONCURRENCY` | 3 | runs in parallel |
 | `AGENT_TIMEOUT_S` | 600 | per-run timeout |
-| `AGENT_OUT` | `agent-pilot` / `agent` | results file name (must not already exist unless resuming or overwriting) |
+| `AGENT_OUT` | `codex-agent-verified-pilot` / `codex-agent-verified` | results file name (must not already exist unless resuming or overwriting) |
 | `AGENT_RESUME` | 0 | resume only when schema, settings, and source fingerprint match exactly |
 | `AGENT_OVERWRITE` | 0 | explicitly replace an existing result file |
 
-Each attempt is isolated: its own `claude -p` process, MCP server, and browser, with built-in
-tools off, no user settings, and only that approach's browser tools allowed. The prompt is the
-same for every approach. A task and approach run is retried once only after an MCP connection
+Each attempt is isolated: its own provider CLI process, MCP server, and browser, with built-in
+tools off, user config/rules and project instructions excluded, and only that approach's browser
+MCP tools allowed. Codex uses read-only sandbox mode and a required, preapproved warmed bridge server;
+its Code Mode host stays enabled as the MCP transport shim. Shell,
+apps, plugins, web search, skills discovery, browser use, computer use, image viewing, and other
+non-MCP tools are disabled. The prompt is the same for every approach. A task and approach run is retried once only after an MCP connection
 failure; both attempts and their usage/cost remain in the output. Connection failures are shown
 separately and excluded from the correctness denominator. A timeout, CLI error, crash, grader
 failure, or wrong answer after launch counts as an attempted failure, including a timeout after
 MCP connected.
 
 Claude's stream supplies normal input, cache-write input, cache-read input, output tokens, cost,
-and model metadata. Missing usage stays `unknown`, rather than becoming zero. If a stream ends
+and model metadata. Codex reports total input (including cached input), cached input, cache-write
+input when available, and output tokens; the report derives normal input as total minus cached.
+Codex does not report USD cost, so cost stays `unknown`. Missing usage stays `unknown`, rather than becoming zero. If a stream ends
 without its final usage event, observed partial usage stays in that attempt's JSON record while
 exact aggregate usage is marked unknown. The report also counts browser tool output characters and
 image blocks. This is a separate diagnostic from billed input tokens; the benchmark does not
 subtract one from the other.
 
-The report separates MCP startup (server spawn and warm-up) from Claude CLI time. CLI startup is
-launch to its first init event; CLI execution is init to process exit. Fixture verification and
+The report separates MCP startup (server spawn and warm-up) from provider CLI time. CLI startup is
+launch to Codex `thread.started` or Claude's first init event; CLI execution is that event to process exit. Fixture verification and
 cleanup are timed separately. These are wall-clock boundaries and include parallel-run contention.
 The CLI does not provide a reliable tool-time versus model-time split, so the benchmark does not
 estimate one. Recovered MCP tool errors are counted separately and do not erase a correct final
@@ -75,9 +83,9 @@ browser environment, source hashes, and configuration fingerprint; resume reject
 changed settings/source/environment. Existing results require `AGENT_RESUME=1` or
 `AGENT_OVERWRITE=1`.
 
-The committed `agent*.json` outputs are historical and predate schema 2, so they cannot be
-resumed. Use a new `AGENT_OUT` name for a fresh benchmark; the default pilot and full-run names
-already exist in the repository and are protected by the overwrite guard.
+The committed Claude `agent*.json` outputs are historical and predate schema 3, so they cannot be
+resumed. Fresh Codex runs use `codex-agent-verified-pilot` and `codex-agent-verified`; use a new
+`AGENT_OUT` name for another run. Existing outputs remain protected by the overwrite guard.
 
 Local fixture pages send browser events and page state to an independent grader using injected
 event listeners and keepalive requests. This adds browser work that is not separately measured,

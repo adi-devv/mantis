@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-export const RESULT_SCHEMA_VERSION = 2;
+export const RESULT_SCHEMA_VERSION = 3;
 
 export type AttemptStatus = 'success' | 'wrong_answer' | 'connection_failure' | 'timeout' | 'crash' | 'cli_error';
 
@@ -11,9 +11,9 @@ export function classifyAttempt(input: {
   launchError: string | null; exitCode: number | null; answerMatches: boolean;
   hasFixtureCheck: boolean; fixtureOk: boolean | null;
 }): AttemptStatus {
-  if (input.sawInit && !input.connected) return 'connection_failure';
   if (input.timedOut) return 'timeout';
   if (input.launchError) return 'crash';
+  if (input.sawInit && !input.connected) return 'connection_failure';
   if (input.resultError) return 'cli_error';
   if (!input.sawResult) return input.exitCode !== 0 ? 'crash' : 'cli_error';
   if (!input.connected) return 'connection_failure';
@@ -158,10 +158,12 @@ export function parseClaudeStream(stream: string): ParsedStream {
 }
 
 export interface ConfigForFingerprint {
+  provider: 'codex' | 'claude';
   tasks: string[];
   approaches: string[];
   runs: number;
   model: string;
+  reasoning: string;
   timeoutMs: number;
   concurrency: number;
   toolRestrictions: Record<string, unknown>;

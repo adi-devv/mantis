@@ -136,4 +136,12 @@ Kept current: updated whenever work lands or a decision changes direction.
   saved input/output token and tool-call counts across all 110 historical streams; offline fake-CLI
   crash, resume, and overwrite checks passed. Compatible resume correctly found zero missing runs,
   while a changed timeout fingerprint was rejected. No paid Claude eval was run. Historical JSON
-  outputs predate schema 2 and cannot be resumed; rerun before publishing updated comparisons.
+  outputs predate the current schema and cannot be resumed; rerun before publishing updated comparisons.
+- 2026-10-15: Added Codex CLI as the default real-agent provider (`gpt-6.1-sol`, medium reasoning),
+  with Claude retained as an explicit optional provider. Codex runs use a read-only ephemeral CLI
+  session, isolated provider config, one required warmed browser MCP bridge, and disabled built-in
+  shell, web, app, skill discovery, browser, computer, and image-view tools. The JSONL parser
+  separates normal/cached/cache-write/output tokens, counts browser observations, records resolved
+  models, and treats USD cost as unavailable. Codex runs use separate `codex-agent-verified*`
+  outputs; existing Claude results remain historical and schema 3 cannot resume them. No Codex
+  benchmark cases have been run or published yet.

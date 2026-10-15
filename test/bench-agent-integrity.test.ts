@@ -68,6 +68,7 @@ describe('real-agent benchmark integrity helpers', () => {
     const common = { sawInit: true, connected: true, sawResult: false, resultError: false, launchError: null, answerMatches: false, hasFixtureCheck: false, fixtureOk: null };
     expect(classifyAttempt({ ...common, timedOut: true, exitCode: null })).toBe('timeout');
     expect(classifyAttempt({ ...common, timedOut: false, exitCode: 1 })).toBe('crash');
+    expect(classifyAttempt({ ...common, connected: false, timedOut: true, exitCode: null })).toBe('timeout');
   });
 
   it('aggregates retry usage without silently converting wholly unknown usage to zero', () => {
@@ -80,7 +81,7 @@ describe('real-agent benchmark integrity helpers', () => {
 
   it('requires resume schema and fingerprint compatibility', () => {
     const settings = {
-      tasks: ['x'], approaches: ['mantis'], runs: 1, model: 'claude-sonnet-4-6', timeoutMs: 1000, concurrency: 1,
+      provider: 'claude' as const, tasks: ['x'], approaches: ['mantis'], runs: 1, model: 'claude-sonnet-4-6', reasoning: 'not-applicable', timeoutMs: 1000, concurrency: 1,
       toolRestrictions: {}, runtime: { nodeVersion: 'v20.14.0', platform: 'win32', arch: 'x64' }, environment: {}, browserPaths: {},
     };
     const expected = makeMetadata(settings, { 'bench/agent/run.ts': 'abc' }, '2.0.0');
