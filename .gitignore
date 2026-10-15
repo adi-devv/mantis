@@ -5,3 +5,4 @@ coverage/
 *.log
 test-results/
 bench/results/partial.*
+bench/_*.ts
