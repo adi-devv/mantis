@@ -6,9 +6,9 @@
  * to anything outside its own body. Only `import type`-style declarations (erased
  * at compile time) may live at module level.
  *
- * Known gaps: closed shadow roots are unreadable from script, and iframes are
- * skipped entirely (same-origin frames would need frame-aware element handles
- * and coordinate translation; deferred).
+ * Iframes: the walker only marks them (a region node carrying `frame`); capture() walks
+ * each frame separately and splices its nodes in. Known gap: closed shadow roots are
+ * unreadable from script.
  */
 
 export type NodeKind = 'interactive' | 'heading' | 'region' | 'text' | 'prose';
@@ -17,6 +17,8 @@ export interface RawNode {
   kind: NodeKind;
   /** Stable element number; only interactive nodes have one. */
   id?: number;
+  /** Iframe placeholder regions only: registry number of the <iframe> element (not shown). */
+  frame?: number;
   /** Role for interactive nodes, region label (header, nav, dialog, ...) for regions. */
   role: string;
   name: string;
@@ -74,14 +76,15 @@ export function walker(): WalkResult {
     next: number;
     byId: Map<number, WeakRef<Element>>;
   }
-  const win = window as unknown as { __mantis?: Registry };
-  const reg: Registry = (win.__mantis ??= { ids: new WeakMap(), next: 1, byId: new Map() });
+  // Numbers in a child frame start at its base (10001, 20001, ...) so they never clash with the page's.
+  const win = window as unknown as { __mantis?: Registry; __mantisBase?: number };
+  const reg: Registry = (win.__mantis ??= { ids: new WeakMap(), next: (win.__mantisBase ?? 0) + 1, byId: new Map() });
   /** Elements given a click-type listener by page script (recorded by Mantis's init script, if loaded). */
   const clickListeners = (window as unknown as { __mantisClick?: WeakSet<Element> }).__mantisClick;
 
   const MAX_NODES = 3000;
   const SKIP = new Set([
-    'script', 'style', 'noscript', 'template', 'head', 'svg', 'canvas', 'iframe', 'frame',
+    'script', 'style', 'noscript', 'template', 'head', 'svg', 'canvas',
     'object', 'embed', 'link', 'meta', 'title', 'audio', 'video', 'datalist',
   ]);
   const INTERACTIVE_ROLES = new Set([
@@ -787,9 +790,28 @@ export function walker(): WalkResult {
     }
   }
 
+  /** A visible iframe becomes a region placeholder; capture() fills it with the frame's own nodes. */
+  function frameMark(el: Element, parent: number, depth: number): void {
+    if (el.getAttribute('aria-hidden') === 'true') return;
+    const cs = getComputedStyle(el);
+    if (cs.display === 'none' || cs.visibility !== 'visible' || parseFloat(cs.opacity) === 0) return;
+    const r = el.getBoundingClientRect();
+    if (r.width < 20 || r.height < 20 || !inDoc(r)) return;
+    let id = reg.ids.get(el);
+    if (id === undefined) {
+      id = reg.next++;
+      reg.ids.set(el, id);
+      reg.byId.set(id, new WeakRef(el));
+    }
+    let name = collapse(el.getAttribute('title') || el.getAttribute('aria-label') || el.getAttribute('name') || '');
+    if (!name) { try { name = new URL((el as HTMLIFrameElement).src).hostname; } catch { /* srcdoc / about:blank */ } }
+    nodes.push(stamp({ kind: 'region', role: 'iframe', name: cap(name, 60), frame: id, states: [], parent, depth, inViewport: inView(r), covered: false }, r));
+  }
+
   function visit(el: Element, parent: number, depth: number, box: DOMRect): void {
     if (nodes.length >= MAX_NODES) { truncated = true; return; }
     if (SKIP.has(el.localName)) return;
+    if (el.localName === 'iframe' || el.localName === 'frame') { frameMark(el, parent, depth); return; }
     if (el.getAttribute('aria-hidden') === 'true' || (el as HTMLElement).inert) return;
     const cs = getComputedStyle(el);
     if (cs.display === 'none' || cs.contentVisibility === 'hidden' || parseFloat(cs.opacity) === 0) return;
@@ -917,7 +939,7 @@ export function walker(): WalkResult {
   // Drop regions left with no content, then compact indices.
   const filled = nodes.map(() => false);
   for (let i = nodes.length - 1; i >= 0; i--) {
-    if (nodes[i].kind === 'region' && !filled[i]) keep[i] = false;
+    if (nodes[i].kind === 'region' && !filled[i] && nodes[i].frame === undefined) keep[i] = false;
     if (keep[i] && nodes[i].parent >= 0) filled[nodes[i].parent] = true;
   }
   const remap: number[] = [];

@@ -25,6 +25,7 @@ const STRUCTURAL = new Set([
   'form', 'table', 'rowgroup', 'row', 'LayoutTable', 'LayoutTableRow', 'LayoutTableCell', 'Canvas', 'figure', 'article',
   'DescriptionList', 'term', 'definition', 'blockquote', 'Abbr', 'emphasis', 'strong', 'code', 'time', 'superscript', 'subscript',
   'mark', 'cell', 'gridcell', // a cell's name is its contents glued together; the contents are checked one by one
+  'Iframe', // a frame's title is a label; its contents are checked (zero-size frames are invisible and dropped)
   'MenuListPopup', 'MenuListOption', 'option', 'dialog', 'alertdialog', 'status', 'alert', 'log', 'document', 'application',
 ]);
 

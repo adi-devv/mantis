@@ -519,7 +519,9 @@ export class MantisBrowser {
   private async observe(page: Page): Promise<{ snap: Snapshot; doc: string | null }> {
     const before = await this.pageState(page); // read first: a change during the scan must not be missed
     const snap = await capture(page);
-    this.last = before.doc && before.mut >= 0 ? { page, doc: before.doc, mut: before.mut, snap } : null;
+    // Changes inside an iframe don't move the page's counter, so pages with frames are always rescanned.
+    const reusable = before.doc && before.mut >= 0 && !snap.nodes.some((n) => n.frame !== undefined);
+    this.last = reusable ? { page, doc: before.doc!, mut: before.mut, snap } : null;
     return { snap, doc: before.doc };
   }
 

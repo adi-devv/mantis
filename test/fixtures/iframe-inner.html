@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Card form</title></head>
+<body>
+  <form id="f" aria-label="Card">
+    <label for="c">Card number</label> <input id="c" required>
+    <button type="submit">Pay</button>
+  </form>
+  <script>
+    document.getElementById('f').addEventListener('submit', (e) => {
+      e.preventDefault();
+      document.body.insertAdjacentHTML('beforeend', '<p>Paid with ' + document.getElementById('c').value + '</p>');
+    });
+  </script>
+</body>
+</html>

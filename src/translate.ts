@@ -599,7 +599,8 @@ export function translate(snap: Snapshot, budget: number = BUDGET_CHARS, opts: R
 
 /**
  * Search the whole page (nothing trimmed or summarised) for controls and text containing `query`,
- * case-insensitive. Exact name matches first, then page order; each hit says which region it is in.
+ * case-insensitive. Exact name matches first, controls before text, then page order; each hit says
+ * which region it is in.
  */
 export function findInSnapshot(snap: Snapshot, query: string, max = 20): string {
   const q = query.toLowerCase().replace(/\s+/g, ' ').trim();
@@ -608,7 +609,10 @@ export function findInSnapshot(snap: Snapshot, query: string, max = 20): string 
   const hits = nodes
     .map((n, i) => ({ n, i }))
     .filter(({ n }) => n.kind !== 'region' && (n.name.toLowerCase().includes(q) || (!n.secret && !!n.value?.toLowerCase().includes(q))))
-    .sort((a, b) => Number(norm(b.n.name) === q) - Number(norm(a.n.name) === q) || a.i - b.i);
+    .sort((a, b) =>
+      Number(norm(b.n.name) === q) - Number(norm(a.n.name) === q) ||
+      Number(b.n.kind === 'interactive') - Number(a.n.kind === 'interactive') ||
+      a.i - b.i);
   if (!hits.length) return `no control or text containing "${quote(query)}" on this page`;
 
   const where = (i: number): string => {

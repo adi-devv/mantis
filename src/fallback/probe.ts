@@ -53,7 +53,7 @@ export function makeProbe(): Probe {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   type Any = any;
   const win = window as unknown as { __mantis?: Registry } & Any;
-  const reg: Registry = (win.__mantis ??= { ids: new WeakMap(), next: 1, byId: new Map() });
+  const reg: Registry = (win.__mantis ??= { ids: new WeakMap(), next: (win.__mantisBase ?? 0) + 1, byId: new Map() });
 
   const MAX_LIST = 40;
   const collapse = (s: string | null | undefined): string => (s ?? '').replace(/\s+/g, ' ').trim();
