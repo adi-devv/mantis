@@ -4,8 +4,8 @@
 
 ## Setup
 
-- Date: 2026-10-15
-- Mantis: git `d783a9a`; numbers reflect Mantis at this commit and will change as it changes
+- Date: 2026-10-16
+- Mantis: git `c447103` (**src/ had uncommitted changes**); numbers reflect Mantis at this commit and will change as it changes
 - Playwright MCP: `@playwright/mcp@0.0.83` (default config, headless, isolated profile, viewport 1280x800)
 - Playwright (screenshot baseline + Mantis): `1.64.1`; Chromium 156.0.8078.4; viewport 1280x800 for all three
 - Machine: win32 10.0.26200, 12 logical cores, 7 GB RAM; Node v20.14.0
@@ -26,11 +26,11 @@
 
 | | Mantis | Playwright MCP | Screenshot (est.) |
 |---|---:|---:|---:|
-| Total tokens (chars/4) | 11,824 | 342,767 | 40,980 |
-| Total tokens (cl100k) | 16,488 | 378,289 | 40,980 |
+| Total tokens (chars/4) | 11,309 | 573,512 | 40,980 |
+| Total tokens (cl100k) | 15,588 | 600,104 | 40,980 |
 | Median tokens per step (chars/4) | 28 | 131 | 1,366 |
-| Median time per step, local pages (ms) | 247 | 315 | 1,066 |
-| Total time, all steps (s) | 22.5 | 24.9 | 36.7 |
+| Median time per step, local pages (ms) | 214 | 290 | 1,065 |
+| Total time, all steps (s) | 22.6 | 25.5 | 37.7 |
 | Steps ok / total | 45 / 45 | 45 / 45 | 30 / 30 (+15 n/a) |
 | Tasks fully completed | 14 / 14 | 14 / 14 | 14 / 14 |
 
@@ -40,8 +40,8 @@ Totals include tokens spent on failed steps, and exclude tokens a tool would hav
 
 | | Mantis | Playwright MCP | Screenshot (est.) |
 |---|---:|---:|---:|
-| Total tokens (chars/4) | 11,824 | 342,767 | 40,980 |
-| Total tokens (cl100k) | 16,488 | 378,289 | 40,980 |
+| Total tokens (chars/4) | 11,309 | 573,512 | 40,980 |
+| Total tokens (cl100k) | 15,588 | 600,104 | 40,980 |
 | Median tokens per step (chars/4) | 28 | 131 | 1,366 |
 
 Tasks: example-read, hn-front-read, hn-open-comments, wikipedia-article-read, wikipedia-search, github-repo-read, mdn-read, local-login, local-cookie, local-longlist-find, local-longlist-filter, local-form-select, local-nav-back, local-dashboard
@@ -52,21 +52,21 @@ The tool list an agent carries in context for the whole session (not included in
 
 | Tool | # tools | chars | tokens (chars/4) | tokens (cl100k) |
 |---|---:|---:|---:|---:|
-| mantis | 15 | 7,058 | 1,765 | 1,706 |
+| mantis | 15 | 5,414 | 1,354 | 1,314 |
 | playwright-mcp | 25 | 20,286 | 5,072 | 4,310 |
 
 ## Per task (tokens, chars/4)
 
 | Task | Steps | Mantis | Playwright MCP | Screenshot (est.) |
 |---|---:|---:|---:|---:|
-| `example-read` (live) | 2 | 190 | 370 | 1,366 |
-| `hn-front-read` (live) | 2 | 1,466 | 12,121 | 1,366 |
-| `hn-open-comments` (live) | 3 | 2,326 | 20,393 | 2,732 |
-| `wikipedia-article-read` (live) | 2 | 688 | 154,735 | 1,366 |
-| `wikipedia-search` (live) | 3 | 2,223 | 112,547 | 2,732 |
-| `github-repo-read` (live) | 2 | 906 | 12,927 | 1,366 |
-| `mdn-read` (live) | 2 | 1,440 | 6,453 | 1,366 |
-| `local-login` (local) | 5 | 141 | 487 | 5,464 |
+| `example-read` (live) | 2 | 254 | 370 | 1,366 |
+| `hn-front-read` (live) | 2 | 1,462 | 12,045 | 1,366 |
+| `hn-open-comments` (live) | 3 | 1,837 | 249,842 | 2,732 |
+| `wikipedia-article-read` (live) | 2 | 648 | 154,708 | 1,366 |
+| `wikipedia-search` (live) | 3 | 2,188 | 113,938 | 2,732 |
+| `github-repo-read` (live) | 2 | 890 | 12,927 | 1,366 |
+| `mdn-read` (live) | 2 | 1,445 | 6,453 | 1,366 |
+| `local-login` (local) | 5 | 141 | 495 | 5,464 |
 | `local-cookie` (local) | 4 | 119 | 438 | 4,098 |
 | `local-longlist-find` (local) | 3 | 340 | 5,813 | 2,732 |
 | `local-longlist-filter` (local) | 4 | 181 | 5,838 | 4,098 |
@@ -86,51 +86,51 @@ Cells are `action + observe` tokens (chars/4); `FAIL` marks a failed step; `n/a`
 
 | # | Step | Mantis | Playwright MCP | Screenshot (est.) |
 |---:|---|---:|---:|---:|
-| 1 | open https://example.com/ | 190 + 0 | 52 + 0 | 0 + 1,366 |
+| 1 | open https://example.com/ | 254 + 0 | 52 + 0 | 0 + 1,366 |
 | 2 | read (expect /Example Domain/) | 0 + 0 | 0 + 318 | n/a (0 + 0) |
 
 ### `hn-front-read` — Open the Hacker News front page and read it
 
 | # | Step | Mantis | Playwright MCP | Screenshot (est.) |
 |---:|---|---:|---:|---:|
-| 1 | open https://news.ycombinator.com/ | 1,466 + 0 | 56 + 0 | 0 + 1,366 |
-| 2 | read (expect /\d+\s*comments?/) | 0 + 0 | 0 + 12,065 | n/a (0 + 0) |
+| 1 | open https://news.ycombinator.com/ | 1,462 + 0 | 56 + 0 | 0 + 1,366 |
+| 2 | read (expect /\d+\s*comments?/) | 0 + 0 | 0 + 11,989 | n/a (0 + 0) |
 
 ### `hn-open-comments` — Hacker News: open the first story's comment thread
 
 | # | Step | Mantis | Playwright MCP | Screenshot (est.) |
 |---:|---|---:|---:|---:|
-| 1 | open https://news.ycombinator.com/ | 1,451 + 0 | 56 + 0 | 0 + 1,366 |
-| 2 | click link /^\d+\s*comments?$/ | 875 + 0 | 83 + 12,065 | 0 + 1,366 |
-| 3 | read (expect /add comment/i) | 0 + 0 | 0 + 8,189 | n/a (0 + 0) |
+| 1 | open https://news.ycombinator.com/ | 1,462 + 0 | 56 + 0 | 0 + 1,366 |
+| 2 | click link /^\d+\s*comments?$/ | 375 + 0 | 68 + 11,989 | 0 + 1,366 |
+| 3 | read (expect /add comment/i) | 0 + 0 | 0 + 237,729 | n/a (0 + 0) |
 
 ### `wikipedia-article-read` — Read the Wikipedia article on Alan Turing
 
 | # | Step | Mantis | Playwright MCP | Screenshot (est.) |
 |---:|---|---:|---:|---:|
-| 1 | open https://en.wikipedia.org/wiki/Alan_Turing | 688 + 0 | 65 + 0 | 0 + 1,366 |
-| 2 | read (expect /English mathematician\|computer scientist/i) | 0 + 0 | 0 + 154,670 | n/a (0 + 0) |
+| 1 | open https://en.wikipedia.org/wiki/Alan_Turing | 648 + 0 | 65 + 0 | 0 + 1,366 |
+| 2 | read (expect /English mathematician\|computer scientist/i) | 0 + 0 | 0 + 154,643 | n/a (0 + 0) |
 
 ### `wikipedia-search` — Search Wikipedia for "Ada Lovelace" and read the result
 
 | # | Step | Mantis | Playwright MCP | Screenshot (est.) |
 |---:|---|---:|---:|---:|
-| 1 | open https://en.wikipedia.org/wiki/Main_Page | 1,448 + 0 | 66 + 0 | 0 + 1,366 |
-| 2 | type "Ada Lovelace" into textbox /search/i + Enter | 775 + 0 | 92 + 14,728 | 0 + 1,366 |
-| 3 | read (expect /Ada Lovelace/) | 0 + 0 | 0 + 97,661 | n/a (0 + 0) |
+| 1 | open https://en.wikipedia.org/wiki/Main_Page | 1,413 + 0 | 66 + 0 | 0 + 1,366 |
+| 2 | type "Ada Lovelace" into textbox /search/i + Enter | 775 + 0 | 92 + 16,072 | 0 + 1,366 |
+| 3 | read (expect /Ada Lovelace/) | 0 + 0 | 0 + 97,708 | n/a (0 + 0) |
 
 ### `github-repo-read` — Read the microsoft/playwright GitHub repo page
 
 | # | Step | Mantis | Playwright MCP | Screenshot (est.) |
 |---:|---|---:|---:|---:|
-| 1 | open https://github.com/microsoft/playwright | 906 + 0 | 99 + 0 | 0 + 1,366 |
+| 1 | open https://github.com/microsoft/playwright | 890 + 0 | 99 + 0 | 0 + 1,366 |
 | 2 | read (expect /Pull requests/i) | 0 + 0 | 0 + 12,828 | n/a (0 + 0) |
 
 ### `mdn-read` — Read the MDN Fetch API page
 
 | # | Step | Mantis | Playwright MCP | Screenshot (est.) |
 |---:|---|---:|---:|---:|
-| 1 | open https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API | 1,440 + 0 | 93 + 0 | 0 + 1,366 |
+| 1 | open https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API | 1,445 + 0 | 93 + 0 | 0 + 1,366 |
 | 2 | read (expect /interface for fetching resources/i) | 0 + 0 | 0 + 6,360 | n/a (0 + 0) |
 
 ### `local-login` — Fill email + password and submit a login form (local fixture)
@@ -138,10 +138,10 @@ Cells are `action + observe` tokens (chars/4); `FAIL` marks a failed step; `n/a`
 | # | Step | Mantis | Playwright MCP | Screenshot (est.) |
 |---:|---|---:|---:|---:|
 | 1 | open <local>/login | 71 + 0 | 56 + 0 | 0 + 1,366 |
-| 2 | type "agent@example.com" into textbox /email/i | 26 + 0 | 28 + 151 | 0 + 1,366 |
+| 2 | type "agent@example.com" into textbox /email/i | 26 + 0 | 28 + 155 | 0 + 1,366 |
 | 3 | type "correct-horse-battery" into textbox /password/i | 20 + 0 | 30 + 0 | 0 + 1,366 |
 | 4 | click button /sign in/i | 24 + 0 | 59 + 0 | 0 + 1,366 |
-| 5 | read (expect /Signed in/) | 0 + 0 | 0 + 163 | n/a (0 + 0) |
+| 5 | read (expect /Signed in/) | 0 + 0 | 0 + 167 | n/a (0 + 0) |
 
 ### `local-cookie` — Dismiss a cookie dialog, then add to cart (local fixture)
 

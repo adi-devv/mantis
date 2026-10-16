@@ -13,19 +13,16 @@ Where work stands, so it can be resumed after a restart. Design: [PLAN.md](PLAN.
 - [x] M7 — Never lose what the accessibility tree has
 - [x] M8 — Faster than the accessibility tree
 - [x] M9 — Better than the accessibility tree
-- [ ] M10 — Real-agent eval (biased first pass done; unbiased eval is step 3 below)
+- [ ] M10 — Real-agent eval (biased first pass done; unbiased eval is step 2 below)
 - [ ] M11 — Launch (0.1.1, README top, demo video; plan in [docs/LAUNCH.md](LAUNCH.md))
 
 ## Next steps
 
-1. Finalise Mantis: trim tool descriptions (fixed ~18.6k-token floor per task: the agent's own
-   prompt plus tool list), fix weak spots (chart needs `media()` + `data()`; multi-page table
-   takes 4 calls vs the tree's 2).
-2. Freeze as v0.1.1 (git tag). No tuning against the held-out set after this.
-3. Unbiased eval on the frozen version: ~50 tasks from WebVoyager or Online-Mind2Web on real
+1. Freeze as v0.1.1 (git tag). No tuning against the held-out set after this.
+2. Unbiased eval on the frozen version: ~50 tasks from WebVoyager or Online-Mind2Web on real
    sites. Mantis vs Playwright MCP vs each agent's native browser tool (Claude in Chrome or
    computer use; Codex's built-in browser). Blind LLM judge, 3 runs, report per task.
-4. Publish 0.1.1 and a GitHub release with those numbers (npm 2FA by the user).
+3. Publish 0.1.1 and a GitHub release with those numbers (npm 2FA by the user).
 
 Later: fallback tools inside iframes; add Chrome DevTools MCP and browser-use to the token replay.
 
@@ -85,3 +82,8 @@ Later: fallback tools inside iframes; add Chrome DevTools MCP and browser-use to
   - Long tasks (4 x 3 runs = 12 per approach; `codex-luna-long`, `claude-haiku-long`). Luna time 654 / 817 /
     1191 s. Haiku time 444 / 522 / 612 s, cost $2.09 / $3.23 / $3.65. Takeaway: tree uses ~1.6–1.9x Mantis's tokens.
   - Caveat: 25 of 26 tasks are local fixtures by the authors; the screenshot baseline is our own tool.
+- 2026-10-16: Finalised for 0.1.1. Tool list 1,706 → 1,313 tokens (shorter descriptions, ladder stated once).
+  A page that fits the budget now shows all its prose (`article-deep-fact`: 3 calls → 1). Chart and paged-table
+  weak spots were already gone in the fresh runs. Luna smoke (`codex-luna-final-smoke`, 7 tasks x 3): 21/21;
+  `long-laptops` took 9–14 calls vs 8 before (the product view is complete, so likely run-to-run variance).
+  Replay median unchanged at 28 tokens/step. 205 tests.

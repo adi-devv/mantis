@@ -8,6 +8,9 @@ const link = (id: number, name: string, inViewport = true, parent = -1): RawNode
 const text = (name: string, inViewport = true): RawNode => ({
   kind: 'text', role: 'text', name, states: [], parent: -1, depth: 0, inViewport, covered: false,
 });
+const prose = (name: string, inViewport = true): RawNode => ({
+  kind: 'prose', role: 'text', name, states: [], parent: -1, depth: 0, inViewport, covered: false,
+});
 const snap = (nodes: RawNode[]): Snapshot => ({ url: 'https://x.test/', title: 'T', nodes, truncated: false });
 
 describe('translate', () => {
@@ -50,5 +53,21 @@ describe('translate', () => {
     const out = translate(snap(nodes), 1500);
     expect(out.length).toBeLessThanOrEqual(1500);
     expect(out).toMatch(/\(trimmed: \d+ (more lines|items offscreen)/);
+  });
+
+  it('shows every paragraph unclipped, offscreen ones too, when the page fits the budget', () => {
+    const paras = Array.from({ length: 20 }, (_, i) => `Paragraph ${i} ${'long running text '.repeat(10)}end ${i}.`);
+    const out = translate(snap(paras.map((p, i) => prose(p, i < 5))));
+    for (const p of paras) expect(out).toContain(`"${p}"`);
+    expect(out).not.toContain('more paragraph');
+  });
+
+  it('trims prose to the viewport, clipped, with an actionable note, when the page is over budget', () => {
+    const paras = Array.from({ length: 40 }, (_, i) => `Paragraph ${i} ${'long running text '.repeat(10)}end ${i}.`);
+    const out = translate(snap(paras.map((p, i) => prose(p, i < 20))));
+    const shown = out.split('\n').filter((l) => l.startsWith('"Paragraph'));
+    expect(shown.length).toBe(8);
+    expect(shown.every((l) => l.length <= 122 && l.endsWith('…"'))).toBe(true);
+    expect(out).toMatch(/\n…32 more paragraphs — find\("text"\) or read\(full=true\)$/);
   });
 });

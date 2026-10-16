@@ -8,15 +8,25 @@ it does this differently from the two ways agents browse today.
 ## 1. How agents browse today
 
 ```mermaid
-flowchart LR
+flowchart TB
     subgraph S["Screenshots"]
-        direction TB
-        S1[Take screenshot] --> S2[Model looks at pixels] --> S3[Guess x,y] --> S4[Click] --> S1
+        direction LR
+        S1(["Take screenshot<br/><b>~1,400 tokens</b>"]) --> S2["Model reads<br/>the pixels"] --> S3["Guesses<br/>x, y"] --> S4(["Click"])
+        S4 -. "screenshot again to check" .-> S1
     end
     subgraph A["Accessibility tree"]
-        direction TB
-        A1[Dump the page's accessibility tree] --> A2[Model reads every node] --> A3["Act on a ref (e.g. e42)"] --> A1
+        direction LR
+        A1(["Dump the whole tree<br/><b>up to ~150k tokens</b>"]) --> A2["Model reads<br/>every node"] --> A3["Picks a ref<br/>e.g. e42"] --> A4(["Click"])
+        A4 -. "re-dump after every action" .-> A1
     end
+    S ~~~ A
+
+    classDef cost fill:#fee2e2,stroke:#dc2626,color:#7f1d1d
+    classDef step fill:#f8fafc,stroke:#94a3b8,color:#0f172a
+    class S1,A1 cost
+    class S2,S3,S4,A2,A3,A4 step
+    style S fill:transparent,stroke:#dc2626,stroke-width:2px
+    style A fill:transparent,stroke:#d97706,stroke-width:2px
 ```
 
 **Screenshots.** The agent sees the page the way a person does, but every look costs
@@ -47,34 +57,45 @@ information the tree has, and must add what it lacks.
 
 ```mermaid
 flowchart TB
-    Agent["AI agent (Claude, Cursor, …)"]
-    Agent -- "MCP: open / read / click(#N) / type …" --> Server
+    Agent(["AI agent · Claude, Codex, Cursor, …"])
 
-    subgraph Mantis
-        Server[MCP server] --> Browser["Real Chromium via Playwright"]
-        Browser --> Capture
-
-        subgraph Capture["1 · Capture (script inside the page)"]
-            C1[Walk the live DOM incl. shadow DOM]
-            C2["Role, name, state of every element"]
-            C3["What the eye sees: visible? covered by a popup?<br/>red error text? primary button? icon meaning?"]
-            C1 --> C2 --> C3
+    subgraph Mantis["Mantis"]
+        direction TB
+        subgraph Run[" "]
+            direction LR
+            Server["MCP server"] --> Browser["Real Chromium<br/>via Playwright"]
         end
 
-        Capture --> Translate
+        subgraph Capture["1 · Capture in the page"]
+            direction LR
+            C1["Walk the live DOM<br/>incl. shadow DOM"] --> C2["Role, name, state<br/>of every element"] --> C3["What the eye sees<br/>covered? red error?<br/>primary button? icon?"]
+        end
 
         subgraph Translate["2 · Translate"]
-            T1["Drop hidden / decorative / empty"]
-            T2["Stable numbers #N (same element = same number)"]
-            T3["Regions: [header] [nav] [main] [dialog — covers page]"]
-            T4["Compact: repeated rows on one line, long lists summarised"]
-            T5["Site memory: menus already seen → one line"]
-            T6["Token budget"]
-            T1 --> T2 --> T3 --> T4 --> T5 --> T6
+            direction LR
+            T1["Drop hidden,<br/>decorative, empty"] --> T2["Stable<br/>numbers #35;N"] --> T3["Regions<br/>header · main · dialog"] --> T4["Compact rows,<br/>summarise lists"] --> T5["Site memory<br/>seen menus → 1 line"] --> T6["Fit the<br/>token budget"]
         end
+
+        Run --> Capture --> Translate
     end
 
-    Translate -- "short numbered text" --> Agent
+    Out(["Short numbered text, back to the agent"])
+
+    Agent == "open · read · click · type" ==> Run
+    Translate ==> Out
+
+    classDef agent fill:#ede9fe,stroke:#7c3aed,color:#2e1065
+    classDef infra fill:#f1f5f9,stroke:#64748b,color:#0f172a
+    classDef cap fill:#e0f2fe,stroke:#0284c7,color:#082f49
+    classDef tr fill:#dcfce7,stroke:#16a34a,color:#052e16
+    class Agent,Out agent
+    class Server,Browser infra
+    style Run fill:transparent,stroke:transparent
+    class C1,C2,C3 cap
+    class T1,T2,T3,T4,T5,T6 tr
+    style Mantis fill:transparent,stroke:#16a34a,stroke-width:2px
+    style Capture fill:transparent,stroke:#0284c7,stroke-dasharray:4 3
+    style Translate fill:transparent,stroke:#16a34a,stroke-dasharray:4 3
 ```
 
 What the agent receives:
@@ -94,17 +115,22 @@ Page: Shop
 
 ```mermaid
 sequenceDiagram
+    autonumber
     participant A as Agent
     participant M as Mantis
     participant P as Page
     A->>M: click(3)
-    M->>P: resolve #3 to the real element, click it
-    M->>P: wait for the page to settle (DOM quiet, timers, fetches)
-    M->>M: compare before / after
-    alt same page
-        M-->>A: "+ appeared, - disappeared, ~ changed" (a few lines)
-    else navigated
-        M-->>A: full view of the new page
+    rect rgba(2, 132, 199, 0.12)
+        M->>P: find element 3 on the page and click it
+        M->>P: wait for the page to settle (DOM quiet, timers, fetches)
+        M->>M: compare before / after
+    end
+    rect rgba(22, 163, 74, 0.12)
+        alt same page
+            M-->>A: + appeared, - gone, ~ changed (a few lines)
+        else navigated
+            M-->>A: full view of the new page
+        end
     end
 ```
 
@@ -115,10 +141,19 @@ don't shift under it between steps.
 
 ```mermaid
 flowchart LR
-    R["read()<br/>numbered text"] -->|chart / image| D["data(id)<br/>alt text, SVG labels,<br/>chart values"]
-    D -->|text baked into pixels| O["ocr(id)<br/>text only"]
-    O -->|still unclear| L["look(id)<br/>crop of ONE element"]
-    L -->|CAPTCHA / 2FA / payment| H["ask_human()<br/>person takes over"]
+    R(["<b>read()</b><br/>numbered text"]) -- "chart or image" --> D["<b>data(id)</b><br/>alt text, SVG labels,<br/>chart values"]
+    D -- "text baked<br/>into pixels" --> O["<b>ocr(id)</b><br/>text only"]
+    O -- "still unclear" --> L["<b>look(id)</b><br/>image of ONE element"]
+    L -- "CAPTCHA, 2FA,<br/>payment" --> H(["<b>ask_human()</b><br/>a person takes over"])
+
+    classDef t1 fill:#dcfce7,stroke:#16a34a,color:#052e16
+    classDef t2 fill:#fef9c3,stroke:#ca8a04,color:#422006
+    classDef t3 fill:#ffedd5,stroke:#ea580c,color:#431407
+    classDef t5 fill:#ede9fe,stroke:#7c3aed,color:#2e1065
+    class R t1
+    class D,O t2
+    class L t3
+    class H t5
 ```
 
 Cheapest first; the agent climbs only when it has to. Only `look` returns an image,

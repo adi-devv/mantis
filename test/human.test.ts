@@ -97,21 +97,13 @@ describe('regions without landmarks', () => {
 });
 
 describe('prose', () => {
-  it('shows a quoted, truncated summary of paragraphs, with the inline links', async () => {
+  it('shows every paragraph, unclipped, with the inline links, when the page fits the budget', async () => {
     const view = await b.open(fixture('article.html'));
     const paras = view.split('\n').filter((l) => l.startsWith('"Paragraph'));
-    expect(paras.length).toBeGreaterThanOrEqual(3);
-    for (const p of paras) expect(p.length).toBeLessThanOrEqual(124); // 120 chars + quotes
-    expect(paras[0]).toMatch(/…"$/);
+    expect(paras.length).toBe(13);
+    expect(paras.every((p) => !p.endsWith('…"'))).toBe(true);
+    expect(view).not.toContain('more paragraph');
     expect(view).toContain('links: #1 link "insects" · #2 "termites"');
-  });
-
-  it('counts the paragraphs it leaves out', async () => {
-    const view = await b.open(fixture('article.html'));
-    const shown = view.split('\n').filter((l) => l.startsWith('"Paragraph')).length;
-    const more = Number(view.match(/…(\d+) more paragraphs/)![1]);
-    expect(shown).toBeLessThanOrEqual(8);
-    expect(shown + more).toBe(13);
   });
 
   it('read({full}) gives every paragraph untruncated', async () => {

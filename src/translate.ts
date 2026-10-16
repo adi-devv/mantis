@@ -3,7 +3,7 @@ import type { RawNode, Snapshot } from './capture/index.js';
 /** Soft cap on the text view; past this, offscreen content is dropped progressively. */
 export const BUDGET_CHARS = 6000;
 
-/** Prose budget: paragraphs shown in the default view before "…N more paragraphs". */
+/** Prose budget: paragraphs shown in the default view before "…N more paragraphs" (unless the whole page fits). */
 const PROSE_MAX = 8;
 const PROSE_CHARS = 120;
 
@@ -53,16 +53,19 @@ interface Level {
   rowName: number;
   /** Chars spent naming the hidden part of a collapsed run (`#8 "Item 6" · #9 "Item 7"`) before "…and N more". */
   listChars: number;
+  /** Every paragraph, in or out of the viewport, unclipped (only worth it when the whole page fits the budget). */
+  allProse: boolean;
 }
 
 const LEVELS: Level[] = [
-  { over: 8, keep: 5, dropOffscreenText: false, dropOffscreenAll: false, rowName: 60, listChars: 600 },
-  { over: 8, keep: 5, dropOffscreenText: false, dropOffscreenAll: false, rowName: 44, listChars: 400 },
-  { over: 8, keep: 5, dropOffscreenText: true, dropOffscreenAll: false, rowName: 44, listChars: 300 },
-  { over: 4, keep: 3, dropOffscreenText: true, dropOffscreenAll: false, rowName: 40, listChars: 150 },
-  { over: 3, keep: 2, dropOffscreenText: true, dropOffscreenAll: true, rowName: 40, listChars: 0 },
+  { over: 8, keep: 5, dropOffscreenText: false, dropOffscreenAll: false, rowName: 60, listChars: 600, allProse: true },
+  { over: 8, keep: 5, dropOffscreenText: false, dropOffscreenAll: false, rowName: 60, listChars: 600, allProse: false },
+  { over: 8, keep: 5, dropOffscreenText: false, dropOffscreenAll: false, rowName: 44, listChars: 400, allProse: false },
+  { over: 8, keep: 5, dropOffscreenText: true, dropOffscreenAll: false, rowName: 44, listChars: 300, allProse: false },
+  { over: 4, keep: 3, dropOffscreenText: true, dropOffscreenAll: false, rowName: 40, listChars: 150, allProse: false },
+  { over: 3, keep: 2, dropOffscreenText: true, dropOffscreenAll: true, rowName: 40, listChars: 0, allProse: false },
 ];
-const FULL_LEVEL: Level = { over: Infinity, keep: 0, dropOffscreenText: false, dropOffscreenAll: false, rowName: 0, listChars: 0 };
+const FULL_LEVEL: Level = { over: Infinity, keep: 0, dropOffscreenText: false, dropOffscreenAll: false, rowName: 0, listChars: 0, allProse: false };
 
 export const quote = (s: string): string => s.replace(/"/g, "'");
 const norm = (s: string): string => s.toLowerCase().replace(/[\s:*]+$/g, '').trim();
@@ -396,9 +399,9 @@ function renderBody(nodes: RawNode[], lvl: Level, ctx: Ctx): { lines: string[]; 
         let j = k + 1;
         while (j < items.length && nodes[items[j]].inline) j++;
         const links = items.slice(k + 1, j).filter((ix) => nodes[ix].kind === 'interactive');
-        if (ctx.full || (n.inViewport && proseShown < PROSE_MAX)) {
+        if (ctx.full || lvl.allProse || (n.inViewport && proseShown < PROSE_MAX)) {
           proseShown++;
-          out.push(`${pad}"${quote(ctx.full ? n.name : clip(n.name, PROSE_CHARS))}"`);
+          out.push(`${pad}"${quote(ctx.full || lvl.allProse ? n.name : clip(n.name, PROSE_CHARS))}"`);
           if (links.length) {
             const cap = ctx.full ? links.length : 8;
             const parts: string[] = [];
@@ -475,7 +478,7 @@ function renderBody(nodes: RawNode[], lvl: Level, ctx: Ctx): { lines: string[]; 
         }
       }
     }
-    if (skippedProse) out.push(`${pad}…${skippedProse} more paragraph${skippedProse === 1 ? '' : 's'}`);
+    if (skippedProse) out.push(`${pad}…${skippedProse} more paragraph${skippedProse === 1 ? '' : 's'} — find("text") or read(full=true)`);
     return out;
   };
 

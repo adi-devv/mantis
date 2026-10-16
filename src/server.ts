@@ -14,24 +14,23 @@ const reply = (text: string) => ({
 /** Build the MCP server around a browser (launched lazily on first tool call). */
 export function createServer(browser: MantisBrowser = new MantisBrowser()): McpServer {
   const server = new McpServer({ name: 'mantis', version: '0.1.0' });
-  const id = z.number().int().describe('Element number from read(), e.g. 14 for "#14"');
+  const id = z.number().int();
 
   server.registerTool(
     'open',
-    { description: 'Go to a URL and return the numbered text view of the page. Act on elements by #number.', inputSchema: { url: z.string() } },
+    { description: 'Go to a URL; returns numbered page text. Act on elements by #number.', inputSchema: { url: z.string() } },
     async ({ url }) => reply(await browser.open(url)),
   );
   server.registerTool(
     'read',
     {
       description:
-        'Return the current page as numbered text. Use the #numbers with click/type/select/scroll. Re-read after the page changes. ' +
-        'Names shown as ~"x" are guesses (icon/tooltip/link). Optional: region (e.g. "nav", "sidebar", "main") reads just that part; full=true turns off trimming. ' +
-        'Regions you already saw on this site show as one line ("[nav] same as before — 8 links (#3–#10)"); their numbers still work. region, full or fresh show everything.',
+        'Page as numbered text; act by #number. Re-read after changes. ~"x" names are guesses. ' +
+        '"Same as before" regions keep working numbers; region, full or fresh expand them.',
       inputSchema: {
-        region: z.string().optional().describe('Only this region: a substring of its label, e.g. "nav", "sidebar", "main", "top bar"'),
-        full: z.boolean().optional().describe('Disable trimming: every paragraph, link and href'),
-        fresh: z.boolean().optional().describe('Show every region in full, even ones already seen on this site (this call only)'),
+        region: z.string().optional().describe('Label substring, e.g. "nav"'),
+        full: z.boolean().optional().describe('No trimming'),
+        fresh: z.boolean().optional().describe('Expand seen regions too (this call only)'),
       },
     },
     async ({ region, full, fresh }) => reply(await browser.read({ region, full, fresh })),
@@ -40,47 +39,46 @@ export function createServer(browser: MantisBrowser = new MantisBrowser()): McpS
     'find',
     {
       description:
-        'Search the whole current page, including parts read() trimmed or summarised ("…and N more", "same as before"), ' +
-        'for controls and text containing this text (case-insensitive). Returns the matches with their #numbers and region.',
-      inputSchema: { text: z.string().describe('Text to look for, e.g. "Pull requests" or "Item 150"') },
+        'Search the whole page, including parts read trims, for text (case-insensitive). Returns #numbers and region.',
+      inputSchema: { text: z.string() },
     },
     async ({ text }) => reply(await browser.find(text)),
   );
   server.registerTool(
     'forget',
     {
-      description: 'Clear what Mantis remembers about the current site (regions already seen), so the next read shows everything in full.',
+      description: 'Clear seen-regions memory; next read shows everything.',
       inputSchema: {},
     },
     async () => reply(await browser.forget()),
   );
   server.registerTool(
     'click',
-    { description: 'Click element #id from read().', inputSchema: { id } },
+    { description: 'Click element #id.', inputSchema: { id } },
     async ({ id }) => reply(await browser.click(id)),
   );
   server.registerTool(
     'type',
     {
-      description: 'Replace the text of input #id from read(). Set submit to press Enter afterwards.',
+      description: 'Replace input #id text; submit presses Enter.',
       inputSchema: { id, text: z.string(), submit: z.boolean().optional() },
     },
     async ({ id, text, submit }) => reply(await browser.type(id, text, submit ?? false)),
   );
   server.registerTool(
     'select',
-    { description: 'Choose an option (by label or value) in dropdown #id from read().', inputSchema: { id, option: z.string() } },
+    { description: 'Choose option (label or value) in dropdown #id.', inputSchema: { id, option: z.string() } },
     async ({ id, option }) => reply(await browser.select(id, option)),
   );
   server.registerTool(
     'press',
-    { description: 'Press a keyboard key, e.g. Enter, Escape, Tab, ArrowDown.', inputSchema: { key: z.string() } },
+    { description: 'Press a key, e.g. Enter.', inputSchema: { key: z.string() } },
     async ({ key }) => reply(await browser.press(key)),
   );
   server.registerTool(
     'scroll',
     {
-      description: 'Scroll the page up or down (default down), or pass id to bring element #id into view.',
+      description: 'Scroll up/down (default down), or pass id to bring #id into view.',
       inputSchema: { direction: z.enum(['up', 'down']).optional(), id: id.optional() },
     },
     async ({ direction, id }) => reply(await browser.scroll(id ?? direction ?? 'down')),
@@ -93,13 +91,13 @@ export function createServer(browser: MantisBrowser = new MantisBrowser()): McpS
 
   // ---- fallback ladder: only when read() is not enough. Try in this order. ----
   const visual = {
-    id: id.optional().describe('Number from media() or read()'),
-    selector: z.string().optional().describe('CSS selector instead of a number'),
+    id: id.optional(),
+    selector: z.string().optional().describe('CSS selector'),
   };
   server.registerTool(
     'media',
     {
-      description: 'List visible images, canvases and charts with numbers for data/ocr/look. Use when read() mentions a picture or chart you need.',
+      description: 'Fallback ladder, only if read is not enough: media → data (prefer) → ocr → look (last resort) → ask_human. Lists images/canvases/charts with numbers.',
       inputSchema: {},
     },
     async () => reply(await browser.media()),
@@ -108,7 +106,7 @@ export function createServer(browser: MantisBrowser = new MantisBrowser()): McpS
     'data',
     {
       description:
-        'Step 1 (prefer this; text only). Hidden text behind an image, SVG or chart canvas: alt/caption/filename, SVG text, and chart values read from Chart.js/ECharts/Highcharts memory. Give id or selector.',
+        'Prefer; text only. Hidden text behind an image/SVG/chart: alt, caption, SVG text, Chart.js/ECharts/Highcharts values. id or selector.',
       inputSchema: visual,
     },
     async ({ id, selector }) => reply(await browser.data({ id, selector })),
@@ -116,7 +114,7 @@ export function createServer(browser: MantisBrowser = new MantisBrowser()): McpS
   server.registerTool(
     'ocr',
     {
-      description: 'Step 2 (text only). Read text drawn inside an image/canvas with deterministic OCR; returns text and confidence, never the image. Use when data() found nothing. Give id or selector.',
+      description: 'Text only. OCR of text in an image/canvas. Use if data found nothing. id or selector.',
       inputSchema: visual,
     },
     async ({ id, selector }) => reply(await browser.ocr({ id, selector })),
@@ -125,7 +123,7 @@ export function createServer(browser: MantisBrowser = new MantisBrowser()): McpS
     'look',
     {
       description:
-        'Step 3, LAST RESORT: the only tool that returns an image (PNG crop of one element, max 800px). Use only when read/data/ocr failed; never for pages you can read as text. Give id or selector.',
+        'LAST RESORT; the only tool returning an image (PNG, max 800px). Only after read/data/ocr failed. id or selector.',
       inputSchema: visual,
     },
     async ({ id, selector }) => {
@@ -143,10 +141,10 @@ export function createServer(browser: MantisBrowser = new MantisBrowser()): McpS
     'ask_human',
     {
       description:
-        'Step 4: hand over to a person for a CAPTCHA, 2FA code, payment or login you cannot do. Mantis never solves CAPTCHAs. Waits until the page changes or until condition (url_change | selector_gone:<css> | selector_present:<css>), then returns the page view.',
+        'Hand over to a person for CAPTCHA, 2FA, payment or login. Mantis never solves CAPTCHAs. Waits for a page change, then returns the page.',
       inputSchema: {
-        reason: z.string().describe('What the human needs to do, e.g. "captcha", "enter 2FA code"'),
-        until: z.string().optional().describe('url_change | selector_gone:<css> | selector_present:<css>; default: URL or page contents change'),
+        reason: z.string().describe('What the human must do'),
+        until: z.string().optional().describe('url_change | selector_gone:<css> | selector_present:<css>; default: URL or content change'),
         timeout_seconds: z.number().positive().optional().describe('Default 300'),
       },
     },
