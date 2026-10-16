@@ -1,0 +1,17 @@
+<!doctype html><title>Slow hydration</title>
+<h1>Slow hydration</h1>
+<button id="continue" disabled>Continue</button>
+<button disabled>Save</button>
+<button disabled>Cancel</button>
+<button disabled>More</button>
+<input type="search" aria-label="Search" disabled>
+<a href="generic-browser-slow-hydrate.html?navigation=1">Reload hydration</a>
+<p id="status">Waiting</p>
+<script>
+  document.querySelector('#continue').addEventListener('click', () => {
+    document.querySelector('#status').textContent = 'Continue handler ran';
+  });
+  setTimeout(() => {
+    document.querySelectorAll('button, input').forEach((control) => { control.disabled = false; });
+  }, new URLSearchParams(location.search).has('quick') ? 500 : 3000);
+</script>

@@ -180,7 +180,7 @@ export class MantisBrowser {
       // A majority of controls being blocked is a meaningful late-dialog signal. A single
       // covered control can also signal a backdrop, even before the dialog is represented.
       // Several truly disabled controls on first load usually mean the page is still hydrating.
-      const hydrating = disabled.filter((n) => n.states.includes('disabled')).length >= 3;
+      const hydrating = this.hasDisabledControls(initial.snap);
       const gated = !dialogAlreadyShown && (hydrating || blocked.some((n) => n.covered) || (blocked.length >= 2 && blocked.length * 2 >= controls.length));
       let snap = initial.snap;
       if (gated && await this.waitForLateDialog(page, disabled.map((n) => n.id!).filter((id) => id !== undefined))) {
@@ -189,6 +189,7 @@ export class MantisBrowser {
       let text = this.render(snap);
       const captcha = await detectCaptcha(page);
       if (captcha) text += `\n${captcha}`;
+      if (hydrating && this.hasDisabledControls(snap)) text += `\n${this.hydrationNote()}`;
       return this.notes.length ? `${text}\n${this.notes.splice(0).join('\n')}` : text;
     });
   }
@@ -587,7 +588,10 @@ export class MantisBrowser {
         // A different document (ids restart, a diff would mislead): say where we are, show it whole.
         if (before && after) lines.push(...headerLines(before.snap, after.snap));
         if ((after?.snap.url ?? now.url()).startsWith('chrome-error:')) lines.push('the page failed to load');
-        else if (after) lines.push(this.render(after.snap));
+        else if (after) {
+          lines.push(this.render(after.snap));
+          if (this.hasDisabledControls(after.snap)) lines.push(this.hydrationNote());
+        }
       }
       lines.push(...this.notes.splice(0));
       return lines.join('\n');
@@ -631,6 +635,14 @@ export class MantisBrowser {
   private render(snap: Snapshot, opts: ReadOptions = {}): string {
     this.remember(snap);
     return translate(snap, undefined, opts, this.memory.hook(originOf(snap.url)));
+  }
+
+  private hasDisabledControls(snap: Snapshot): boolean {
+    return snap.nodes.filter((n) => n.kind === 'interactive' && n.states.includes('disabled')).length >= 3;
+  }
+
+  private hydrationNote(): string {
+    return `Some controls are still disabled; the page may be loading. Actions wait up to ${this.actionTimeout / 1000}s for them to enable.`;
   }
 
   /** Remember how each number was last described, for action messages. */

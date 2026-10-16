@@ -1,0 +1,50 @@
+{
+  "source": "codex-luna-fix4",
+  "judgeModel": "gpt-6.1-sol",
+  "runs": [
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://speedo.com/en-us/collections/women-new-arrivals/products/womens-muscleback-swimsuit-black-8005285008?variant=52969616015727",
+      "toolCalls": 27,
+      "totalInputTokens": 770519,
+      "wallS": 143.93,
+      "verdict": "unsure",
+      "reason": "The page supports a black swimsuit priced at $55 in size 40, but does not establish that size 40 is Large or that this was the lowest-priced eligible swimsuit."
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://www.google.com/maps/place/Global+Gas+Station/@40.8010077,-74.0431204,12z/data=!4m10!1m2!2m1!1sgas+station+Manhattan+NY+rating+4.2!3m6!1s0x89c2f680de149fef:0xd055bad93493bd11!8m2!3d40.8302583!4d-73.9405417!15sCiNnYXMgc3RhdGlvbiBNYW5oYXR0YW4gTlkgcmF0aW5nIDQuMlolIiNnYXMgc3RhdGlvbiBtYW5oYXR0YW4gbnkgcmF0aW5nIDQuMpIBC2dhc19zdGF0aW9u4AEA!16s%2Fg%2F11bvt5rb_6?entry=ttu&g_ep=EgoyMDI2MTAxMy4wIKXMDSoASAFQAw%3D%3D",
+      "toolCalls": 11,
+      "totalInputTokens": 199735,
+      "wallS": 48.544,
+      "verdict": "failure",
+      "reason": "The agent found a Manhattan gas station rated 4.3 stars but explicitly did not sort its reviews by lowest rating."
+    },
+    {
+      "task": "1ab384fb3a791edfb410213cc6b82151_110325",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://phet.colorado.edu/sims/html/build-a-nucleus/latest/build-a-nucleus_all.html",
+      "toolCalls": 18,
+      "totalInputTokens": 356337,
+      "wallS": 172.361,
+      "verdict": "failure",
+      "reason": "The agent explicitly stated it could not set the nucleus to 4 protons and 2 neutrons or show the proton emission decay result."
+    },
+    {
+      "task": "461ab9b0c7b20ac5f912704480979c65",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://www.nyse.com/markets/nyse/rule-605",
+      "toolCalls": 5,
+      "totalInputTokens": 103404,
+      "wallS": 41.001,
+      "verdict": "failure",
+      "reason": "The agent did not locate the July 2024 Rule 605 Market Center Files, and the reported URL displays a page-not-found error."
+    }
+  ]
+}

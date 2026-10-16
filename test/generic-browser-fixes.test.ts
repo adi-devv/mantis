@@ -49,3 +49,37 @@ it('keeps ordinary open latency short for a single disabled control', async () =
   expect(view).not.toContain('Hidden consent');
   expect(performance.now() - start).toBeLessThan(300);
 });
+
+it('notes slow hydration and can click as soon as controls become enabled', async () => {
+  const slowBrowser = new MantisBrowser({ actionTimeoutMs: 5000 });
+  try {
+    const view = await slowBrowser.open(fixture('generic-browser-slow-hydrate.html'));
+    expect(view).toContain('Some controls are still disabled');
+    expect(view).toContain('Actions wait up to 5s');
+    const result = await slowBrowser.click(idOf(view, 'button "Continue"'));
+    expect(result).toContain('Continue handler ran');
+  } finally {
+    await slowBrowser.close();
+  }
+});
+
+it('skips the hydration note for two disabled controls or controls enabled during the existing wait', async () => {
+  const two = await browser.open(fixture('generic-browser-enable.html'));
+  expect(two).not.toContain('Some controls are still disabled');
+  const ready = await browser.open(`${fixture('generic-browser-slow-hydrate.html')}?quick=1`);
+  expect(ready).not.toContain('Some controls are still disabled');
+  expect((await browser.snapshot()).nodes.filter((n) => n.kind === 'interactive' && n.states.includes('disabled'))).toHaveLength(0);
+});
+
+it('notes disabled controls in a full view after navigation', async () => {
+  const slowBrowser = new MantisBrowser({ actionTimeoutMs: 5000 });
+  try {
+    const view = await slowBrowser.open(fixture('generic-browser-slow-hydrate.html'));
+    const result = await slowBrowser.click(idOf(view, 'link "Reload hydration"'));
+    expect(result).toContain('Slow hydration');
+    expect(result).toContain('Some controls are still disabled');
+    expect(result).toContain('Actions wait up to 5s');
+  } finally {
+    await slowBrowser.close();
+  }
+});
