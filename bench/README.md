@@ -47,7 +47,7 @@ AGENT_OUT=codex-verified-subset AGENT_APPROACHES=mantis,tree npm run bench:agent
 | `AGENT_MODEL` | `gpt-6.1-sol` for Codex; `claude-sonnet-4-6` for Claude | selected provider's model |
 | `AGENT_REASONING` | `medium` | Codex reasoning effort (`low`, `medium`, `high`, `xhigh`, `max`) |
 | `CODEX_BIN` | installed Codex CLI | optional path override for `codex.exe` / `codex` |
-| `AGENT_CONCURRENCY` | 3 | runs in parallel |
+| `AGENT_CONCURRENCY` | 3 | runs in parallel; raise it as far as RAM allows (each run is an agent CLI, an MCP server and a browser); times then include more contention |
 | `AGENT_TIMEOUT_S` | 600 | per-run timeout |
 | `AGENT_OUT` | `codex-agent-verified-pilot` / `codex-agent-verified` | results file name (must not already exist unless resuming or overwriting) |
 | `AGENT_RESUME` | 0 | resume only when schema, settings, and source fingerprint match exactly |
@@ -89,7 +89,9 @@ resumed. Fresh Codex runs use `codex-agent-verified-pilot` and `codex-agent-veri
 
 Local fixture pages send browser events and page state to an independent grader using injected
 event listeners and keepalive requests. This adds browser work that is not separately measured,
-and it is applied to every approach on local tasks. The live Wikipedia task has no independent
+and it is applied to every approach on local tasks. Before grading, the fixture server waits
+until no observation is in flight and none has arrived for 250 ms (at most 3 s), so a slow
+machine cannot turn a correct run into a wrong one. The live Wikipedia task has no independent
 page-state grader; it is checked by the answer pattern alone and may change over time.
 
 Approaches:

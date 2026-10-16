@@ -22,15 +22,25 @@ See `PLAN.md` for the full plan.
 
 Kept current: updated whenever work lands or a decision changes direction.
 
-1. Repeat the full eval with 3 runs per task (variance), now that one run is in.
-2. Harder tasks that separate tools on success, not only cost: very long pages, messy real
-   sites, icon-only controls, covered buttons, error recovery, multi-tab, several live sites.
-3. Look at Mantis's two losses: forms (level with Chrome DevTools MCP) and the chart task
-   (screenshots read it in one look; Mantis needs media() + data()).
-4. Add Chrome DevTools MCP and browser-use to the token replay benchmark.
-5. GitHub release v0.1.0 to match npm (awaiting the user's go-ahead); then publish 0.1.1 with
-   these numbers (npm 2FA by the user) and a matching GitHub release.
-6. Later: the same eval with Codex as a second agent; fallback tools inside iframes.
+1. Check that Codex sees screenshot images with `features.view_image=false`, then a cheap smoke
+   run (one task per approach) with the new grader before any full run.
+2. Fresh full eval with the stricter grading: Codex, 3 runs per task, as many in parallel as the
+   machine takes (AGENT_CONCURRENCY). Then the same with Claude, so the claim holds for two agents.
+3. Harder, longer tasks. Against screenshots the gap grows with steps (about 1x on one-page
+   lookups, 4–6x on forms and checkout, 15x on the date-picker booking), because every step
+   re-reads the whole conversation. Long multi-step tasks are where the headline number lives;
+   also tasks that separate tools on success: very long pages, messy real sites, icon-only
+   controls, covered buttons, error recovery, multi-tab, several live sites.
+4. Lower the fixed floor: a one-call task already reads ~18.6k tokens (agent prompt + tool
+   list). Trim Mantis's tool descriptions and check how much of the floor is ours.
+5. Mantis's losses: signup and checkout (Chrome DevTools MCP used fewer calls), the chart task
+   (screenshots read it in one look; Mantis needs media() + data()), the multi-page table
+   (Playwright MCP 2 calls vs 4).
+6. Add Chrome DevTools MCP and browser-use to the token replay benchmark.
+7. GitHub release v0.1.0 to match npm (awaiting the user's go-ahead); then publish 0.1.1 with
+   the fresh numbers (npm 2FA by the user) and a matching GitHub release. Launch plan:
+   `docs/LAUNCH.md`.
+8. Later: fallback tools inside iframes.
 
 ## Log
 
@@ -145,3 +155,9 @@ Kept current: updated whenever work lands or a decision changes direction.
   models, and treats USD cost as unavailable. Codex runs use separate `codex-agent-verified*`
   outputs; existing Claude results remain historical and schema 3 cannot resume them. No Codex
   benchmark cases have been run or published yet.
+- 2026-10-16: Codex branch merged into main (fast-forward). Grader race fixed: verification used
+  a fixed 75 ms wait, so under load the last page observations could arrive late and a correct
+  run was graded wrong (fixture test failed 2 of 4 runs). The grader now waits until no
+  observation is in flight and none arrived for 250 ms (cap 3 s); pages expose a pending count
+  so tests wait deterministically. FAQ fixture: answers are added only when their question is
+  opened, so no tool can read them without the click the grader requires.

@@ -216,7 +216,9 @@ actually succeed more often**. Work, in order:
     comparison. The harness now defaults to Codex (`gpt-6.1-sol`, medium reasoning), isolates
     only the selected browser MCP server, captures Codex stream usage, and leaves USD cost unknown.
     The published Claude run remains historical; no Codex results have been published yet.
-11. **Next:** several Codex runs per task (variance), harder tasks that separate tools on success,
+11. **Next:** several Codex runs per task (variance), then Claude again with the stricter grading;
+    longer multi-step tasks, where the gap to screenshots compounds (15x on the date-picker
+    booking vs about 1x on one-page lookups), and harder tasks that separate tools on success,
     not only cost.
 
 The test for every change: **lose nothing the tree has · use fewer tokens · add meaning ·

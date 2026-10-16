@@ -100,8 +100,14 @@ iframes and a chart; [results](bench/results/agent.md), [how to run](bench/READM
 | Time | **360 s** | 469 s | 406 s | 569 s | 677 s |
 
 Mantis was cheapest on 17 of 22 tasks; screenshots won the chart task and Chrome DevTools
-MCP was level on forms. One run per task so far; every approach solved every task, so these
-tasks separate the tools on cost, not yet on success.
+MCP was level on forms. Against screenshots the gap grows with task length: about the same
+on one-page lookups, 4–6x fewer tokens on multi-step forms and checkout, 15x on the date-picker
+booking (5 tool calls vs 41). Every run also pays a fixed ~18k-token floor (the agent's own
+prompt and tool list), which caps the ratio on short tasks.
+
+This first run is historical: one run per task, graded on the final reply only. The harness
+now also checks what the agent actually did on each local page; fresh runs (Codex by default,
+several runs per task) are next.
 
 ## How it works
 
