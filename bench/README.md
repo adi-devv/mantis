@@ -62,6 +62,23 @@ The task file is not in the repo (the dataset is gated). To get it, accept the t
 `AGENT_TASKS=cat:realsite` runs tasks from `agent/realsite-tasks.json` (Online-Mind2Web rows: `task_id`, `website`, `confirmed_task`, `level`; no file means no tasks). `AGENT_REALSITE_N` (default 10) rows are sampled, stratified by `level`, with a seeded shuffle (`AGENT_REALSITE_SEED`, default 1). `AGENT_TASKS=all` skips them.
 The agent ends with a `FINAL_URL:` line, so the usual grading only checks that it finished. For Mantis, tree and screenshot runs, the harness saves a 1280x800 PNG of the agent's live page immediately after the CLI exits, beside its unique run log. `JUDGE_IN=<result name> npm run bench:judge` has Codex (`gpt-6.1-sol`, high reasoning, read-only, screenshot attached) judge each run blind (`JUDGE_PROVIDER=claude` uses `claude-sonnet-5-5` instead), from the final reply (tool-revealing lines stripped, run order shuffled) and that PNG. Older runs and failed captures use a fresh screenshot of the reported final URL. It writes `results/<name>-judged.{json,md}` with success / failure / unsure / blocked counts, overall success rate, and a rate excluding task IDs blocked for every tested approach.
 
+### Running in the cloud
+
+A cloud session clones the repo fresh, so two things that work locally break there:
+
+- **No real-site task file.** `realsite-tasks.json` is gitignored and the Hugging Face download is gated (401 without a token). Never commit it. Put the rows the run needs (copied from your local file) inline in the cloud brief, and tell the session to write them to `bench/agent/realsite-tasks.json` before running. Without the file there are no real-site tasks, so the run selects nothing.
+- **Root user.** Cloud containers run as root, and Chrome refuses to start as root without `--no-sandbox`. Mantis and screenshot already pass it. For `tree`, `run.ts` adds it to Playwright MCP's args when `process.getuid() === 0`. Any new approach that launches its own browser needs the same flag, or every run of it fails at launch.
+
+To run specific rows, pick them by id and set `AGENT_REALSITE_N` at least as high as the row count, so sampling keeps them all. Example:
+
+```bash
+AGENT_PROVIDER=claude AGENT_MODEL=claude-haiku-5-5 AGENT_REALSITE_N=300 AGENT_TASKS=<id1>,<id2> \
+AGENT_RUNS=3 AGENT_CONCURRENCY=6 AGENT_OUT=<name> npm run bench:agent
+JUDGE_PROVIDER=claude JUDGE_IN=<name> npm run bench:judge
+```
+
+A cloud session can't message back and sends no notice when it ends. Have it commit `bench/results/<name>*` and the judged files to a `bench/<name>` branch and push, then read the results from that branch.
+
 ### Approaches
 
 - `mantis`: all Mantis tools (`dist/server.js`).
