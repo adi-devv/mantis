@@ -13,7 +13,7 @@ without it.
 
    ```bash
    mkdir -p ~/.claude/skills/mantis-browser
-   curl -fsSL https://raw.githubusercontent.com/adi-devv/mantis/main/skill/SKILL.md \
+   curl -fsSL https://raw.githubusercontent.com/perzianhq/mantis/main/skill/SKILL.md \
      -o ~/.claude/skills/mantis-browser/SKILL.md
    ```
 
@@ -21,7 +21,7 @@ without it.
 
    ```powershell
    New-Item -ItemType Directory -Force "$HOME\.claude\skills\mantis-browser"
-   Invoke-WebRequest https://raw.githubusercontent.com/adi-devv/mantis/main/skill/SKILL.md -OutFile "$HOME\.claude\skills\mantis-browser\SKILL.md"
+   Invoke-WebRequest https://raw.githubusercontent.com/perzianhq/mantis/main/skill/SKILL.md -OutFile "$HOME\.claude\skills\mantis-browser\SKILL.md"
    ```
 
    From a checkout, copy `skill/SKILL.md` there instead. For a single project, use

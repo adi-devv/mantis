@@ -7,10 +7,10 @@
   "author": "Aadit Singal",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/adi-devv/mantis.git"
+    "url": "git+https://github.com/perzianhq/mantis.git"
   },
-  "homepage": "https://github.com/adi-devv/mantis#readme",
-  "bugs": "https://github.com/adi-devv/mantis/issues",
+  "homepage": "https://github.com/perzianhq/mantis#readme",
+  "bugs": "https://github.com/perzianhq/mantis/issues",
   "keywords": [
     "mcp",
     "browser",
