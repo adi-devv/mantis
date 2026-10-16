@@ -11,7 +11,7 @@ import type { Target } from './fallback/media.js';
 import { detectCaptcha } from './fallback/captcha.js';
 import { recognize, closeOcr } from './fallback/ocr.js';
 import { downscale, pngSize } from './fallback/look.js';
-import { userAgentFor } from './userAgent.js';
+import { chromiumExecutable, userAgentFor } from './userAgent.js';
 import { parseUntil, describeUntil, waitForHuman, DEFAULT_TIMEOUT_SECONDS } from './fallback/askHuman.js';
 
 /** Transpiler helper shim for pages (see launch()). */
@@ -211,7 +211,7 @@ export class MantisBrowser {
   async launch(): Promise<void> {
     if (this.browser) return;
     const headless = this.opts.headless ?? process.env.MANTIS_HEADLESS !== '0';
-    this.browser = await chromium.launch({ headless });
+    this.browser = await chromium.launch({ headless, ...chromiumExecutable() });
     // Headless Chromium announces itself as "HeadlessChrome", which some sites answer with a degraded page.
     const userAgent = headless || process.env.MANTIS_USER_AGENT ? await userAgentFor(this.browser) : undefined;
     this.context = await this.browser.newContext({ viewport: { width: 1280, height: 800 }, ...(userAgent ? { userAgent } : {}) });
@@ -627,7 +627,7 @@ export class MantisBrowser {
       const url = page.url();
       let headed: Browser;
       try {
-        headed = await chromium.launch({ headless: false });
+        headed = await chromium.launch({ headless: false, ...chromiumExecutable() });
       } catch (e) {
         throw new ActionError(
           `cannot open a visible browser window for the human (${brief(e)}). ` +

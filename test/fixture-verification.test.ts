@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { chromium } from 'playwright';
 import type { Browser, Page } from 'playwright';
+import { chromiumExecutable } from '../src/userAgent.js';
 import { startFixtures } from '../bench/fixtures.js';
 import { TASKS } from '../bench/agent/tasks.js';
 import { LONG_EXPECT } from '../bench/fixtures-long.js';
@@ -11,7 +12,7 @@ let fixtures: Awaited<ReturnType<typeof startFixtures>>;
 let page: Page;
 
 beforeAll(async () => {
-  browser = await chromium.launch();
+  browser = await chromium.launch(chromiumExecutable());
   fixtures = await startFixtures({ checks: TASKS.map((entry) => ({ taskId: entry.id, check: entry.check })) });
   page = await browser.newPage();
 });

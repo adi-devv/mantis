@@ -64,10 +64,11 @@ The agent ends with a `FINAL_URL:` line, so the usual grading only checks that i
 
 ### Running in the cloud
 
-A cloud session clones the repo fresh, so two things that work locally break there:
+A cloud session clones the repo fresh, so three things that work locally break there:
 
 - **No real-site task file.** `realsite-tasks.json` is gitignored and the Hugging Face download is gated (401 without a token). Never commit it. Put the rows the run needs (copied from your local file) inline in the cloud brief, and tell the session to write them to `bench/agent/realsite-tasks.json` before running. Without the file there are no real-site tasks, so the run selects nothing.
 - **Root user.** Cloud containers run as root, and Chrome refuses to start as root without `--no-sandbox`. Mantis and screenshot already pass it. For `tree`, `run.ts` adds it to Playwright MCP's args when `process.getuid() === 0`. Any new approach that launches its own browser needs the same flag, or every run of it fails at launch.
+- **Chromium build.** If Playwright's pinned Chromium build isn't installed (cloud images ship an older one under `/opt/pw-browsers`), set `MANTIS_CHROMIUM` to an installed binary, e.g. `/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell`. Every approach, the UA probe and the judge then use it.
 
 To run specific rows, pick them by id and set `AGENT_REALSITE_N` at least as high as the row count, so sampling keeps them all. Example:
 

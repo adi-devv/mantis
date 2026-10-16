@@ -9,6 +9,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { chromium } from 'playwright';
 import type { Browser } from 'playwright';
 import { MantisBrowser } from '../src/index.js';
+import { chromiumExecutable } from '../src/userAgent.js';
 import { startFixtures } from '../bench/fixtures.js';
 import { fixture } from './helpers.js';
 
@@ -40,7 +41,7 @@ let chrome: Browser;
 let mantis: MantisBrowser;
 let bench: Awaited<ReturnType<typeof startFixtures>>;
 beforeAll(async () => {
-  chrome = await chromium.launch();
+  chrome = await chromium.launch(chromiumExecutable());
   mantis = new MantisBrowser();
   bench = await startFixtures();
 });

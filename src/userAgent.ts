@@ -23,13 +23,18 @@ export async function userAgentFor(browser: Browser): Promise<string> {
   }
 }
 
+/** Launch option pointing Playwright at the Chromium binary in MANTIS_CHROMIUM, when set. */
+export function chromiumExecutable(): { executablePath?: string } {
+  return process.env.MANTIS_CHROMIUM ? { executablePath: process.env.MANTIS_CHROMIUM } : {};
+}
+
 let cached: Promise<string> | undefined;
 
 /** Same string as userAgentFor, for callers with no browser yet (bench runner, MCP server flags). Launches headless Chromium once. */
 export function benchUserAgent(): Promise<string> {
   return (cached ??= (async () => {
     if (process.env.MANTIS_USER_AGENT) return process.env.MANTIS_USER_AGENT;
-    const browser = await chromium.launch({ headless: true });
+    const browser = await chromium.launch({ headless: true, ...chromiumExecutable() });
     try { return await userAgentFor(browser); } finally { await browser.close().catch(() => undefined); }
   })());
 }

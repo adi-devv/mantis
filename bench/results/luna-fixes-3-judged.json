@@ -1,0 +1,105 @@
+{
+  "source": "luna-fixes-3",
+  "judgeModel": "gpt-6.1-sol",
+  "runs": [
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://smartasset.com/taxes/income-taxes",
+      "toolCalls": 11,
+      "totalInputTokens": 232949,
+      "wallS": 43.878,
+      "verdict": "success",
+      "reason": "The screenshot confirms ZIP 97007, single filing status, and $30,887 in federal tax, using $174,250 household income less the $15,750 standard deduction to yield $158,500 taxable income."
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://smartasset.com/taxes/income-taxes",
+      "toolCalls": 24,
+      "totalInputTokens": 858746,
+      "wallS": 60.789,
+      "verdict": "success",
+      "reason": "The reported $30,887 correctly estimates 2025 federal income tax on $158,500 of taxable income for a single filer, excluding FICA."
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://smartasset.com/taxes/income-taxes",
+      "toolCalls": 29,
+      "totalInputTokens": 470121,
+      "wallS": 75.185,
+      "verdict": "failure",
+      "reason": "The agent entered $158,500 as household income and applied the standard deduction, rather than estimating tax on $158,500 of taxable income as requested."
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://speedo.com/en-us/collections/women-new-arrivals/products/womens-muscleback-swimsuit-black-8005285008?variant=52969616015727",
+      "toolCalls": 18,
+      "totalInputTokens": 371266,
+      "wallS": 88.061,
+      "verdict": "unsure",
+      "reason": "The cart confirms one black women’s swimsuit in size 40 for $55, but the evidence does not establish that size 40 matches Large or that it was the lowest-priced eligible swimsuit."
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://speedo.com/en-us/collections/women-swimwear-all/products/womens-colourblock-2-0-swimsuit-black-pink-800424815357",
+      "toolCalls": 16,
+      "totalInputTokens": 611832,
+      "wallS": 71.58,
+      "verdict": "failure",
+      "reason": "The agent explicitly stopped without adding a swimsuit to the cart, and the screenshot does not verify a black swimsuit in size large."
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://speedo.com/en-us/products/womens-solid-leaderback-swimsuit-black-800539900140?variant=",
+      "toolCalls": 47,
+      "totalInputTokens": 987110,
+      "wallS": 169.973,
+      "verdict": "unsure",
+      "reason": "The cart shows a black women’s swimsuit for $37 in size 40, but the evidence does not establish that size 40 is Large or that this was the lowest-priced eligible swimsuit."
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://www.google.com/maps/place/Global+Gas+Station/@40.8010077,-74.0431204,12z/data=!4m12!1m2!2m1!1sgas+station+Manhattan+NY+rated+4.1!3m8!1s0x89c2f680de149fef:0xd055bad93493bd11!8m2!3d40.8302583!4d-73.9405417!9m1!1b1!15sCiJnYXMgc3RhdGlvbiBNYW5oYXR0YW4gTlkgcmF0ZWQgNC4xWiQiImdhcyBzdGF0aW9uIG1hbmhhdHRhbiBueSByYXRlZCA0LjGSAQtnYXNfc3RhdGlvbuABAA!16s%2Fg%2F11bvt5rb_6?entry=ttu&g_ep=EgoyMDI2MTAxMy4wIKXMDSoASAFQAw%3D%3D",
+      "toolCalls": 11,
+      "totalInputTokens": 211959,
+      "wallS": 50.875,
+      "verdict": "failure",
+      "reason": "The station meets the rating requirement, but the reviews are not shown sorted by lowest rating, and the evidence does not establish a required sign-in step."
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://www.google.com/maps/place/Global+Gas+Station/@40.8010077,-74.0431204,12z/data=!4m10!1m2!2m1!1sgas+station+Manhattan+NY+rating+4.5!3m6!1s0x89c2f680de149fef:0xd055bad93493bd11!8m2!3d40.8302583!4d-73.9405417!15sCiNnYXMgc3RhdGlvbiBNYW5oYXR0YW4gTlkgcmF0aW5nIDQuNVolIiNnYXMgc3RhdGlvbiBtYW5oYXR0YW4gbnkgcmF0aW5nIDQuNZIBC2dhc19zdGF0aW9u4AEA!16s%2Fg%2F11bvt5rb_6?entry=ttu&g_ep=EgoyMDI2MTAxMy4wIKXMDSoASAFQAw%3D%3D",
+      "toolCalls": 19,
+      "totalInputTokens": 796047,
+      "wallS": 70.666,
+      "verdict": "success",
+      "reason": "The agent found a Manhattan gas station rated 4.3 and stopped at the evidenced sign-in prompt while attempting to access review sorting, as instructed."
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://www.google.com/maps/",
+      "toolCalls": 19,
+      "totalInputTokens": 207268,
+      "wallS": 40.561,
+      "verdict": "failure",
+      "reason": "The agent did not find a gas station rated above 4.0 or sort its reviews by lowest rating, and the screenshot shows only search results."
+    }
+  ]
+}

@@ -8,7 +8,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { chromium } from 'playwright';
 import type { Browser, Page } from 'playwright';
 import { z } from 'zod';
-import { userAgentFor } from '../../src/userAgent.js';
+import { chromiumExecutable, userAgentFor } from '../../src/userAgent.js';
 
 const VIEWPORT = { width: 1280, height: 800 };
 let browser: Browser | null = null;
@@ -16,7 +16,7 @@ let page: Page | null = null;
 
 async function current(): Promise<Page> {
   if (!page) {
-    browser = await chromium.launch({ headless: true });
+    browser = await chromium.launch({ headless: true, ...chromiumExecutable() });
     page = await (await browser.newContext({ viewport: VIEWPORT, userAgent: await userAgentFor(browser) })).newPage();
   }
   return page;

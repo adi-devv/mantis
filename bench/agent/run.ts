@@ -620,6 +620,7 @@ const settings = {
     MANTIS_MEMORY: process.env.MANTIS_MEMORY ?? null,
     MANTIS_HEADLESS: process.env.MANTIS_HEADLESS ?? null,
     BENCH_CHROMIUM: process.env.BENCH_CHROMIUM ?? null,
+    MANTIS_CHROMIUM: process.env.MANTIS_CHROMIUM ?? null,
     PLAYWRIGHT_BROWSERS_PATH: process.env.PLAYWRIGHT_BROWSERS_PATH ?? null,
     CODEX_BIN: process.env.CODEX_BIN ?? null,
     CLAUDE_BIN: process.env.CLAUDE_BIN ?? null,

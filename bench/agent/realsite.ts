@@ -97,6 +97,7 @@ export function loadRealsiteRows(file: string = REALSITE_FILE): RealsiteRow[] {
 
 export function realsitePrompt(row: Pick<RealsiteRow, 'website' | 'task'>): string {
   return `Start at ${row.website}. ${row.task} Do not log in, buy anything, or enter personal information; stop before that step. ` +
+    'Finish with the page showing the evidence for your answer, including relevant inputs and site-generated results. Leave any required sign-in, purchase, or personal-information prompt open. State what is currently visible and distinguish it from earlier observations or your own calculations. Do not substitute your own estimate for a requested site result. ' +
     'When done, reply with your answer or what you did, then a last line "FINAL_URL: <url of the page you ended on>".';
 }
 

@@ -205,7 +205,10 @@ export function deriveRegions(snap: Snapshot): RawNode[] {
 // ---- region filter ---------------------------------------------------------
 
 function onlyRegion(nodes: RawNode[], query: string): RawNode[] | string {
-  const q = query.toLowerCase().trim();
+  const q = query.toLowerCase().trim().replace(
+    /^(.*\s)?(?:"([^"]*)"|'([^']*)'|“([^”]*)”|‘([^’]*)’)$/,
+    (_match, role, double, single, curlyDouble, curlySingle) => `${role ?? ''}${double ?? single ?? curlyDouble ?? curlySingle}`,
+  );
   const label = (n: RawNode): string => `${n.role}${n.name ? ' ' + n.name : ''}`.toLowerCase();
   const matches = (i: number): boolean => nodes[i].kind === 'region' && label(nodes[i]).includes(q);
   const inMatch = (i: number): boolean => {

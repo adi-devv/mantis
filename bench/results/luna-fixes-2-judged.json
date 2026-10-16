@@ -1,0 +1,105 @@
+{
+  "source": "luna-fixes-2",
+  "judgeModel": "gpt-6.1-sol",
+  "runs": [
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://smartasset.com/taxes/income-taxes",
+      "toolCalls": 10,
+      "totalInputTokens": 190069,
+      "wallS": 39.813,
+      "verdict": "failure",
+      "reason": "The calculator shows no tax estimate, and the screenshot does not support the claimed CAPTCHA or the reported $30,887 result."
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://smartasset.com/taxes/income-taxes",
+      "toolCalls": 22,
+      "totalInputTokens": 824343,
+      "wallS": 57.474,
+      "verdict": "failure",
+      "reason": "The agent treated $158,500 as income before the standard deduction, but the task specified taxable income, which yields $30,887 in federal income tax under 2025 single-filer brackets."
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://smartasset.com/taxes/income-taxes",
+      "toolCalls": 41,
+      "totalInputTokens": 811035,
+      "wallS": 98.2,
+      "verdict": "success",
+      "reason": "The screenshot supports the reported $30,887 federal tax estimate with Single status and Beaverton, OR, using $174,250 household income less the $15,750 standard deduction to yield $158,500 taxable income."
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://speedo.com/en-us/cart",
+      "toolCalls": 31,
+      "totalInputTokens": 1152704,
+      "wallS": 131.747,
+      "verdict": "failure",
+      "reason": "The cart contains size 40, and the agent did not establish that this corresponds to the requested size large or that $37 was the lowest available price."
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://speedo.com/en-us/en-us/pages/women",
+      "toolCalls": 5,
+      "totalInputTokens": 172367,
+      "wallS": 37.207,
+      "verdict": "failure",
+      "reason": "The agent did not find or add the lowest-priced women's black swimsuit in size large to the cart, and the screenshot shows an ordinary 404 page with a cookie overlay."
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://speedo.com/en-us/womens-ombre-ultraback-one-piece-black-",
+      "toolCalls": 68,
+      "totalInputTokens": 1672279,
+      "wallS": 167.87,
+      "verdict": "failure",
+      "reason": "The agent explicitly stopped without adding a swimsuit to the cart and did not establish the lowest-priced black swimsuit available in size large."
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://www.google.com/maps/place/Global+Gas+Station/@40.8010663,-74.0431203,12z/data=!4m12!1m2!2m1!1sgas+stations+in+Manhattan,+NY!3m8!1s0x89c2f680de149fef:0xd055bad93493bd11!8m2!3d40.8302583!4d-73.9405417!9m1!1b1!15sCh1nYXMgc3RhdGlvbnMgaW4gTWFuaGF0dGFuLCBOWVoeIhxnYXMgc3RhdGlvbnMgaW4gbWFuaGF0dGFuIG55kgELZ2FzX3N0YXRpb27gAQA!16s%2Fg%2F11bvt5rb_6?entry=ttu",
+      "toolCalls": 13,
+      "totalInputTokens": 239626,
+      "wallS": 56.392,
+      "verdict": "failure",
+      "reason": "The station meets the rating requirement, but the reviews remain unsorted by lowest rating, and the screenshot does not substantiate a required sign-in step."
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://www.google.com/maps/place/Global+Gas+Station/@40.7663172,-74.1382211,12z/data=!4m10!1m2!2m1!1sgas+stations+in+Manhattan,+NY!3m6!1s0x89c2f680de149fef:0xd055bad93493bd11!8m2!3d40.8302583!4d-73.9405417!15sCh1nYXMgc3RhdGlvbnMgaW4gTWFuaGF0dGFuLCBOWVoeIhxnYXMgc3RhdGlvbnMgaW4gbWFuaGF0dGFuIG55kgELZ2FzX3N0YXRpb27gAQA!16s%2Fg%2F11bvt5rb_6?entry=ttu&g_ep=EgoyMDI2MTAxMy4wIKXMDSoASAFQAw%3D%3D",
+      "toolCalls": 22,
+      "totalInputTokens": 625430,
+      "wallS": 89.734,
+      "verdict": "success",
+      "reason": "The agent found a Manhattan gas station rated 4.3 and stopped at the evidenced Google sign-in prompt, as permitted by the task instructions."
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://www.google.com/maps/",
+      "toolCalls": 23,
+      "totalInputTokens": 384538,
+      "wallS": 89.433,
+      "verdict": "failure",
+      "reason": "The station meets the location and rating criteria, but the reviews are not sorted by lowest rating, and the screenshot provides no evidence of a required sign-in step."
+    }
+  ]
+}

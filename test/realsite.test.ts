@@ -90,6 +90,11 @@ describe('loadRealsiteTasks', () => {
     const row = makeRows({ easy: 4, medium: 4, hard: 4 }).find((r) => r.task_id === task!.id)!;
     expect(task!.prompt('http://unused')).toBe(realsitePrompt(row));
     expect(task!.prompt('')).toContain(`Start at ${row.website}. ${row.task} Do not log in, buy anything, or enter personal information; stop before that step.`);
+    expect(task!.prompt('')).toContain('Finish with the page showing the evidence for your answer, including relevant inputs and site-generated results.');
+    expect(task!.prompt('')).toContain('Leave any required sign-in, purchase, or personal-information prompt open.');
+    expect(task!.prompt('')).toContain('State what is currently visible and distinguish it from earlier observations or your own calculations.');
+    expect(task!.prompt('')).toContain('Do not substitute your own estimate for a requested site result.');
+    expect(task!.prompt('').indexOf('Finish with the page')).toBeLessThan(task!.prompt('').indexOf('FINAL_URL'));
     expect(task!.prompt('')).toContain('a last line "FINAL_URL: <url of the page you ended on>".');
     expect(tasks.map((t) => t.id)).toEqual(loadRealsiteTasks({ AGENT_REALSITE_N: '6', AGENT_REALSITE_SEED: '3' }, file).map((t) => t.id));
     expect(loadRealsiteTasks({}, file)).toHaveLength(10);
@@ -162,6 +167,8 @@ describe('judge helpers', () => {
     expect(prompt).toContain('The cheapest listed item is $12.99.');
     expect(prompt).not.toMatch(/mantis|e42|mcp/i);
     expect(prompt).toContain('No screenshot is available');
+    expect(prompt).toContain('If the reply says a required login, purchase, or personal-information prompt stopped it but no such prompt is visible on a live capture, mark "unsure" unless other evidence shows failure.');
+    expect(prompt).toContain('If the task asks for a result the site computes and the agent gives its own estimate or calculation instead, mark "failure".');
     expect(buildJudgePrompt({ task: 't', website: 'w', finalUrl: null, answer: 'a', screenshotPath: '/tmp/x/final.png' })).toContain('/tmp/x/final.png');
   });
 

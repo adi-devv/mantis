@@ -31,6 +31,9 @@ describe('final-page screenshot evidence', () => {
     expect(prompt).toContain("agent's own final live page");
     expect(prompt).not.toContain('fresh load');
     expect(prompt).not.toContain('task--mantis');
+    expect(prompt).toContain('If the reply says a required login, purchase, or personal-information prompt stopped it but no such prompt is visible on a live capture, mark "unsure" unless other evidence shows failure.');
+    expect(prompt).toContain('If the task asks for a result the site computes and the agent gives its own estimate or calculation instead, mark "failure".');
+    expect(prompt).not.toContain('relevant inputs to be visible');
   });
 
   it('uses the legacy fresh URL load if no live capture exists', async () => {
@@ -45,7 +48,7 @@ describe('final-page screenshot evidence', () => {
     expect(readFileSync(blind, 'utf8')).toBe('fresh-png');
     const prompt = buildJudgePrompt({ task: 'find item', website: 'https://example.com', finalUrl: 'https://example.com', answer: '', screenshotPath: blind, screenshotSource: source });
     expect(prompt).toContain('freshly loaded in a new browser');
-    expect(prompt).toContain('do not penalise that alone');
+    expect(prompt).toContain('do not penalise that alone when the reply is specific and consistent with the page');
   });
 
   it('rejects a stored path outside the run log folder and falls back', async () => {
