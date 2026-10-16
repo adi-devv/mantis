@@ -116,6 +116,7 @@ export function mantisAdapter(): TextAdapter {
  */
 export function chromiumForMcp(): string | undefined {
   if (process.env.BENCH_CHROMIUM) return process.env.BENCH_CHROMIUM;
+  if (process.env.MANTIS_CHROMIUM) return process.env.MANTIS_CHROMIUM;
   const full = chromium.executablePath();
   const root = path.dirname(path.dirname(full));
   const cache = path.dirname(root);

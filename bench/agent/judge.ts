@@ -16,6 +16,7 @@ import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdir
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { chromiumExecutable } from '../../src/userAgent.js';
 import { parseClaudeStream } from './integrity.js';
 import { parseCodexStream } from './codex.js';
 import { loadRealsiteRows, mulberry32, parseFinalUrl, sanitizeAnswer, shuffled } from './realsite.js';
@@ -271,7 +272,7 @@ async function main(): Promise<void> {
 
   const screenshot = async (url: string, file: string): Promise<boolean> => {
     if (!/^https?:\/\//i.test(url)) return false;
-    const browser = await (browserPromise ??= chromium.launch({ headless: true }));
+    const browser = await (browserPromise ??= chromium.launch({ headless: true, ...chromiumExecutable() }));
     const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
     try {
       const page = await context.newPage();

@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { chromium } from 'playwright';
 import type { Browser, BrowserContext, Page } from 'playwright';
 import { MantisBrowser } from '../src/index.js';
+import { chromiumExecutable } from '../src/userAgent.js';
 import { CAPTCHA_WARNING, detectCaptcha } from '../src/fallback/captcha.js';
 import { fixture } from './helpers.js';
 
@@ -10,7 +11,7 @@ let context: BrowserContext;
 let page: Page;
 
 beforeAll(async () => {
-  rawBrowser = await chromium.launch();
+  rawBrowser = await chromium.launch(chromiumExecutable());
   context = await rawBrowser.newContext();
   await context.route('https://www.google.com/recaptcha/**', (route) => route.fulfill({
     contentType: 'text/html',
