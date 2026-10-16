@@ -27,6 +27,7 @@ See `docs/SETUP.md` (build/test) and `bench/README.md` (benchmarks, `AGENT_*` en
 
 ## Benchmark focus
 - Our main competitor is the accessibility-tree tool (Playwright MCP). Routine comparisons are Mantis vs tree vs screenshot. Skip browser-use and DevTools unless asked.
+- Real-site runs are graded by the blind judge (`npm run bench:judge`) on Codex `gpt-6.1-sol`, high reasoning (the default; `JUDGE_PROVIDER=claude` for Sonnet). Use a different model from the agent under test.
 - Every agent task needs a grader test in `test/fixture-verification.test.ts` with a passing case and a near-miss failing case.
 
 ## Git

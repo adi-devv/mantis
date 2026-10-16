@@ -1,0 +1,270 @@
+{
+  "source": "codex-luna-realsite30-b1",
+  "judgeModel": "claude-sonnet-5-5",
+  "runs": [
+    {
+      "task": "ec78d3a635e417bc2a80d03ca93d7165",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://www.gov.uk/carers-allowance",
+      "toolCalls": 12,
+      "totalInputTokens": 270044,
+      "wallS": 102.559,
+      "verdict": "success",
+      "reason": "The reply covers the relevant support for a single over-State-Pension-age person: State Pension, Pension Credit, Housing Benefit, Council Tax Reduction, Winter Fuel Payment, Warm Home Discount, and Carer's Allowance with Carer's Credit. It also notes that Carer's Allowance interacts with State Pension and Pension Credit. The screenshot shows the Carer's Allowance page, consistent with the cited links. I did not check the figures (£238, £86.45, the 27 June 1960 birth-date cutoff) against the live pages, but they look plausible."
+    },
+    {
+      "task": "ec78d3a635e417bc2a80d03ca93d7165",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://www.gov.uk/state-pension",
+      "toolCalls": 28,
+      "totalInputTokens": 1384367,
+      "wallS": 61.869,
+      "verdict": "success",
+      "reason": "The reply gives a comprehensive, accurate overview of GOV.UK support for a single pension-age person in England: State Pension, Pension Credit with its carer addition, Housing Benefit, Council Tax Reduction, Winter Fuel Payment, TV licence and Carer's Allowance. The figures look plausible for 2026/27, though the fresh-load screenshot (State Pension page) doesn't let me check them. The agent also stopped without logging in or entering personal information."
+    },
+    {
+      "task": "ec78d3a635e417bc2a80d03ca93d7165",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://www.gov.uk/attendance-allowance",
+      "toolCalls": 13,
+      "totalInputTokens": 154933,
+      "wallS": 43.752,
+      "verdict": "success",
+      "reason": "The reply covers the relevant GOV.UK supports for this profile (State Pension, Pension Credit, Housing Benefit, Council Tax Reduction, Winter Fuel Payment, Carer's Allowance) and correctly notes that Attendance Allowance is for the person being cared for. Its details are accurate, including the Carer's Allowance overlap with State Pension and the £86.45 rate. The final screenshot shows the Attendance Allowance page, which is off-center but consistent with the reply, and the agent did not log in or enter personal information."
+    },
+    {
+      "task": "6b5be1764692d1dc8f17dc4375b2daa8",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://finance.yahoo.com/quote/EURUSD=X/history/",
+      "toolCalls": 3,
+      "totalInputTokens": 71389,
+      "wallS": 41.219,
+      "verdict": "success",
+      "reason": "The screenshot shows the Yahoo Finance EUR/USD (EURUSD=X) Historical Data tab with a daily Oct 16, 2025–Oct 16, 2026 range and a data table. This matches the agent's reply and the task."
+    },
+    {
+      "task": "6b5be1764692d1dc8f17dc4375b2daa8",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://finance.yahoo.com/quote/EURUSD=X/history/",
+      "toolCalls": 5,
+      "totalInputTokens": 120469,
+      "wallS": 34.619,
+      "verdict": "success",
+      "reason": "The final page is Yahoo Finance's EUR/USD (EURUSD=X) Historical Data tab. It shows a date range, a Daily frequency and an OHLC data table, which is what the task asked for."
+    },
+    {
+      "task": "6b5be1764692d1dc8f17dc4375b2daa8",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://finance.yahoo.com/quote/EURUSD=X/history/",
+      "toolCalls": 9,
+      "totalInputTokens": 147706,
+      "wallS": 59.476,
+      "verdict": "success",
+      "reason": "The final URL loads Yahoo Finance's Historical Data page for EUR/USD (EURUSD=X). The screenshot shows a daily Historical Prices table for Oct 16, 2025 – Oct 16, 2026, which is what the task asked for."
+    },
+    {
+      "task": "bd1e3770b7181f6fce9c35e18caa9785",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://www.craigslist.org/view/d/top-commercial-10-kw-solar-installation/qPmYjKoAcEFQfwts7qWfR4",
+      "toolCalls": 8,
+      "totalInputTokens": 149589,
+      "wallS": 38.37,
+      "verdict": "unsure",
+      "reason": "The screenshot is completely blank, so it shows nothing of the search, the hide-duplicates filter or the listing. The reply is specific, but it describes Melbourne and Bendigo results under a Delhi Craigslist search, which is odd, and I can't check it."
+    },
+    {
+      "task": "bd1e3770b7181f6fce9c35e18caa9785",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://www.craigslist.org/view/d/top-commercial-10-kw-solar-installation/qPmYjKoAcEFQfwts7qWfR4",
+      "toolCalls": 9,
+      "totalInputTokens": 242637,
+      "wallS": 41.549,
+      "verdict": "unsure",
+      "reason": "The screenshot is blank, so nothing confirms the search, the hide-duplicates filter, or the listing page. The agent's reply is specific and plausible, but it can't be verified."
+    },
+    {
+      "task": "bd1e3770b7181f6fce9c35e18caa9785",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://www.craigslist.org/search/area/delhi?cat=bbb&query=solar",
+      "toolCalls": 29,
+      "totalInputTokens": 263034,
+      "wallS": 59.118,
+      "verdict": "unsure",
+      "reason": "The fresh-load screenshot is completely blank, so it shows nothing. The reported URL has no hide-duplicates parameter, and a Delhi search returning Melbourne and Geelong listings looks odd, so I can't confirm the task was done."
+    },
+    {
+      "task": "5c00e9561eae94789443f405525a5869",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://www.healthline.com/health/drugs/vivitrol-dosage",
+      "toolCalls": 4,
+      "totalInputTokens": 89663,
+      "wallS": 39.534,
+      "verdict": "success",
+      "reason": "The agent ended on Healthline's Vivitrol Dosage and Administration page. Its answer of 380 mg by intramuscular injection every 4 weeks, given by a healthcare professional, matches the standard labeled Vivitrol dose. The screenshot shows only the page introduction, so the dosage text itself isn't visible, but the answer is consistent with the page and the known dose."
+    },
+    {
+      "task": "5c00e9561eae94789443f405525a5869",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://www.healthline.com/health/drugs/vivitrol-dosage",
+      "toolCalls": 6,
+      "totalInputTokens": 98512,
+      "wallS": 42.325,
+      "verdict": "success",
+      "reason": "The agent landed on Healthline's Vivitrol Dosage and Administration page. Its answer, one 380 mg injection about once a month given by a healthcare professional, matches the known Vivitrol dosing. The screenshot shows only the page intro, so the dosage figure itself isn't visible there."
+    },
+    {
+      "task": "5c00e9561eae94789443f405525a5869",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://www.healthline.com/health/drugs/vivitrol-dosage-and-administration",
+      "toolCalls": 12,
+      "totalInputTokens": 174179,
+      "wallS": 40.041,
+      "verdict": "unsure",
+      "reason": "The reply (one 380 mg injection about monthly, given by a healthcare professional) matches the known Vivitrol dosage, but the reported Healthline URL returns a 404 on a fresh load, so the screenshot gives no support for it."
+    },
+    {
+      "task": "eb323dc584156d0eb3a2b90bb8c4b791_110325",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://www.compass.com/homedetails/188-20-50th-Ave-Unit-1FL-BASEMENT-Queens-NY-11365/2JXEIS_pid/",
+      "toolCalls": 16,
+      "totalInputTokens": 306962,
+      "wallS": 68.374,
+      "verdict": "failure",
+      "reason": "The reported listing has 3 bedrooms, not the 2 bedrooms the task asked for, and nothing shows that $4,800 is the cheapest match across New York."
+    },
+    {
+      "task": "eb323dc584156d0eb3a2b90bb8c4b791_110325",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://www.compass.com/for-rent/new-york/p-2/?searchQuery=%7B%22sort%22%3A%7B%22column%22%3A%22price%22%2C%22direction%22%3A%22asc%22%7D%7D",
+      "toolCalls": 61,
+      "totalInputTokens": 3229834,
+      "wallS": 178.722,
+      "verdict": "failure",
+      "reason": "The agent said it could not identify the cheapest 2-bed, 3+-bath rental and gave no listing, and the screenshot shows only an unfiltered results page."
+    },
+    {
+      "task": "eb323dc584156d0eb3a2b90bb8c4b791_110325",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://www.compass.com/homes-for-rent/new-york-ny/",
+      "toolCalls": 27,
+      "totalInputTokens": 460427,
+      "wallS": 168.776,
+      "verdict": "unsure",
+      "reason": "The fresh screenshot shows only the default 'Recommended' results with no filters, so I can't confirm that $13,500 at 720 West End Ave 7H is the cheapest 2-bed, 3+-bath rental. The price also seems high for a search that may include all boroughs."
+    },
+    {
+      "task": "c03ee2be3d73556ab789c0ad1cbd3451",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://marketplace.akc.org/search-groomers",
+      "toolCalls": 3,
+      "totalInputTokens": 71715,
+      "wallS": 19.899,
+      "verdict": "failure",
+      "reason": "The final page is a 403 Forbidden error, so the agent never searched for groomers near 10005 or checked any service prices; the task was not accomplished, even though the agent's reply honestly reports the block."
+    },
+    {
+      "task": "c03ee2be3d73556ab789c0ad1cbd3451",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://marketplace.akc.org/search-groomers",
+      "toolCalls": 3,
+      "totalInputTokens": 77966,
+      "wallS": 17.284,
+      "verdict": "failure",
+      "reason": "The agent never searched for groomers near 10005 or looked at any prices, because the marketplace page returned 403 Forbidden. The screenshot shows the same error, so the reply is accurate but the task was not done."
+    },
+    {
+      "task": "c03ee2be3d73556ab789c0ad1cbd3451",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://marketplace.akc.org/",
+      "toolCalls": 21,
+      "totalInputTokens": 348591,
+      "wallS": 116.551,
+      "verdict": "failure",
+      "reason": "The agent never found a groomer or any service prices. Its final page is a 403 Forbidden error, which matches its own reply that it was blocked, so the task was not completed."
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://speedo.com/en-us/collections/women-black-swimsuits/products/womens-shaping-strappy-swimsuit-black-80037010001",
+      "toolCalls": 25,
+      "totalInputTokens": 525646,
+      "wallS": 215.152,
+      "verdict": "failure",
+      "reason": "The agent did not add any swimsuit to the cart, which was the core of the task. The cookie banner it blamed could have been dismissed, and it did not verify that $39.20 was the lowest price."
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://speedo.com/en-us/collections/women-swimwear-all?sort_by=price-ascending&filter.v.availability=1",
+      "toolCalls": 8,
+      "totalInputTokens": 227353,
+      "wallS": 93.947,
+      "verdict": "failure",
+      "reason": "The agent said it could not add anything to the cart, and the screenshot shows only an unfiltered women's swimwear list sorted by price, with no black or size Large filter and no cart addition."
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://speedo.com/en-us",
+      "toolCalls": 28,
+      "totalInputTokens": 477029,
+      "wallS": 70.29,
+      "verdict": "failure",
+      "reason": "The agent's own reply says it could not confirm the lowest-priced black swimsuit in size Large or add anything to the cart, so the task was not completed."
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://www.google.com/maps/place/Shell/@40.7389859,-74.1476673,12z/data=!4m10!1m2!2m1!1sgas+station+in+Manhattan,+NY!3m6!1s0x89c258af21f3c7ab:0x9f22d34dc273493a!8m2!3d40.783089!4d-73.945193!15sChxnYXMgc3RhdGlvbiBpbiBNYW5oYXR0YW4sIE5ZWh0iG2dhcyBzdGF0aW9uIGluIG1hbmhhdHRhbiBueZIBC2dhc19zdGF0aW9u4AEA!16s%2Fg%2F1tct9mk_?entry=ttu&g_ep=EgoyMDI2MTAxMy4wIKXMDSoASAFQAw%3D%3D",
+      "toolCalls": 15,
+      "totalInputTokens": 264203,
+      "wallS": 63.82,
+      "verdict": "failure",
+      "reason": "The agent said it could not verify a station rated above 4.0 or sort its reviews, so it never completed the task. The screenshot shows only a search results list, with no place page and no reviews sorted by lowest rating."
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://www.google.com/maps/search/gas+station+Manhattan+NY+4.2+stars/@40.8009491,-74.0431206,12z/data=!3m1!4b1?entry=ttu&g_ep=EgoyMDI2MTAxMy4wIKXMDSoASAFQAw%3D%3D",
+      "toolCalls": 11,
+      "totalInputTokens": 228042,
+      "wallS": 32.532,
+      "verdict": "failure",
+      "reason": "The agent found no qualifying Manhattan station and never opened reviews or sorted them by lowest rating, so the task was not completed."
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://www.google.com/maps/search/gas+station+Manhattan+NY",
+      "toolCalls": 23,
+      "totalInputTokens": 342249,
+      "wallS": 61.914,
+      "verdict": "failure",
+      "reason": "The agent did not complete the task: it reported only the first few visible results (rated 2.8–3.7), did not find a Manhattan gas station rated above 4.0, and did not sort any reviews by lowest rating."
+    }
+  ]
+}

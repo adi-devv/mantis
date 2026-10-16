@@ -4,10 +4,11 @@
  *   JUDGE_IN=my-realsite npm run bench:judge        # reads results/my-realsite.json + results/agent-logs/my-realsite/
  *
  * For each judged run it takes the agent's final reply and FINAL_URL, loads that URL in a fresh headless
- * Chromium (1280x800 screenshot), and asks `claude -p` (Read tool only) for {"verdict","reason"}. The judge never
+ * Chromium (1280x800 screenshot), and asks Codex (`codex exec`, screenshot attached, read-only) or `claude -p` (Read tool only) for {"verdict","reason"}. The judge never
  * sees which approach produced a run: tool-revealing lines are stripped from the reply and the run order is shuffled.
- * Writes results/<name>-judged.{json,md}. Env: JUDGE_MODEL (claude-sonnet-5-5), JUDGE_CONCURRENCY (6),
- * JUDGE_SEED (1), JUDGE_TIMEOUT_S (240), CLAUDE_BIN.
+ * Writes results/<name>-judged.{json,md}. Env: JUDGE_PROVIDER (codex | claude, default codex), JUDGE_MODEL
+ * (gpt-6.1-sol / claude-sonnet-5-5), JUDGE_REASONING (high, Codex only), JUDGE_CONCURRENCY (6), JUDGE_SEED (1),
+ * JUDGE_TIMEOUT_S (240), CODEX_BIN, CLAUDE_BIN.
  */
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -67,7 +68,7 @@ export const runKey = (task: string, approach: string, run: number): string => `
 
 // ---- Judge prompt and reply parsing ----
 
-export function buildJudgePrompt(input: { task: string; website: string; finalUrl: string | null; answer: string; screenshotPath: string | null }): string {
+export function buildJudgePrompt(input: { task: string; website: string; finalUrl: string | null; answer: string; screenshotPath: string | null; attached?: boolean }): string {
   return [
     'You are grading whether a web agent completed a task on a real website. You are not told how the agent worked; judge only the evidence below.',
     '',
@@ -83,7 +84,7 @@ export function buildJudgePrompt(input: { task: string; website: string; finalUr
     '"""',
     '',
     input.screenshotPath
-      ? `A screenshot of that URL, freshly loaded in a new browser (1280x800), is at ${input.screenshotPath}. Open it with the Read tool and use it as evidence. Because it is a fresh load, a page may lack state the agent created (a search, a filter, a form entry); do not penalise that alone when the reply is specific and consistent with the page.`
+      ? `A screenshot of that URL, freshly loaded in a new browser (1280x800), ${input.attached ? 'is attached' : `is at ${input.screenshotPath}. Open it with the Read tool and`} use it as evidence. Because it is a fresh load, a page may lack state the agent created (a search, a filter, a form entry); do not penalise that alone when the reply is specific and consistent with the page.`
       : 'No screenshot is available (the final URL could not be loaded); judge on the reply and URL alone, and answer "unsure" if that is not enough.',
     '',
     'Mark "success" only if the task was actually accomplished (or, for questions, the answer is correct and supported by the evidence). Mark "failure" if it was not, or the reply is wrong, evasive, or off-task. Mark "unsure" if the evidence is not enough to decide.',
@@ -131,7 +132,7 @@ export function renderJudgedMarkdown(name: string, runs: JudgedRun[], tasks: Map
   const taskIds = [...new Set(runs.map((r) => r.task))];
   const L: string[] = [];
   L.push(`# Real-site eval, blind-judged: ${name}`, '');
-  L.push(`> Each run's final reply and a fresh screenshot of its final URL were graded by \`${judgeModel}\` (Claude Code, Read tool only) without knowing which approach produced it. Tool-revealing lines were stripped from the reply and the order was shuffled. Sites change over time and the screenshot is a fresh load, so treat this as a snapshot.`, '');
+  L.push(`> Each run's final reply and a fresh screenshot of its final URL were graded by \`${judgeModel}\` (screenshot only, no other tools) without knowing which approach produced it. Tool-revealing lines were stripped from the reply and the order was shuffled. Sites change over time and the screenshot is a fresh load, so treat this as a snapshot.`, '');
   L.push('## Per approach', '');
   L.push('| Approach | Runs | Success | Failure | Unsure | Avg tool calls | Avg input tokens | Avg time (s) |');
   L.push('|---|---:|---:|---:|---:|---:|---:|---:|');
@@ -160,13 +161,28 @@ function claudeBin(): string {
   return process.platform === 'win32' && existsSync(win) ? win : 'claude';
 }
 
-/** Run one judge call. The prompt goes in on stdin; cwd is the empty temp folder holding the screenshot. */
+/** Run one Codex judge call: read-only, no user config, the screenshot attached; returns the last message. */
+function callCodexJudge(prompt: string, cwd: string, model: string, reasoning: string, shot: string | null, timeoutMs: number): Promise<string> {
+  const last = path.join(cwd, 'last.txt');
+  const args = ['exec', '--ephemeral', '--skip-git-repo-check', '--ignore-user-config', '-s', 'read-only', '-m', model,
+    '-c', `model_reasoning_effort=${reasoning}`, ...(shot ? ['-i', shot] : []), '-o', last, '-'];
+  return runCli(process.env.CODEX_BIN ?? 'codex', args, prompt, cwd, timeoutMs).then(() => {
+    if (!existsSync(last)) throw new Error('codex judge wrote no reply');
+    return readFileSync(last, 'utf8');
+  });
+}
+
 function callJudge(prompt: string, cwd: string, model: string, timeoutMs: number): Promise<string> {
+  // Isolation: no user/project settings or CLAUDE.md, no MCP servers, Read is the only tool, nothing saved.
+  const args = ['-p', '--model', model, '--output-format', 'json', '--tools', 'Read', '--allowedTools', 'Read',
+    '--setting-sources', '', '--strict-mcp-config', '--disable-slash-commands', '--no-session-persistence'];
+  return runCli(claudeBin(), args, prompt, cwd, timeoutMs);
+}
+
+/** Run a judge CLI. The prompt goes in on stdin; cwd is the empty temp folder holding the screenshot. */
+function runCli(bin: string, args: string[], prompt: string, cwd: string, timeoutMs: number): Promise<string> {
   return new Promise((resolve, reject) => {
-    // Isolation: no user/project settings or CLAUDE.md, no MCP servers, Read is the only tool, nothing saved.
-    const args = ['-p', '--model', model, '--output-format', 'json', '--tools', 'Read', '--allowedTools', 'Read',
-      '--setting-sources', '', '--strict-mcp-config', '--disable-slash-commands', '--no-session-persistence'];
-    const p = spawn(claudeBin(), args, { cwd, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+    const p = spawn(bin, args, { cwd, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
     let out = '';
     let err = '';
     const timer = setTimeout(() => {
@@ -179,7 +195,7 @@ function callJudge(prompt: string, cwd: string, model: string, timeoutMs: number
     p.on('error', (e) => { clearTimeout(timer); reject(e); });
     p.on('close', (code) => {
       clearTimeout(timer);
-      if (out.trim()) resolve(out);
+      if (out.trim() || code === 0) resolve(out);
       else reject(new Error(`judge exited with code ${code}: ${err.slice(0, 200)}`));
     });
     p.stdin.on('error', () => { /* the process may exit before reading */ });
@@ -190,7 +206,10 @@ function callJudge(prompt: string, cwd: string, model: string, timeoutMs: number
 async function main(): Promise<void> {
   const name = process.env.JUDGE_IN;
   if (!name || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/.test(name)) throw new Error('Set JUDGE_IN=<result name> (reads bench/results/<name>.json).');
-  const model = process.env.JUDGE_MODEL ?? 'claude-sonnet-5-5';
+  const judgeProvider = process.env.JUDGE_PROVIDER ?? 'codex';
+  if (judgeProvider !== 'codex' && judgeProvider !== 'claude') throw new Error('JUDGE_PROVIDER must be codex or claude.');
+  const model = process.env.JUDGE_MODEL ?? (judgeProvider === 'codex' ? 'gpt-6.1-sol' : 'claude-sonnet-5-5');
+  const reasoning = process.env.JUDGE_REASONING ?? 'high';
   const concurrency = Number(process.env.JUDGE_CONCURRENCY ?? 6);
   const seed = Number(process.env.JUDGE_SEED ?? 1);
   const timeoutMs = Number(process.env.JUDGE_TIMEOUT_S ?? 240) * 1000;
@@ -240,8 +259,10 @@ async function main(): Promise<void> {
       try {
         const shot = finalUrl ? path.join(dir, 'final.png') : null;
         const haveShot = shot && finalUrl ? await screenshot(finalUrl, shot) : false;
-        const prompt = buildJudgePrompt({ task: row.task, website: row.website, finalUrl, answer: sanitizeAnswer(text), screenshotPath: haveShot ? shot : null });
-        result = parseJudgeOutput(await callJudge(prompt, dir, model, timeoutMs));
+        const prompt = buildJudgePrompt({ task: row.task, website: row.website, finalUrl, answer: sanitizeAnswer(text), screenshotPath: haveShot ? shot : null, attached: judgeProvider === 'codex' });
+        result = parseJudgeOutput(judgeProvider === 'codex'
+          ? await callCodexJudge(prompt, dir, model, reasoning, haveShot ? shot : null, timeoutMs)
+          : await callJudge(prompt, dir, model, timeoutMs));
       } catch (error) {
         result = { verdict: 'unsure', reason: `judge error: ${error instanceof Error ? error.message : String(error)}`.slice(0, 200) };
       }

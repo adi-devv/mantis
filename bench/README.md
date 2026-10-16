@@ -60,7 +60,7 @@ Categories: `forms`, `reading`, `lists`, `overlays`, `navigation`, `dynamic`, `v
 The task file is not in the repo (the dataset is gated). To get it, accept the terms at [osunlp/Online-Mind2Web](https://huggingface.co/datasets/osunlp/Online-Mind2Web), download `Online_Mind2Web.json` and save it as `bench/agent/realsite-tasks.json`.
 
 `AGENT_TASKS=cat:realsite` runs tasks from `agent/realsite-tasks.json` (Online-Mind2Web rows: `task_id`, `website`, `confirmed_task`, `level`; no file means no tasks). `AGENT_REALSITE_N` (default 10) rows are sampled, stratified by `level`, with a seeded shuffle (`AGENT_REALSITE_SEED`, default 1). `AGENT_TASKS=all` skips them.
-The agent ends with a `FINAL_URL:` line, so the usual grading only checks that it finished. Then `JUDGE_IN=<result name> npm run bench:judge` has Claude Code (`claude-sonnet-5-5`, Read tool only) judge each run blind, from the final reply (tool-revealing lines stripped, run order shuffled) and a fresh screenshot of the final URL, 6 at a time. It writes `results/<name>-judged.{json,md}`: success / failure / unsure per approach and per task.
+The agent ends with a `FINAL_URL:` line, so the usual grading only checks that it finished. Then `JUDGE_IN=<result name> npm run bench:judge` has Codex (`gpt-6.1-sol`, high reasoning, read-only, screenshot attached) judge each run blind (`JUDGE_PROVIDER=claude` uses `claude-sonnet-5-5` instead), from the final reply (tool-revealing lines stripped, run order shuffled) and a fresh screenshot of the final URL, 6 at a time. It writes `results/<name>-judged.{json,md}`: success / failure / unsure per approach and per task.
 
 ### Approaches
 
