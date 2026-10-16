@@ -1,5 +1,18 @@
 # Setup
 
+## Install
+
+Requires Node 20+.
+
+```bash
+npx playwright install chromium
+claude mcp add mantis -- npx -y -p mantis-browser mantis-mcp
+```
+
+On native Windows: `claude mcp add mantis -- cmd /c npx -y -p mantis-browser mantis-mcp`
+
+Try it without an agent: `npx -y -p mantis-browser mantis read https://example.com`
+
 ## Build and test
 
 Requires Node 20+.
