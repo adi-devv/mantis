@@ -2,6 +2,8 @@
 
 **Lets AI agents browse the web as short, numbered text instead of screenshots.**
 
+[perzian.dev/mantis](https://perzian.dev/mantis/) · by [Perzian](https://perzian.dev)
+
 Mantis shows the agent what a person would notice on a page, in a few lines, and lets it act by number.
 It works with Claude Code, Codex, Cursor or your own agent as an MCP server. [Install in two commands](docs/SETUP.md#install).
 
