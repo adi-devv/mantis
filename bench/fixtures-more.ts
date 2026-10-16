@@ -214,20 +214,25 @@ const plans = page(
   });`,
 );
 
+// Answers are added only when their question is opened, so no tool can read them without the click.
+const FAQ = [
+  ['How do I reset my password?', 'Use the "Forgot password" link on the sign-in page.'],
+  ['Can I change my plan?', 'Yes, from Settings → Billing, at any time.'],
+  ['What is your refund policy?', 'You can ask for a full refund within 30 days of purchase.'],
+  ['Do you offer discounts?', 'Students get 20% off with a valid student email.'],
+];
 const faq = page(
   'Help',
   `<main><h1>Help centre</h1>
-${[
-    ['How do I reset my password?', 'Use the "Forgot password" link on the sign-in page.'],
-    ['Can I change my plan?', 'Yes, from Settings → Billing, at any time.'],
-    ['What is your refund policy?', 'You can ask for a full refund within 30 days of purchase.'],
-    ['Do you offer discounts?', 'Students get 20% off with a valid student email.'],
-  ].map(([q, a], i) => `<h2><button aria-expanded="false" aria-controls="a${i}">${q}</button></h2><div id="a${i}" hidden><p>${a}</p></div>`).join('\n')}
+${FAQ.map(([q], i) => `<h2><button aria-expanded="false" aria-controls="a${i}">${q}</button></h2><div id="a${i}" hidden></div>`).join('\n')}
 </main>`,
-  `document.querySelectorAll('h2 button').forEach((b) => b.addEventListener('click', () => {
+  `const A = ${JSON.stringify(FAQ.map(([, a]) => a))};
+  document.querySelectorAll('h2 button').forEach((b, i) => b.addEventListener('click', () => {
     const open = b.getAttribute('aria-expanded') === 'true';
     b.setAttribute('aria-expanded', String(!open));
-    document.getElementById(b.getAttribute('aria-controls')).hidden = open;
+    const panel = document.getElementById(b.getAttribute('aria-controls'));
+    panel.innerHTML = open ? '' : '<p>' + A[i] + '</p>';
+    panel.hidden = open;
   }));`,
 );
 

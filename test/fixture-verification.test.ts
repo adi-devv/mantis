@@ -26,7 +26,9 @@ async function openAttempt(taskId: string, attemptId: string, path: string): Pro
 }
 
 async function verify(taskId: string, attemptId: string, expected: boolean): Promise<void> {
-  await page.waitForTimeout(100);
+  // Let post-action snapshots be sent, then wait until the grader has received every observation.
+  await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 0)));
+  await page.waitForFunction(() => (window as unknown as { __fixturePending: number }).__fixturePending === 0);
   expect((await fixtures.verify(taskId, attemptId))?.ok).toBe(expected);
 }
 
@@ -138,6 +140,7 @@ it('smokes the remaining local interaction checks', async () => {
 
   const faq = TASKS.find((entry) => entry.id === 'faq-refund')!;
   await openAttempt(faq.id, 'faq-refund', '/help');
+  expect(await page.locator('body').innerText()).not.toContain('30 days');
   await page.getByRole('button', { name: /refund policy/i }).click();
   await verify(faq.id, 'faq-refund', true);
 

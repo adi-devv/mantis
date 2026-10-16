@@ -55,8 +55,12 @@ const observer = String.raw`<script>
   };
   const send = (kind, target, targetSummary, controlState, actionId) => {
     const data = { path: location.pathname.replace(/^\/__attempt\/[A-Za-z0-9_-]+/, '') || '/', kind, documentId, actionId, target: targetSummary || summarize(target), controls: controlState || controls(), text: (document.body?.innerText || '').replace(/\s+/g, ' ').slice(0, 5000) };
-    fetch('/__verify/' + encodeURIComponent(token), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(data), keepalive: true }).catch(() => {});
+    pending++;
+    fetch('/__verify/' + encodeURIComponent(token), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(data), keepalive: true }).catch(() => {}).finally(() => { pending--; });
   };
+  // Observations not yet received by the grader, so tests can wait for them deterministically.
+  let pending = 0;
+  Object.defineProperty(window, '__fixturePending', { get: () => pending });
   send('load', document.documentElement);
   for (const kind of ['click','input','change','submit','scroll']) {
     document.addEventListener(kind, (event) => {
@@ -75,7 +79,19 @@ function instrument(html: string): string {
   return bootstrapped.includes('</body>') ? bootstrapped.replace('</body>', `${observer}</body>`) : `${bootstrapped}${observer}`;
 }
 
-interface AttemptState { taskId: string; events: FixtureObservation[] }
+interface AttemptState { taskId: string; events: FixtureObservation[]; pending: number; lastAt: number }
+
+const newAttempt = (taskId: string): AttemptState => ({ taskId, events: [], pending: 0, lastAt: 0 });
+
+/** Observations are posted asynchronously, so wait until none is in flight and none has arrived for a while. */
+const QUIET_MS = 250;
+const MAX_WAIT_MS = 3000;
+async function quiet(state: AttemptState | undefined): Promise<void> {
+  const deadline = Date.now() + MAX_WAIT_MS;
+  while (state && Date.now() < deadline && (state.pending > 0 || Date.now() - state.lastAt < QUIET_MS)) {
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+}
 
 const page = (title: string, body: string, script = ''): string =>
   `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${title}</title></head><body>${body}${script ? `<script>${script}</script>` : ''}</body></html>`;
@@ -224,6 +240,8 @@ export async function startFixtures(options: { checks?: FixtureCheckEntry[] } = 
     const url = new URL(req.url ?? '/', 'http://x');
     if (req.method === 'POST' && url.pathname.startsWith('/__verify/')) {
       const token = decodeURIComponent(url.pathname.slice('/__verify/'.length));
+      const pending = attempts.get(token);
+      if (pending) { pending.pending++; pending.lastAt = Date.now(); }
       let body = '';
       req.setEncoding('utf8');
       req.on('data', (part: string) => { body += part; });
@@ -233,6 +251,7 @@ export async function startFixtures(options: { checks?: FixtureCheckEntry[] } = 
           const state = attempts.get(token);
           if (state && event && typeof event.path === 'string' && Array.isArray(state.events)) state.events.push(event);
         } catch { /* malformed observation is ignored */ }
+        if (pending) { pending.pending--; pending.lastAt = Date.now(); }
         res.writeHead(204).end();
       });
       return;
@@ -242,7 +261,7 @@ export async function startFixtures(options: { checks?: FixtureCheckEntry[] } = 
     if (attemptPrefix) {
       const token = attemptPrefix[1]!;
       path = attemptPrefix[2] || '/';
-      if (!attempts.has(token)) attempts.set(token, { taskId: '', events: [] });
+      if (!attempts.has(token)) attempts.set(token, newAttempt(''));
     }
     const more = moreRoute(path);
     if (more) {
@@ -263,16 +282,16 @@ export async function startFixtures(options: { checks?: FixtureCheckEntry[] } = 
     base,
     baseFor: (taskId, attemptId) => {
       if (!/^[A-Za-z0-9_-]+$/.test(attemptId)) throw new Error('attemptId must contain only letters, numbers, hyphens, and underscores');
-      attempts.set(attemptId, { taskId, events: [] });
+      attempts.set(attemptId, newAttempt(taskId));
       return `${base}/__attempt/${encodeURIComponent(attemptId)}`;
     },
     verify: async (taskId, attemptId) => {
       if (attemptId === undefined) return null;
       const check = checks.get(taskId);
       if (!check) { attempts.delete(attemptId); return null; }
-      // Let the final keepalive observation finish after the agent closes its browser.
-      await new Promise((resolve) => setTimeout(resolve, 75));
+      // Let the final keepalive observations land, including after the agent closes its browser.
       const state = attempts.get(attemptId);
+      await quiet(state);
       if (state && state.taskId !== taskId) return { ok: false, details: 'attempt belongs to a different task' };
       const events = state?.events ?? [];
       const result = check(events);
