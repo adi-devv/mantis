@@ -9,3 +9,4 @@ export type { MemoryOptions } from './memory.js';
 export type { ReadOptions, RegionInfo, RegionHook } from './translate.js';
 export { diffSnapshots, DIFF_BUDGET_CHARS } from './diff.js';
 export type { Target } from './fallback/media.js';
+export { benchUserAgent, userAgentFor, stripHeadless } from './userAgent.js';

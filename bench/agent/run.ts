@@ -19,6 +19,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { chromiumForMcp } from '../adapters.js';
 import { startFixtures } from '../fixtures.js';
+import { benchUserAgent } from '../../src/userAgent.js';
 import { PILOT, TASKS } from './tasks.js';
 import type { AgentTask } from './tasks.js';
 import { aggregateUsage, assertCompatibleResume, classifyAttempt, hashSources, makeMetadata, parseClaudeStream, validateFlag, validatePositiveInt } from './integrity.js';
@@ -50,6 +51,8 @@ if (!MODEL.trim() || /[\r\n\0]/.test(MODEL)) throw new Error(`AGENT_MODEL must b
 type Approach = 'mantis' | 'tree' | 'devtools' | 'browseruse' | 'screenshot';
 const node = process.execPath;
 const MCP_CHROMIUM = chromiumForMcp();
+/** Normal (non-headless) Chrome user agent, identical for every approach; see src/userAgent.ts. */
+const BENCH_UA = await benchUserAgent();
 const CODEX_BIN = process.env.CODEX_BIN ?? 'codex';
 const VENV_PY = path.join(REPO, 'bench', 'agent', '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
 const TSX = import.meta.resolve('tsx');
@@ -182,7 +185,7 @@ async function startServer(spec: ServerSpec, warmMs: number, log: string): Promi
 const APPROACHES: Record<Approach, { label: string; server: (dir: string) => Record<string, ServerSpec>; warmMs?: number; allow: string[]; deny?: string[] }> = {
   mantis: {
     label: 'Mantis',
-    server: (dir) => ({ mantis: { command: node, args: [path.join(REPO, 'bench', 'agent', 'bridge.mjs'), '--mantis-server'], env: { MANTIS_MEMORY_DIR: path.join(dir, 'mem') } } }),
+    server: (dir) => ({ mantis: { command: node, args: [path.join(REPO, 'bench', 'agent', 'bridge.mjs'), '--mantis-server'], env: { MANTIS_MEMORY_DIR: path.join(dir, 'mem'), MANTIS_USER_AGENT: BENCH_UA } } }),
     allow: ['mcp__mantis'],
     deny: ['mcp__mantis__bench_capture'],
   },
@@ -193,7 +196,7 @@ const APPROACHES: Record<Approach, { label: string; server: (dir: string) => Rec
         command: node,
         // Same browser binary as the token benchmark (Playwright MCP otherwise looks for an installed Chrome).
         args: [
-          path.join(REPO, 'node_modules', '@playwright', 'mcp', 'cli.js'), '--headless', '--isolated', '--viewport-size', '1280x800', '--output-dir', path.join(dir, 'tree-output'),
+          path.join(REPO, 'node_modules', '@playwright', 'mcp', 'cli.js'), '--headless', '--isolated', '--user-agent', BENCH_UA, '--viewport-size', '1280x800', '--output-dir', path.join(dir, 'tree-output'),
           ...(MCP_CHROMIUM ? ['--executable-path', MCP_CHROMIUM] : []),
         ],
       },
@@ -256,7 +259,7 @@ const APPROACHES: Record<Approach, { label: string; server: (dir: string) => Rec
   screenshot: {
     label: 'Screenshots (click by x,y)',
     // tsx by absolute URL: runs start in an empty temp folder where a bare 'tsx' does not resolve.
-    server: () => ({ screenshot: { command: node, args: ['--import', TSX, path.join(REPO, 'bench', 'agent', 'screenshot-mcp.ts')] } }),
+    server: () => ({ screenshot: { command: node, args: ['--import', TSX, path.join(REPO, 'bench', 'agent', 'screenshot-mcp.ts')], env: { MANTIS_USER_AGENT: BENCH_UA } } }),
     allow: ['mcp__screenshot'],
     deny: ['mcp__screenshot__bench_capture'],
   },

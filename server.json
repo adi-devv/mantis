@@ -1,0 +1,20 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.perzianhq/mantis",
+  "description": "The web as short, numbered text for AI agents: a lean browser interface over Playwright.",
+  "repository": {
+    "url": "https://github.com/perzianhq/mantis",
+    "source": "github"
+  },
+  "version": "0.1.2",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "mantis-browser",
+      "version": "0.1.2",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

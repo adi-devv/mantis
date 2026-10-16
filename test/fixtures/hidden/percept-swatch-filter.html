@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Swatch filter</title>
+<style>
+  body { font: 16px sans-serif; margin: 0; }
+  ul { list-style: none; margin: 0; padding: 0; width: 400px; }
+  .facet-checkbox { position: relative; display: flex; align-items: center; gap: 8px; height: 26px; margin: 4px 0; }
+  .swatch-input-wrapper { display: block; }
+  .swatch-input__input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; width: 392px; height: 26px; }
+  .swatch-input__label { display: block; width: 26px; height: 26px; }
+  .swatch { display: block; width: 26px; height: 26px; border-radius: 50%; background: var(--swatch--background); border: 1px solid #ccc; box-sizing: border-box; }
+  .facets-count { color: #666; }
+  .visually-hidden { position: absolute !important; overflow: hidden; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; clip: rect(0, 0, 0, 0); word-wrap: normal !important; }
+  #status { margin-top: 16px; }
+  #cookie { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 100; }
+  #cookie .box { background: #fff; margin: 120px auto; width: 420px; padding: 20px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Filters</h1>
+  <h2>Color</h2>
+  <ul id="colors"></ul>
+  <p id="status">Selected: none</p>
+</main>
+<script>
+  const colors = [
+    ['Black', 167, 'rgb(0 0 0)', '276878098799'],
+    ['Blue', 94, 'rgb(0 0 255)', '276878131567'],
+    ['Red', 51, 'rgb(255 0 0)', '276878164335'],
+    ['White', 38, 'rgb(255 255 255)', '276878197103'],
+  ];
+  const list = document.getElementById('colors');
+  colors.forEach(([name, count, rgb, id], i) => {
+    const gid = 'gid://shopify/Metaobject/' + id;
+    list.insertAdjacentHTML('beforeend', `<li class="list-menu__item"><div class="facets__label facet-checkbox">
+  <div class="swatch-input-wrapper">
+    <input type="checkbox" id="Filter-color${i + 1}" name="filter.p.m.product.color_filter" value="${gid}" class="swatch-input__input" data-name="${name}">
+    <label for="Filter-color${i + 1}" title="${gid}" class="swatch-input__label"><span class="swatch" style="--swatch--background: ${rgb};"></span></label>
+  </div>
+  <span class="facet-checkbox__text" aria-hidden="true"><span>${name}</span> <span class="facets-count">(${count})</span></span>
+  <span class="visually-hidden">${name} (${count} products)</span>
+</div></li>`);
+  });
+  list.addEventListener('change', () => {
+    const on = [...list.querySelectorAll('input:checked')].map((i) => i.dataset.name);
+    document.getElementById('status').textContent = 'Selected: ' + (on.join(', ') || 'none');
+  });
+  if (location.search.includes('cookie=1')) {
+    document.body.insertAdjacentHTML('beforeend', `<div id="cookie"><div class="box" role="dialog" aria-modal="true" aria-labelledby="ct">
+      <h2 id="ct">We use cookies</h2><button onclick="document.getElementById('cookie').remove()">Accept all</button></div></div>`);
+  }
+</script>
+</body>
+</html>

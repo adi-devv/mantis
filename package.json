@@ -1,16 +1,17 @@
 {
   "name": "mantis-browser",
-  "version": "0.1.1",
+  "version": "0.1.2",
+  "mcpName": "io.github.perzianhq/mantis",
   "description": "A lean browser interface for AI agents: web pages as short numbered text.",
   "type": "module",
   "license": "MIT",
   "author": "Aadit Singal",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/adi-devv/mantis.git"
+    "url": "git+https://github.com/perzianhq/mantis.git"
   },
-  "homepage": "https://github.com/adi-devv/mantis#readme",
-  "bugs": "https://github.com/adi-devv/mantis/issues",
+  "homepage": "https://github.com/perzianhq/mantis#readme",
+  "bugs": "https://github.com/perzianhq/mantis/issues",
   "keywords": [
     "mcp",
     "browser",
@@ -28,6 +29,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
+    "mantis-browser": "dist/server.js",
     "mantis": "dist/cli.js",
     "mantis-mcp": "dist/server.js"
   },

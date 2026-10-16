@@ -11,6 +11,7 @@ import type { Target } from './fallback/media.js';
 import { detectCaptcha } from './fallback/captcha.js';
 import { recognize, closeOcr } from './fallback/ocr.js';
 import { downscale, pngSize } from './fallback/look.js';
+import { userAgentFor } from './userAgent.js';
 import { parseUntil, describeUntil, waitForHuman, DEFAULT_TIMEOUT_SECONDS } from './fallback/askHuman.js';
 
 /** Transpiler helper shim for pages (see launch()). */
@@ -131,7 +132,9 @@ export class MantisBrowser {
     if (this.browser) return;
     const headless = this.opts.headless ?? process.env.MANTIS_HEADLESS !== '0';
     this.browser = await chromium.launch({ headless });
-    this.context = await this.browser.newContext({ viewport: { width: 1280, height: 800 } });
+    // Headless Chromium announces itself as "HeadlessChrome", which some sites answer with a degraded page.
+    const userAgent = headless || process.env.MANTIS_USER_AGENT ? await userAgentFor(this.browser) : undefined;
+    this.context = await this.browser.newContext({ viewport: { width: 1280, height: 800 }, ...(userAgent ? { userAgent } : {}) });
     // Transpilers (tsx, vitest) wrap named functions in a __name() helper that does not
     // exist in the page; define it (as a string, so it is not itself wrapped).
     await this.context.addInitScript("Object.defineProperty(globalThis, '__name', { value: (f) => f, configurable: true });");

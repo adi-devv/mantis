@@ -118,3 +118,97 @@ describe('shared-context hints', () => {
     } finally { await b.close(); }
   });
 });
+
+describe('transparent click-target controls (swatch filters)', () => {
+  const COLORS = ['Black (167 products)', 'Blue (94 products)', 'Red (51 products)', 'White (38 products)'];
+
+  it('numbers each opacity:0 checkbox stretched over its row and names it from the row text', async () => {
+    const b = new MantisBrowser();
+    try {
+      const view = await b.open(fixture('hidden/percept-swatch-filter.html'));
+      const snap = await b.snapshot();
+      const boxes = snap.nodes.filter((n) => n.kind === 'interactive' && n.role === 'checkbox');
+      expect(boxes.map((n) => n.name)).toEqual(COLORS);
+      expect(boxes.every((n) => !n.inferred && !n.covered && !n.states.includes('looks disabled'))).toBe(true);
+      for (const n of boxes) expect(view).toContain(`#${n.id} checkbox "${n.name}"`);
+      // The row text is the control's name, not also a separate plain-text line.
+      expect(view.split(String.fromCharCode(10)).filter((l) => l.includes('Black (167 products)'))).toHaveLength(1);
+      expect(view).not.toContain('gid://');
+    } finally { await b.close(); }
+  });
+
+  it('clicking the numbered checkbox selects that colour', async () => {
+    const b = new MantisBrowser();
+    try {
+      await b.open(fixture('hidden/percept-swatch-filter.html'));
+      const snap = await b.snapshot();
+      const black = snap.nodes.find((n) => n.kind === 'interactive' && n.name === 'Black (167 products)');
+      await b.click(black!.id!);
+      const view = await b.read();
+      expect(view).toContain('Selected: Black');
+      expect(view).toContain(`#${black!.id} checkbox "Black (167 products)" (checked`);
+      const red = (await b.snapshot()).nodes.find((n) => n.kind === 'interactive' && n.name === 'Red (51 products)');
+      await b.click(red!.id!);
+      expect(await b.read()).toContain('Selected: Black, Red');
+    } finally { await b.close(); }
+  });
+
+  it('lists the checkboxes as covered, not missing, under a page-covering cookie dialog', async () => {
+    const b = new MantisBrowser();
+    try {
+      const view = await b.open(fixture('hidden/percept-swatch-filter.html') + '?cookie=1');
+      const snap = await b.snapshot();
+      const boxes = snap.nodes.filter((n) => n.kind === 'interactive' && n.role === 'checkbox');
+      expect(boxes.map((n) => n.name)).toEqual(COLORS);
+      expect(boxes.every((n) => n.covered)).toBe(true);
+      expect(view).toContain('covers page');
+      expect(view).toMatch(/checkbox "Black \(167 products\)" \(covered\)/);
+    } finally { await b.close(); }
+  });
+
+  it('keeps near-misses as they were: covered by a card, hidden, words around a code, shared rows', async () => {
+    const b = new MantisBrowser();
+    try {
+      const view = await b.open(fixture('hidden/percept-swatch-near-miss.html'));
+      const snap = await b.snapshot();
+      const names = snap.nodes.filter((n) => n.kind === 'interactive').map((n) => n.name);
+      // (a) an ordinary opaque card on top is not an overlay: the ghost input stays hidden.
+      // (d) visibility:hidden and pointer-events:none ghosts stay hidden too.
+      for (const hidden of ['Covered ghost', 'Invisible ghost', 'Inert ghost']) expect(view, hidden).not.toContain(hidden);
+      // (b) a code among words is a real name.
+      expect(names).toContain('SKU-1234 blue');
+      // (c) two controls share the row: no borrowed row text, the machine name stays.
+      expect(names).toContain('gid://shopify/Metaobject/111222333444');
+      expect(names).toContain('gid://shopify/Metaobject/555666777888');
+      expect(names.filter((n) => n.includes('Shared row words'))).toHaveLength(0);
+      expect(names.filter((n) => n.includes('Ignored row words'))).toHaveLength(0);
+      expect(names).toHaveLength(3);
+    } finally { await b.close(); }
+  });
+});
+
+describe('unnamed dismiss buttons', () => {
+  it('names an icon-only close-btn in a shadow-root popup "close", and clicking it uncovers the page', async () => {
+    const b = new MantisBrowser({ actionTimeoutMs: 1500 });
+    try {
+      await b.open(fixture('hidden/percept-close-class.html'));
+      const snap = await b.snapshot();
+      const close = snap.nodes.find((n) => n.kind === 'interactive' && n.name === 'close');
+      expect(close?.inferred).toBe(true);
+      const buy = snap.nodes.find((n) => n.kind === 'interactive' && n.name === 'Buy now');
+      expect(buy?.covered).toBe(true);
+      await b.click(close!.id!);
+      const after = await b.snapshot();
+      expect(after.nodes.find((n) => n.kind === 'interactive' && n.name === 'Buy now')?.covered).toBe(false);
+    } finally { await b.close(); }
+  });
+
+  it('near miss: "disclosure" and "closed" classes are not read as close', async () => {
+    const b = new MantisBrowser({ actionTimeoutMs: 1500 });
+    try {
+      await b.open(fixture('hidden/percept-close-class.html'));
+      const names = (await b.snapshot()).nodes.filter((n) => n.kind === 'interactive' && n.role === 'button').map((n) => n.name);
+      expect(names.filter((n) => n === 'close')).toHaveLength(1);
+    } finally { await b.close(); }
+  });
+});
