@@ -13,7 +13,7 @@ Where work stands, so it can be resumed after a restart. Design: [PLAN.md](PLAN.
 - [x] M7 — Never lose what the accessibility tree has
 - [x] M8 — Faster than the accessibility tree
 - [x] M9 — Better than the accessibility tree
-- [ ] M10 — Real-agent eval (biased first pass done; unbiased eval is step 2 below)
+- [ ] M10 — Real-agent eval (fixture evals done; real-site pilot done; full real-site eval is step 2 below)
 - [ ] M11 — Launch (0.1.1, README top, demo video; plan in [docs/LAUNCH.md](LAUNCH.md))
 
 ## Next steps
@@ -22,7 +22,7 @@ Where work stands, so it can be resumed after a restart. Design: [PLAN.md](PLAN.
 2. Unbiased eval on the frozen version: ~50 tasks from WebVoyager or Online-Mind2Web on real
    sites. Mantis vs Playwright MCP vs each agent's native browser tool (Claude in Chrome or
    computer use; Codex's built-in browser). Blind LLM judge, 3 runs, report per task.
-3. Publish 0.1.1 and a GitHub release with those numbers (npm 2FA by the user).
+3. Done: 0.1.1 published to npm. Still to do: a GitHub release with the real-site numbers.
 
 Later: fallback tools inside iframes; add Chrome DevTools MCP and browser-use to the token replay.
 
@@ -91,3 +91,8 @@ Later: fallback tools inside iframes; add Chrome DevTools MCP and browser-use to
   long-shop and long-onboard x 3): 6/6 correct; calls 25.3 → 19.7 and 30.3 → 21.3; tokens flat (308k vs 303k,
   305k vs 263k; runs with equal calls vary 200–374k, so 3 runs can't show a token change). 208 tests.
   Frozen as v0.1.1.
+- 2026-10-16: Published 0.1.1 to npm. Real-site pilot on Online-Mind2Web (`bench/agent/realsite.ts`, blind
+  Sonnet judge in `bench/agent/judge.ts`; Codex `gpt-6-luna`, medium reasoning, 1 run). 5 of the first 10 tasks
+  were blocked by bot detection for every approach and were replaced by the next unblocked ones in seed order.
+  On the 10 unblocked tasks: Mantis 7/10, 8.4 calls, 185k tokens; tree 5/10, 12.2, 311k; screenshots 6/10, 17.9, 310k.
+  README trimmed to plain language; numbers in `bench/RESULTS.md`, build and config in `docs/DEVELOPMENT.md`.

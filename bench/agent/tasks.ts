@@ -5,8 +5,9 @@
  */
 import type { FixtureCheck, FixtureObservation } from '../fixtures.js';
 import { LONG_EXPECT } from '../fixtures-long.js';
+import { loadRealsiteTasks } from './realsite.js';
 
-export type Category = 'forms' | 'reading' | 'lists' | 'overlays' | 'navigation' | 'dynamic' | 'visual' | 'long';
+export type Category = 'forms' | 'reading' | 'lists' | 'overlays' | 'navigation' | 'dynamic' | 'visual' | 'long' | 'realsite';
 
 export interface AgentTask {
   id: string;
@@ -19,6 +20,8 @@ export interface AgentTask {
   expect: RegExp;
   /** Local action tasks also need server-observed evidence that the browser reached the requested state. */
   check?: FixtureCheck;
+  /** Real-site task with no regex answer: `expect` only checks the agent finished; bench/agent/judge.ts grades it afterwards. */
+  judged?: boolean;
 }
 
 type EventKind = FixtureObservation['kind'];
@@ -41,7 +44,7 @@ const control = (event: FixtureObservation, id: string, value: string, checked?:
 const target = (event: FixtureObservation, id: string): boolean => event.target.id === id;
 const esc = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-export const TASKS: AgentTask[] = [
+const LOCAL_AND_LIVE_TASKS: AgentTask[] = [
   {
     id: 'form-subscribe',
     category: 'forms',
@@ -279,5 +282,7 @@ export const TASKS: AgentTask[] = [
     check: check((e) => LONG_EXPECT.laptops.paths.every((path) => has(e, (x) => x.path === path && x.kind === 'load'))),
   },
 ];
+/** Hand-written tasks plus the sampled real-site tasks (AGENT_TASKS=cat:realsite; none if realsite-tasks.json is absent). */
+export const TASKS: AgentTask[] = [...LOCAL_AND_LIVE_TASKS, ...loadRealsiteTasks()];
 /** The small set used for a quick pilot (default when AGENT_TASKS is not set). */
 export const PILOT = ['form-subscribe', 'wikipedia-birthdate'];

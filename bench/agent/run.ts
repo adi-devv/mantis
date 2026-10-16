@@ -301,7 +301,10 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
     const bridge = { command: node, args: [path.join(REPO, 'bench', 'agent', 'bridge.mjs'), String(server.port)] };
     writeFileSync(cfg, JSON.stringify({ mcpServers: { [name]: bridge } }));
     const taskBase = task.site === 'local' ? fixtures.baseFor(task.id, attemptId) : base;
-    const prompt = `${task.prompt(taskBase)}\n\nUse only the browser tools you have. When you are done, end your reply with one line: ANSWER: <answer>`;
+    // Judged real-site prompts already say how to end the reply (FINAL_URL line); the judge reads the whole reply.
+    const prompt = task.judged
+      ? `${task.prompt(taskBase)}\n\nUse only the browser tools you have.`
+      : `${task.prompt(taskBase)}\n\nUse only the browser tools you have. When you are done, end your reply with one line: ANSWER: <answer>`;
     const a = APPROACHES[approach];
     const codexServer = {
       name, command: node, args: bridge.args,
@@ -388,7 +391,9 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
     try { rmSync(dir, { recursive: true, force: true }); } catch { /* temporary profile cleanup is best effort */ }
     cleanupMs = Date.now() - cleanupStart;
   }
-  const answer = (/ANSWER:\s*(.+)/i.exec(parsed.resultText ?? '')?.[1] ?? (parsed.resultText ?? '').slice(-200)).trim().slice(0, 160);
+  const answer = (task.judged
+    ? (parsed.resultText ?? '').replace(/^\s*FINAL_URL:.*$/gim, '')
+    : (/ANSWER:\s*(.+)/i.exec(parsed.resultText ?? '')?.[1] ?? (parsed.resultText ?? '').slice(-200))).trim().slice(0, 160);
   const connected = parsed.connected;
   const connectionState = connected ? 'connected' : parsed.sawInit ? 'failed' : 'unknown';
   let status = classifyAttempt({
@@ -510,7 +515,8 @@ for (const pick of picks) {
     throw new Error(`unknown AGENT_TASKS entry ${JSON.stringify(pick)}; ids: ${TASKS.map((t) => t.id).join(', ')}`);
   }
 }
-const tasks = want === 'all' ? TASKS : TASKS.filter((t) => picks.includes(t.id) || picks.includes(`cat:${t.category}`) || picks.includes(t.category));
+// "all" means the deterministic tasks; judged real-site tasks must be asked for (cat:realsite).
+const tasks = want === 'all' ? TASKS.filter((t) => !t.judged) : TASKS.filter((t) => picks.includes(t.id) || picks.includes(`cat:${t.category}`) || picks.includes(t.category));
 if (!tasks.length) throw new Error(`no tasks match AGENT_TASKS=${want}; ids: ${TASKS.map((t) => t.id).join(', ')}`);
 const approaches = (process.env.AGENT_APPROACHES ?? 'mantis,tree,screenshot').split(',') as Approach[];
 const validApproaches: Approach[] = ['mantis', 'tree', 'devtools', 'browseruse', 'screenshot'];
@@ -562,7 +568,8 @@ const settings = {
 preflightApproaches(approaches);
 const sourceFiles = [
   'bench/agent/run.ts', 'bench/agent/integrity.ts', 'bench/agent/tasks.ts', 'bench/agent/bridge.mjs',
-  'bench/agent/codex.ts', 'bench/agent/codex-config.ts',
+  'bench/agent/codex.ts', 'bench/agent/codex-config.ts', 'bench/agent/realsite.ts',
+  ...(existsSync(path.join(REPO, 'bench', 'agent', 'realsite-tasks.json')) ? ['bench/agent/realsite-tasks.json'] : []),
   'bench/agent/screenshot-mcp.ts', 'bench/fixtures.ts', 'bench/fixtures-more.ts', 'bench/adapters.ts',
   ...sourceFilesUnder('src'), ...sourceFilesUnder('dist'), 'package-lock.json',
 ];

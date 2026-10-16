@@ -1,0 +1,171 @@
+{
+  "source": "codex-luna-realsite-swap",
+  "judgeModel": "claude-sonnet-5-5",
+  "runs": [
+    {
+      "task": "bf3b311cc8dce16d3de844f4b5875dfd",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://www.apple.com/in/apple-watch-ultra-4/specs/",
+      "toolCalls": 8,
+      "totalInputTokens": 206940,
+      "wallS": 51.462,
+      "verdict": "success",
+      "reason": "The screenshot shows the Apple Watch Ultra 4 tech specs page, which matches the reported URL and the 'Titanium case, Grade 5, Natural, Black' claim. The reply compares Series 12, Ultra 4 and SE 3 and gives Ultra details, and the agent stopped before any login or purchase. I could not check the other comparison figures against the page, but they are plausible and specific."
+    },
+    {
+      "task": "bf3b311cc8dce16d3de844f4b5875dfd",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://www.apple.com/watch/compare/",
+      "toolCalls": 10,
+      "totalInputTokens": 242019,
+      "wallS": 42.438,
+      "verdict": "success",
+      "reason": "The compare page screenshot shows Series 12, Ultra 4 and SE 3, which matches the agent's lineup. The reply gives a comparison table and Ultra 4 details, and it reports visiting the Ultra overview page and stopping before any purchase or login."
+    },
+    {
+      "task": "bf3b311cc8dce16d3de844f4b5875dfd",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://www.apple.com/apple-watch-ultra-4/",
+      "toolCalls": 18,
+      "totalInputTokens": 324831,
+      "wallS": 120.991,
+      "verdict": "success",
+      "reason": "The screenshot shows the Apple Watch Ultra 4 page with the battery headline the agent described. The reply summarizes a comparison of Series 12, Ultra 4 and SE 3 with specific specs, and it stopped before any purchase. I couldn't check the comparison specs against the screenshot, and the Ultra detail beyond that is thin."
+    },
+    {
+      "task": "4f903626f632586fe4728d6664947bab",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://www.justice.gov/news/press-releases?search_api_fulltext=Antitrust+Division&start_date=2022-01-01&end_date=2022-12-31&sort_by=search_api_relevance",
+      "toolCalls": 12,
+      "totalInputTokens": 250571,
+      "wallS": 78.827,
+      "verdict": "failure",
+      "reason": "The agent never retrieved any 2022 Antitrust Division press releases. Its own reply says it hit \"Access Denied\", and the screenshot of the final URL shows the same Access Denied error page."
+    },
+    {
+      "task": "4f903626f632586fe4728d6664947bab",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://www.justice.gov/news/press-releases?f%5B0%5D=facet_components%3A376",
+      "toolCalls": 11,
+      "totalInputTokens": 281161,
+      "wallS": 61.401,
+      "verdict": "failure",
+      "reason": "The page shows Access Denied and the agent said it never applied the 2022 date range or viewed any results, so the task was not completed."
+    },
+    {
+      "task": "4f903626f632586fe4728d6664947bab",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://www.justice.gov/atr/press-releases",
+      "toolCalls": 25,
+      "totalInputTokens": 437755,
+      "wallS": 85.174,
+      "verdict": "failure",
+      "reason": "The agent only reached the unfiltered Antitrust press releases page and said it could not apply the 2022 filter, even though a 'Filter by Year' option is visible. No 2022 press releases were found or shown."
+    },
+    {
+      "task": "a69d2934fe54fef165490a5a2d95bf38_070826",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://cookpad.com/jp/recipes/26541926?ref=search&search_term=%E5%B0%8F%E9%BA%A6%E7%B2%89%E3%81%AA%E3%81%97+%E3%83%91%E3%83%B3%E3%82%B1%E3%83%BC%E3%82%AD",
+      "toolCalls": 5,
+      "totalInputTokens": 111128,
+      "wallS": 48.787,
+      "verdict": "success",
+      "reason": "The agent searched Cookpad Japan for 小麦粉なし パンケーキ and listed several flour-free pancake recipes. The final page is a flour-free banana and sweet potato pancake recipe (小麦粉不使用), which matches the task."
+    },
+    {
+      "task": "a69d2934fe54fef165490a5a2d95bf38_070826",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://cookpad.com/jp/search/%E3%83%91%E3%83%B3%E3%82%B1%E3%83%BC%E3%82%AD%20%E5%B0%8F%E9%BA%A6%E7%B2%89%E3%81%AA%E3%81%97",
+      "toolCalls": 5,
+      "totalInputTokens": 139358,
+      "wallS": 20.935,
+      "verdict": "success",
+      "reason": "The screenshot shows Cookpad Japan search results for 'パンケーキ 小麦粉なし' (pancakes without wheat flour), including the banana pancake recipe the agent listed. The reply gives specific recipes and honestly notes that some use rice flour or oatmeal."
+    },
+    {
+      "task": "a69d2934fe54fef165490a5a2d95bf38_070826",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://cookpad.com/jp/search/%E3%83%91%E3%83%B3%E3%82%B1%E3%83%BC%E3%82%AD%20小麦粉なし",
+      "toolCalls": 9,
+      "totalInputTokens": 146379,
+      "wallS": 48.104,
+      "verdict": "success",
+      "reason": "The screenshot shows the Cookpad Japan search 「パンケーキ 小麦粉なし」 with 8,514 recipes. The first result is 「小麦粉不使用☆バナナとさつまいものパンケーキ」, which matches the agent's reply and the task."
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://smartasset.com/taxes/income-taxes",
+      "toolCalls": 11,
+      "totalInputTokens": 281999,
+      "wallS": 71.403,
+      "verdict": "failure",
+      "reason": "Using 2025 single brackets, federal income tax on $158,500 of taxable income is about $30,887, not the $41,149 the agent reported. The calculator's headline figure is 'Federal Income and FICA Taxes', so the agent likely reported a combined total or a mis-set input, and the screenshot shows no result that supports the figure."
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://smartasset.com/taxes/income-taxes",
+      "toolCalls": 18,
+      "totalInputTokens": 647899,
+      "wallS": 44.145,
+      "verdict": "failure",
+      "reason": "The calculator returned no result, and the agent's manual figure of $28,358 is wrong. Applying the 2025 single brackets to $158,500 of taxable income gives about $30,887."
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://smartasset.com/taxes/income-taxes",
+      "toolCalls": 36,
+      "totalInputTokens": 666937,
+      "wallS": 147.463,
+      "verdict": "success",
+      "reason": "The $30,887 figure matches a hand calculation with the 2025 single brackets on $158,500 of taxable income. The agent also grossed up the calculator's household income by the $15,750 standard deduction so the calculator used the stated taxable income. The fresh-load screenshot shows an empty calculator, so I could not confirm the entries, but the reply is specific and consistent with the page."
+    },
+    {
+      "task": "60cbbbd58eb9d28b053aef945f464228",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://www.bbb.org/scamtracker/lookupscam?q=scam_id%3D555555555%26from%3D0",
+      "toolCalls": 5,
+      "totalInputTokens": 98765,
+      "wallS": 39.364,
+      "verdict": "success",
+      "reason": "The BBB Scam Tracker lookup for 555555555 shows 0 results, and the agent's hedged reply matches that. One doubt is that the search used a 'Scam ID' filter, which may not be the same as a phone-number search."
+    },
+    {
+      "task": "60cbbbd58eb9d28b053aef945f464228",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://www.bbb.org/scamtracker/lookupscam?q=scam_id%3D555555555%26from%3D0",
+      "toolCalls": 9,
+      "totalInputTokens": 212626,
+      "wallS": 37.267,
+      "verdict": "failure",
+      "reason": "The agent searched the Scam ID filter, which matches BBB report IDs, rather than looking up 555555555 as a phone number in the scam search box. The 0 results therefore don't answer whether the phone number is a scam."
+    },
+    {
+      "task": "60cbbbd58eb9d28b053aef945f464228",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://www.bbb.org/scamtracker/search",
+      "toolCalls": 10,
+      "totalInputTokens": 168036,
+      "wallS": 56.499,
+      "verdict": "success",
+      "reason": "The agent searched the BBB Scam Tracker for 555555555 and honestly reported 0 results, with the caveat that the site read it as a Scam ID search. The fresh-load screenshot shows the Look Up a Scam search page, which fits that, but I couldn't confirm the 0-result claim because the screenshot only shows the default page."
+    }
+  ]
+}

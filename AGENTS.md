@@ -23,7 +23,7 @@ Plan on the strong model and hand the coding to the cheaper one with a clear bri
 - Run long work (evals, full suites) in the background and report when it finishes.
 
 ## Commands
-See `README.md` (build/test) and `bench/README.md` (benchmarks, `AGENT_*` env vars, result format).
+See `docs/DEVELOPMENT.md` (build/test) and `bench/README.md` (benchmarks, `AGENT_*` env vars, result format).
 
 ## Benchmark focus
 - Our main competitor is the accessibility-tree tool (Playwright MCP). Routine comparisons are Mantis vs tree vs screenshot. Skip browser-use and DevTools unless asked.

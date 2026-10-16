@@ -1,0 +1,6 @@
+{"type":"thread.started","thread_id":"t"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"I'll start."}}
+{"type":"item.started","item":{"id":"item_1","type":"mcp_tool_call","server":"mantis","tool":"open","arguments":{"url":"https://example.com"},"result":null,"error":null,"status":"in_progress"}}
+{"type":"item.completed","item":{"id":"item_1","type":"mcp_tool_call","server":"mantis","tool":"open","arguments":{"url":"https://example.com"},"result":{"content":[{"type":"text","text":"page"}]},"error":null,"status":"completed"}}
+{"type":"item.completed","item":{"id":"item_2","type":"agent_message","text":"The cheapest listed item is $12.99.\nI clicked e42 and then used the Mantis open tool.\nIt is the Blue Mug.\nFINAL_URL: https://example.com/mugs?sort=price"}}
+{"type":"turn.completed","usage":{"input_tokens":10,"cached_input_tokens":0,"output_tokens":5}}

@@ -175,7 +175,7 @@ and never of the full page. Mantis never solves CAPTCHAs.
 | Iframes (payment, login widgets) | per frame | inline under `[iframe "Payment"]`, own numbers |
 | Size | whole page | budgeted, compacted |
 
-**Measured:** the numbers are in the [README](../README.md#benchmark). How to read them:
+**Measured:** the numbers are in [bench/RESULTS.md](../bench/RESULTS.md). How to read them:
 
 - The replay's total-token gap is driven by a few huge pages, and on some of them Mantis shows a
   trimmed view while the tree sends everything. "Orients on the page cheaply" is fair; "reads the

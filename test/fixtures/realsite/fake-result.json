@@ -1,0 +1,7 @@
+{
+  "metadata": { "settings": { "provider": "codex" } },
+  "results": [
+    { "task": "rs-1", "approach": "mantis", "run": 1, "status": "success", "answer": "short", "toolCalls": 7, "totalInputTokens": 12000, "timings": { "cliWallMs": 20000 } },
+    { "task": "rs-1", "approach": "tree", "run": 1, "status": "timeout", "answer": "", "toolCalls": 30, "totalInputTokens": 90000, "timings": { "cliWallMs": 600000 } }
+  ]
+}
