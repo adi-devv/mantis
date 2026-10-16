@@ -1,0 +1,772 @@
+{
+  "metadata": {
+    "schemaVersion": 3,
+    "configFingerprint": "bd2246d4645d56c7294d8ac7e2445f1a7f3cd237e531212db64828b56bfc3dfb",
+    "settings": {
+      "provider": "claude",
+      "tasks": [
+        "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+        "bc2ce7f206045dd2d322e5695a947219",
+        "0e42c3a73f2aece1f854e0ba55b7c8b0"
+      ],
+      "approaches": [
+        "mantis",
+        "tree",
+        "screenshot"
+      ],
+      "runs": 3,
+      "model": "claude-haiku-5-5",
+      "reasoning": "not-applicable",
+      "timeoutMs": 600000,
+      "concurrency": 6,
+      "toolRestrictions": {
+        "builtins": [
+          "Claude built-ins disabled by --tools \"\""
+        ],
+        "approaches": {
+          "mantis": {
+            "allow": [
+              "mcp__mantis"
+            ],
+            "deny": [
+              "mcp__mantis__bench_capture"
+            ]
+          },
+          "tree": {
+            "allow": [
+              "mcp__playwright__browser_navigate",
+              "mcp__playwright__browser_navigate_back",
+              "mcp__playwright__browser_snapshot",
+              "mcp__playwright__browser_click",
+              "mcp__playwright__browser_type",
+              "mcp__playwright__browser_fill_form",
+              "mcp__playwright__browser_select_option",
+              "mcp__playwright__browser_press_key",
+              "mcp__playwright__browser_hover",
+              "mcp__playwright__browser_wait_for",
+              "mcp__playwright__browser_find",
+              "mcp__playwright__browser_tabs",
+              "mcp__playwright__browser_handle_dialog",
+              "mcp__playwright__browser_take_screenshot"
+            ],
+            "deny": [
+              "mcp__playwright__browser_evaluate",
+              "mcp__playwright__browser_run_code_unsafe"
+            ]
+          },
+          "screenshot": {
+            "allow": [
+              "mcp__screenshot"
+            ],
+            "deny": [
+              "mcp__screenshot__bench_capture"
+            ]
+          }
+        }
+      },
+      "runtime": {
+        "nodeVersion": "v22.22.0",
+        "platform": "linux",
+        "arch": "x64"
+      },
+      "environment": {
+        "MANTIS_MEMORY": null,
+        "MANTIS_HEADLESS": null,
+        "BENCH_CHROMIUM": null,
+        "MANTIS_CHROMIUM": "/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell",
+        "PLAYWRIGHT_BROWSERS_PATH": "/opt/pw-browsers",
+        "CODEX_BIN": null,
+        "CLAUDE_BIN": null,
+        "resolvedCliCommand": "claude"
+      },
+      "browserPaths": {
+        "chromiumForMcp": "/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell",
+        "browserUsePlaywrightBrowsersPath": "/opt/pw-browsers"
+      }
+    },
+    "sourceHashes": {
+      "bench/agent/run.ts": "156cd5aa7c178a1c31d9e456d941c7e9142cbc84b9e7eb5c4204b6ee213ce834",
+      "bench/agent/integrity.ts": "69829d9853f0166252050c3a0bf0a864ae595901c85bf8191c9e2714de024e99",
+      "bench/agent/tasks.ts": "752a4fa3da542fbcc72d591e485dbf142154e58be3359fe5aaf0778c03bb6d6b",
+      "bench/agent/bridge.mjs": "7648b01676db09199b9cda8546c63b0147963960b9b9ec6411921dc6a5cb8f19",
+      "bench/agent/codex.ts": "e7d16855e24ef025d87b4f18a4ec32c50b8cef701985ef85aa6d03f748ddd236",
+      "bench/agent/codex-config.ts": "7ea7bccfcbf19c4d9dbd236e6c30bdc6b366be78d54f63f88f670f4482a00435",
+      "bench/agent/realsite.ts": "7844c8f182d54e14aea855d538db29f2d39d7b1035b16e4240879a0c8ec784aa",
+      "bench/agent/realsite-tasks.json": "59c843c4f7b124ba3ecde7b61186cbaa79345a02a3e52c7db9fe010c10e52c25",
+      "bench/agent/screenshot-mcp.ts": "64d0ad2b12183399b8134be97df620918979f35246d75aed2a81972ccea834bc",
+      "bench/fixtures.ts": "315a6a1724e81b4519bc62443ce6ead7fc6c56bd2d547292c1fb845ac9f76dd6",
+      "bench/fixtures-more.ts": "c1a15f3e8f4d00366395994a4d81725203c736f25613150f26ca2b7a5006b594",
+      "bench/adapters.ts": "f5131942344133faecab2c93eb4bee2ebe771571a74b987bf5761e616f70b7b5",
+      "src/browser.ts": "f1844b05e3a41a53a5360fda6e4ffc6801d0b1e05e62585d23ac12e73ee6f380",
+      "src/capture/index.ts": "637c4cd540105630da976a4a1749c5e43f182b88fd499026bdd2eb97973ed721",
+      "src/capture/walker.ts": "a1b323b49c6ffbc20afb438eaf02c6554b5257274c4ff5c7f487eed60b9ab4cc",
+      "src/cli.ts": "ed184995d3442c646ad297d0a38edf0f5766d4df613a61bbe06f6f7f103bf64b",
+      "src/diff.ts": "b7daeeb547c59fca821160cd20785f961c2ac8e0b2b332a5cf713fc309e11f94",
+      "src/fallback/askHuman.ts": "013b786651865008b288edbd6b6f149263fec3c2598595e564153843c4706d25",
+      "src/fallback/captcha.ts": "4f58bec15adeabc83d659ca1c21a0f2da41ed89e98987bfd6f65b0c98a7381b8",
+      "src/fallback/look.ts": "a1fce059e961f8201de7e7d634b266d1531e89593d2b04f2491223413f991114",
+      "src/fallback/media.ts": "22e07e781bcd2697e201beee906182e8abd948486003aeebd31c64025fc3ed81",
+      "src/fallback/ocr.ts": "4a401a33ee5f8b6c32b3f957b080405f2e8de150fe8c13333d3c7c6e2f8bd50d",
+      "src/fallback/probe.ts": "aa57b2f89883ba44ec3fd69e8f2c4c0e45004246cea056c3fce232ac42c8ebfd",
+      "src/index.ts": "1bb51b56f839083c7ae3fca4066c48b6e16d2d4830d20d897b5c682366a2a83c",
+      "src/memory.ts": "2d7c5fe8f142a67a80bb73fc45aa66ff5dea6ffb6d038a48453ddd1514ac6e9f",
+      "src/server.ts": "0214c92788b4e7c9c0996ef7b6cb1395f48de16b2849b524a2a90046d9c4a14b",
+      "src/translate.ts": "3a22c6095969a859bb54efd55c829c814a9dd044bc90183d9271072af1b7cafa",
+      "src/userAgent.ts": "abda20081b3cc8af82da86d0a9134aeb9d478aca3e317773fcf4e692b2d66f51",
+      "dist/browser.d.ts": "a8fcc9696cd7b8a58ff60b8a40d1207ef77c0960c9b6a8b5fac485a9b6b966b3",
+      "dist/browser.js": "26537aa966969c6ebeb3229af5c187d90db2755907c1114540fe4fd9044883ce",
+      "dist/browser.js.map": "749ba0ea095813355062b8575e4568d7efbc3ff66af1d50823f8a81bfe75b64b",
+      "dist/capture/index.d.ts": "bc2d046a0485ecd3eda82fb8b371dea7ff3f1a103905fe83ad97e876ecde9dd5",
+      "dist/capture/index.js": "06217ca6bf33b1778d30796255e08d36ff74ac3e9f03a8c934241d7a84fd5603",
+      "dist/capture/index.js.map": "2322d3ed4d5c9f8dc57e4c27d3ad12d8b39baee3d7c945199409dad57edb9c44",
+      "dist/capture/walker.d.ts": "162c3bd763b2206e8291180b9c2b12fb1cfcb536b3305db3c79ee2ed1290e637",
+      "dist/capture/walker.js": "3c6e72b062e655385666ee730678f45cedc9a7c92617bcfc766e23b2f5e00a0b",
+      "dist/capture/walker.js.map": "d30966791d4df8bb577fa9063440ef8849069749286802918740e5cde1c6df32",
+      "dist/cli.d.ts": "43e818adf60173644896298637f47b01d5819b17eda46eaa32d0c7d64724d012",
+      "dist/cli.js": "36e9fec642fcd7d90930ad09516177874d681c627c964c5dc4fa5d205cc70a57",
+      "dist/cli.js.map": "29fc6fc6b9714a98392362f9582c81dcf5d1a3218353b3acd51978a9036f61f9",
+      "dist/diff.d.ts": "fc4194a9d2263adad0053ecea46f96b917b63c73f649f1069fa45ca1714c4a43",
+      "dist/diff.js": "1fd5e47b4dc023af815bd3d5494724607f5a78ef87ee37b2dabdfc2d5021862e",
+      "dist/diff.js.map": "5e3c8e7bfeb9427da6d42e013e7b8466ca5ec28fb7757fec63ab62869b01a6a0",
+      "dist/fallback/askHuman.d.ts": "cce5053ca7a8ad7fd21ec8d4cf3e69c11cb8fe817d34fa746eba144f1420acfd",
+      "dist/fallback/askHuman.js": "f479ea63e519fd3ce76d2059f6f1740c4fd86d0d74d1efe7b7e371b8f07caa6f",
+      "dist/fallback/askHuman.js.map": "f791903345c7ab1e479e9b76859c9fbda207a5a04baef33a606fa76b306533fc",
+      "dist/fallback/captcha.d.ts": "955f78313568c5b87874348e6b8b9a27047a9b299635518ea0ffbb324039eac5",
+      "dist/fallback/captcha.js": "5bf1da6bed04183ac7eb4935044e2bf6612d925582c1f873f94c6d11a8c8dbee",
+      "dist/fallback/captcha.js.map": "ef69099fde766b303c152b21a458fb4b1653179caab958dbc66a74e887801fa9",
+      "dist/fallback/look.d.ts": "955e64af5f409d668fdf46d9fdd877ae012f8d246caedeadfb313e0247ecd6af",
+      "dist/fallback/look.js": "8c33ec0526efad8885fad941d332472cd58115e417cb4f3ca9fb8e1f27329a30",
+      "dist/fallback/look.js.map": "9bcc391e5c964b1920fe5101c3fadcc40e053b5447b5e45ff4dff83e9692e805",
+      "dist/fallback/media.d.ts": "2b0f628dba91f7d9da7cb4ee08b102037cb165448c18fa8e0c7cabf05918a749",
+      "dist/fallback/media.js": "939fece5d160b210e6e1f751fa2db765d55c88ddea01bcdb534941858361287c",
+      "dist/fallback/media.js.map": "b56cee770e060ed1b76b9a0ea14d380d59d492cf68e9af3b2e6dc98fd82fdfb2",
+      "dist/fallback/ocr.d.ts": "5f5cb0e04091187d8989520626a8266349b9c1c5c1f934f66c6583f26db5267f",
+      "dist/fallback/ocr.js": "ffe361929c3cd290645f89f70f5dff46828b14136cc54297501478171fcb5b2c",
+      "dist/fallback/ocr.js.map": "a74d12f44c709a8313382da19857b5cb2c7c30162f9ce11b8bae27cd632a3b12",
+      "dist/fallback/probe.d.ts": "d171fbde232b1d41fe67faf83168d57023a66068c69c0aed976d5e0f068cd597",
+      "dist/fallback/probe.js": "2453d56f097a5cb087cbd62b3f82b5c9474128463a73d3a586cf99579f73e876",
+      "dist/fallback/probe.js.map": "8d2441a4855ff20a6b31761476d2a437798e4441ea4ecb5092882fd44b2b6176",
+      "dist/index.d.ts": "1bb51b56f839083c7ae3fca4066c48b6e16d2d4830d20d897b5c682366a2a83c",
+      "dist/index.js": "cf623ed316f23cd356ce68b741e8192234de378587c880d11ce7448692e37ae7",
+      "dist/index.js.map": "ab61ed5039b37dfd5cc78232ec20f2737a407ad3124e87f4b9c2e02d43904127",
+      "dist/memory.d.ts": "15258ea9433619fed0f2c921a8b4a584a79d7603acd26e4954cc535232668e46",
+      "dist/memory.js": "d886daad0a558521e4f0952ddb3a8e4fa0cc5a0b5830379d06d474014e44e65e",
+      "dist/memory.js.map": "092966360dd28b5acccbc1b2a5992d3fa8c4e7c6217e73219829e62535390481",
+      "dist/server.d.ts": "1933eeb4ddcdfff3b415d8bec8a674c31447a294cfdc77d1e5046bdbddae2bc0",
+      "dist/server.js": "aaab3b8ea265443d55431bac654abaa2a8e73942e6c5d2d0ec199a29d9926792",
+      "dist/server.js.map": "300e7160ecf5eca4b840c6401399292bbe48a53580d9d68648d5b76bb9992d3b",
+      "dist/translate.d.ts": "62b37d24579c352c4c1db1eef67bec92cb153121c89b0e5ba914f5dbffb84ecb",
+      "dist/translate.js": "1ae036acafe46f4f16b844e448f3f7b5d580b01a365d5afd51c65e1398e60e95",
+      "dist/translate.js.map": "51f0621bea48fa268fd3630b05776eac5a4345617cbbcf90d381b435d05a5620",
+      "dist/userAgent.d.ts": "efd6325cdcf78c8168c1fa0f9cf6a0df2cbf0f4ad21d0a7e0cf338700f02d1b8",
+      "dist/userAgent.js": "a5cf7d8e013b2da7125fa2027b4fe9753200329d481f87fad9f42d73033c1546",
+      "dist/userAgent.js.map": "6123149683ba8eeb24f7fcdeefd62c455251268a3774606e5ea2c1ab86736b9d",
+      "package-lock.json": "99a83003014f16494a40c78a18b1e1ca9a50fffc71c05bbca42c5adcbdb23b8e"
+    },
+    "cliVersion": "2.1.301 (Claude Code)"
+  },
+  "model": "claude-haiku-5-5",
+  "runs": 3,
+  "results": [
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--mantis--1--attempt-1-1792174565468-xr92ql.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I added the Women's Shaping Strappy One Piece in Black, size 38/14, to your cart at $39.20 (sale price, regular $98.00), quantity 1. I stopped there and did not",
+      "turns": 17,
+      "toolCalls": 16,
+      "toolErrors": 0,
+      "observationChars": 31329,
+      "observationImages": 0,
+      "inputTokens": 28,
+      "cacheWriteTokens": 26089,
+      "cacheReadTokens": 223031,
+      "totalInputTokens": 249148,
+      "outputTokens": 4308,
+      "costUsd": 0.009604909999999998,
+      "timings": {
+        "mcpStartupMs": 2047,
+        "cliStartupMs": 2591,
+        "cliExecutionMs": 102986,
+        "cliWallMs": 105577,
+        "verificationMs": 0,
+        "cleanupMs": 18
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--mantis--1--attempt-1-1792174565468-xr92ql.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I added the Women's Shaping Strappy One Piece in Black, size 38/14, to your cart at $39.20 (sale price, regular $98.00), quantity 1. I stopped there and did not",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 17,
+          "toolCalls": 16,
+          "toolErrors": 0,
+          "observationChars": 31329,
+          "observationImages": 0,
+          "totalInputTokens": 249148,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 28,
+            "cacheWriteTokens": 26089,
+            "cacheReadTokens": 223031,
+            "outputTokens": 4308,
+            "costUsd": 0.009604909999999998
+          },
+          "timings": {
+            "mcpStartupMs": 2047,
+            "cliStartupMs": 2591,
+            "cliExecutionMs": 102986,
+            "cliWallMs": 105577,
+            "verificationMs": 0,
+            "cleanupMs": 18
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--screenshot--1--attempt-1-1792174565481-ukprq5.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I added Women's Shaping Strappy One Piece Black to your cart at $39.20 (down from $98.00) and stopped before checkout. Nothing was logged in, purchased, or ente",
+      "turns": 60,
+      "toolCalls": 59,
+      "toolErrors": 0,
+      "observationChars": 5297,
+      "observationImages": 30,
+      "inputTokens": 62,
+      "cacheWriteTokens": 59072,
+      "cacheReadTokens": 905423,
+      "totalInputTokens": 964557,
+      "outputTokens": 8643,
+      "costUsd": 0.025196330000000006,
+      "timings": {
+        "mcpStartupMs": 2068,
+        "cliStartupMs": 2363,
+        "cliExecutionMs": 108982,
+        "cliWallMs": 111345,
+        "verificationMs": 0,
+        "cleanupMs": 4
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--screenshot--1--attempt-1-1792174565481-ukprq5.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I added Women's Shaping Strappy One Piece Black to your cart at $39.20 (down from $98.00) and stopped before checkout. Nothing was logged in, purchased, or ente",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 60,
+          "toolCalls": 59,
+          "toolErrors": 0,
+          "observationChars": 5297,
+          "observationImages": 30,
+          "totalInputTokens": 964557,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 62,
+            "cacheWriteTokens": 59072,
+            "cacheReadTokens": 905423,
+            "outputTokens": 8643,
+            "costUsd": 0.025196330000000006
+          },
+          "timings": {
+            "mcpStartupMs": 2068,
+            "cliStartupMs": 2363,
+            "cliExecutionMs": 108982,
+            "cliWallMs": 111345,
+            "verificationMs": 0,
+            "cleanupMs": 4
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "mantis",
+      "run": 2,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--mantis--2--attempt-1-1792174565486-evky68.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "The Women's Shaping Strappy One Piece in black is in your cart at $39.20 (sale price, regular $98.00), size 40/16, quantity 1. I stopped before checkout and did",
+      "turns": 28,
+      "toolCalls": 27,
+      "toolErrors": 4,
+      "observationChars": 43224,
+      "observationImages": 0,
+      "inputTokens": 50,
+      "cacheWriteTokens": 34819,
+      "cacheReadTokens": 547067,
+      "totalInputTokens": 581936,
+      "outputTokens": 7081,
+      "costUsd": 0.015979970000000003,
+      "timings": {
+        "mcpStartupMs": 2072,
+        "cliStartupMs": 2582,
+        "cliExecutionMs": 131363,
+        "cliWallMs": 133945,
+        "verificationMs": 0,
+        "cleanupMs": 82
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--mantis--2--attempt-1-1792174565486-evky68.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "The Women's Shaping Strappy One Piece in black is in your cart at $39.20 (sale price, regular $98.00), size 40/16, quantity 1. I stopped before checkout and did",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 28,
+          "toolCalls": 27,
+          "toolErrors": 4,
+          "observationChars": 43224,
+          "observationImages": 0,
+          "totalInputTokens": 581936,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 50,
+            "cacheWriteTokens": 34819,
+            "cacheReadTokens": 547067,
+            "outputTokens": 7081,
+            "costUsd": 0.015979970000000003
+          },
+          "timings": {
+            "mcpStartupMs": 2072,
+            "cliStartupMs": 2582,
+            "cliExecutionMs": 131363,
+            "cliWallMs": 133945,
+            "verificationMs": 0,
+            "cleanupMs": 82
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "screenshot",
+      "run": 2,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--screenshot--2--attempt-1-1792174565504-b1lc3b.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I added the Women's Solid Leaderback Swimsuit Black to your cart at $37.00 (on sale, was $74.00), size 40. I did not check out, log in, or enter any personal in",
+      "turns": 115,
+      "toolCalls": 114,
+      "toolErrors": 0,
+      "observationChars": 10395,
+      "observationImages": 59,
+      "inputTokens": 120,
+      "cacheWriteTokens": 111160,
+      "cacheReadTokens": 3300583,
+      "totalInputTokens": 3411863,
+      "outputTokens": 16535,
+      "costUsd": 0.10629405,
+      "timings": {
+        "mcpStartupMs": 2063,
+        "cliStartupMs": 2404,
+        "cliExecutionMs": 201785,
+        "cliWallMs": 204189,
+        "verificationMs": 0,
+        "cleanupMs": 50
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--screenshot--2--attempt-1-1792174565504-b1lc3b.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I added the Women's Solid Leaderback Swimsuit Black to your cart at $37.00 (on sale, was $74.00), size 40. I did not check out, log in, or enter any personal in",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 115,
+          "toolCalls": 114,
+          "toolErrors": 0,
+          "observationChars": 10395,
+          "observationImages": 59,
+          "totalInputTokens": 3411863,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 120,
+            "cacheWriteTokens": 111160,
+            "cacheReadTokens": 3300583,
+            "outputTokens": 16535,
+            "costUsd": 0.10629405
+          },
+          "timings": {
+            "mcpStartupMs": 2063,
+            "cliStartupMs": 2404,
+            "cliExecutionMs": 201785,
+            "cliWallMs": 204189,
+            "verificationMs": 0,
+            "cleanupMs": 50
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "mantis",
+      "run": 3,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--mantis--3--attempt-1-1792174673525-7dekpb.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I added the Women's Solid Leaderback Swimsuit Black (size 40) to your cart at $37.00 (sale price, regular $74.00). I stopped there and did not check out, log in",
+      "turns": 39,
+      "toolCalls": 38,
+      "toolErrors": 5,
+      "observationChars": 99557,
+      "observationImages": 0,
+      "inputTokens": 58,
+      "cacheWriteTokens": 56819,
+      "cacheReadTokens": 812924,
+      "totalInputTokens": 869801,
+      "outputTokens": 6667,
+      "costUsd": 0.022832339999999996,
+      "timings": {
+        "mcpStartupMs": 2011,
+        "cliStartupMs": 873,
+        "cliExecutionMs": 166168,
+        "cliWallMs": 167041,
+        "verificationMs": 0,
+        "cleanupMs": 2
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--mantis--3--attempt-1-1792174673525-7dekpb.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I added the Women's Solid Leaderback Swimsuit Black (size 40) to your cart at $37.00 (sale price, regular $74.00). I stopped there and did not check out, log in",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 39,
+          "toolCalls": 38,
+          "toolErrors": 5,
+          "observationChars": 99557,
+          "observationImages": 0,
+          "totalInputTokens": 869801,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 58,
+            "cacheWriteTokens": 56819,
+            "cacheReadTokens": 812924,
+            "outputTokens": 6667,
+            "costUsd": 0.022832339999999996
+          },
+          "timings": {
+            "mcpStartupMs": 2011,
+            "cliStartupMs": 873,
+            "cliExecutionMs": 166168,
+            "cliWallMs": 167041,
+            "verificationMs": 0,
+            "cleanupMs": 2
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "tree",
+      "run": 3,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--tree--3--attempt-1-1792174679241-0ui2ol.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I added the Women's Solid High Neck One Piece in Black, size L, to your cart at $58.00. I stopped there and did not check out, log in, or enter any personal inf",
+      "turns": 35,
+      "toolCalls": 34,
+      "toolErrors": 2,
+      "observationChars": 63626,
+      "observationImages": 0,
+      "inputTokens": 58,
+      "cacheWriteTokens": 34013,
+      "cacheReadTokens": 707672,
+      "totalInputTokens": 741743,
+      "outputTokens": 4309,
+      "costUsd": 0.016039619999999997,
+      "timings": {
+        "mcpStartupMs": 2004,
+        "cliStartupMs": 1385,
+        "cliExecutionMs": 162934,
+        "cliWallMs": 164319,
+        "verificationMs": 0,
+        "cleanupMs": 13
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--tree--3--attempt-1-1792174679241-0ui2ol.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I added the Women's Solid High Neck One Piece in Black, size L, to your cart at $58.00. I stopped there and did not check out, log in, or enter any personal inf",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 35,
+          "toolCalls": 34,
+          "toolErrors": 2,
+          "observationChars": 63626,
+          "observationImages": 0,
+          "totalInputTokens": 741743,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 58,
+            "cacheWriteTokens": 34013,
+            "cacheReadTokens": 707672,
+            "outputTokens": 4309,
+            "costUsd": 0.016039619999999997
+          },
+          "timings": {
+            "mcpStartupMs": 2004,
+            "cliStartupMs": 1385,
+            "cliExecutionMs": 162934,
+            "cliWallMs": 164319,
+            "verificationMs": 0,
+            "cleanupMs": 13
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "screenshot",
+      "run": 3,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--screenshot--3--attempt-1-1792174702229-mj55sa.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I added Women's Shaping Strappy One Piece Black (Black) to the cart, size 40/16, quantity 1, for $39.20. I stopped at the cart drawer and did not check out or e",
+      "turns": 163,
+      "toolCalls": 162,
+      "toolErrors": 0,
+      "observationChars": 7668,
+      "observationImages": 34,
+      "inputTokens": 68,
+      "cacheWriteTokens": 69735,
+      "cacheReadTokens": 1223798,
+      "totalInputTokens": 1293601,
+      "outputTokens": 13387,
+      "costUsd": 0.03288528,
+      "timings": {
+        "mcpStartupMs": 2014,
+        "cliStartupMs": 1539,
+        "cliExecutionMs": 144359,
+        "cliWallMs": 145898,
+        "verificationMs": 0,
+        "cleanupMs": 13
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--screenshot--3--attempt-1-1792174702229-mj55sa.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I added Women's Shaping Strappy One Piece Black (Black) to the cart, size 40/16, quantity 1, for $39.20. I stopped at the cart drawer and did not check out or e",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 163,
+          "toolCalls": 162,
+          "toolErrors": 0,
+          "observationChars": 7668,
+          "observationImages": 34,
+          "totalInputTokens": 1293601,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 68,
+            "cacheWriteTokens": 69735,
+            "cacheReadTokens": 1223798,
+            "outputTokens": 13387,
+            "costUsd": 0.03288528
+          },
+          "timings": {
+            "mcpStartupMs": 2014,
+            "cliStartupMs": 1539,
+            "cliExecutionMs": 144359,
+            "cliWallMs": 145898,
+            "verificationMs": 0,
+            "cleanupMs": 13
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/bc2ce7f206045dd2d322e5695a947219--mantis--1--attempt-1-1792174772725-qkp4nj.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I couldn't get SmartAsset's estimate. The income tax calculator and the Taxes section both fail to load with \"Application error: a client-side exception has occ",
+      "turns": 22,
+      "toolCalls": 21,
+      "toolErrors": 0,
+      "observationChars": 20446,
+      "observationImages": 0,
+      "inputTokens": 32,
+      "cacheWriteTokens": 12458,
+      "cacheReadTokens": 204878,
+      "totalInputTokens": 217368,
+      "outputTokens": 2757,
+      "costUsd": 0.005922080000000001,
+      "timings": {
+        "mcpStartupMs": 2044,
+        "cliStartupMs": 2814,
+        "cliExecutionMs": 65898,
+        "cliWallMs": 68712,
+        "verificationMs": 0,
+        "cleanupMs": 2
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/bc2ce7f206045dd2d322e5695a947219--mantis--1--attempt-1-1792174772725-qkp4nj.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I couldn't get SmartAsset's estimate. The income tax calculator and the Taxes section both fail to load with \"Application error: a client-side exception has occ",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 22,
+          "toolCalls": 21,
+          "toolErrors": 0,
+          "observationChars": 20446,
+          "observationImages": 0,
+          "totalInputTokens": 217368,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 32,
+            "cacheWriteTokens": 12458,
+            "cacheReadTokens": 204878,
+            "outputTokens": 2757,
+            "costUsd": 0.005922080000000001
+          },
+          "timings": {
+            "mcpStartupMs": 2044,
+            "cliStartupMs": 2814,
+            "cliExecutionMs": 65898,
+            "cliWallMs": 68712,
+            "verificationMs": 0,
+            "cleanupMs": 2
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    }
+  ]
+}
