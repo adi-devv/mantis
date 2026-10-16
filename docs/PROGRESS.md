@@ -95,4 +95,4 @@ Later: fallback tools inside iframes; add Chrome DevTools MCP and browser-use to
   Sonnet judge in `bench/agent/judge.ts`; Codex `gpt-6-luna`, medium reasoning, 1 run). 5 of the first 10 tasks
   were blocked by bot detection for every approach and were replaced by the next unblocked ones in seed order.
   On the 10 unblocked tasks: Mantis 7/10, 8.4 calls, 185k tokens; tree 5/10, 12.2, 311k; screenshots 6/10, 17.9, 310k.
-  README trimmed to plain language; numbers in `bench/RESULTS.md`, build and config in `docs/DEVELOPMENT.md`.
+  README trimmed to plain language; numbers in `bench/RESULTS.md`, build and config in `docs/SETUP.md`.

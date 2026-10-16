@@ -73,7 +73,7 @@ about even. All numbers, method and caveats: [bench/RESULTS.md](bench/RESULTS.md
 
 - [How it works](docs/APPROACH.md)
 - [Claude skill](skill/README.md): teaches Claude how to read Mantis output
-- [Development, configuration and tool reference](docs/DEVELOPMENT.md)
+- [Setup, configuration and tool reference](docs/SETUP.md)
 - [Benchmarks: how to re-run them](bench/README.md)
 
 ## License
