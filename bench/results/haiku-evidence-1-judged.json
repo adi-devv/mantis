@@ -1,0 +1,616 @@
+{
+  "source": "haiku-evidence-1",
+  "judgeModel": "claude-sonnet-5-5",
+  "runs": [
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://speedo.com/en-us/products/womens-shaping-strappy-swimsuit-black-80037010001?variant=53025010745711",
+      "toolCalls": 25,
+      "totalInputTokens": 745718,
+      "wallS": 158.316,
+      "verdict": "success",
+      "reason": "The agent filtered Women's Black Swimsuits to size L and in-stock, sorted by price, and picked the lowest-priced item, Shaping Strappy at $39.20. It added that item to the cart without logging in or checking out. The only doubt is the size mapping: the product page has only numeric sizes, and 40/16 comes from the filtered card's variant link. That link is reasonable evidence that the site maps 40/16 to L.",
+      "evidence": [
+        "F6",
+        "F7",
+        "F8",
+        "F11",
+        "F12"
+      ],
+      "frameCount": 12,
+      "finalFrame": "F12",
+      "judgeVerdict": "success",
+      "checks": null
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://speedo.com/en-us/collections/women-recreation/products/womens-shaping-strappy-swimsuit-black-80037010001?variant=53025010745711",
+      "toolCalls": 48,
+      "totalInputTokens": 2630222,
+      "wallS": 237.728,
+      "verdict": "success",
+      "reason": "On the Women's Recreation collection filtered to Size L, Black and In stock, sorted by price, the cheapest one-piece swimsuit was the Shaping Strappy at $39.20. The cart drawer in the final frame shows exactly that item, size 40/16, with 1 item and an estimated total of $39.20, and the agent did not check out. The agent did not search other women's swimsuit collections, and it inferred that L means 40/16. Both gaps leave some risk, but the evidence points to a correct result.",
+      "evidence": [
+        "F8",
+        "F10",
+        "F12"
+      ],
+      "frameCount": 12,
+      "finalFrame": "F12",
+      "judgeVerdict": "success",
+      "checks": null
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://speedo.com/en-us",
+      "toolCalls": 50,
+      "totalInputTokens": 611360,
+      "wallS": 115.815,
+      "verdict": "failure",
+      "reason": "The agent never added the suit to the cart. It stopped over a size-mapping doubt, not a login, purchase or personal-information step, and the final frame shows 0 in cart with 40/16 preselected.",
+      "evidence": [
+        "F9",
+        "F11",
+        "F12"
+      ],
+      "frameCount": 12,
+      "finalFrame": "F12",
+      "judgeVerdict": "failure",
+      "checks": null
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "mantis",
+      "run": 2,
+      "finalUrl": "https://speedo.com/en-us/collections/women-black-swimsuits/products/womens-shaping-strappy-swimsuit-black-80037010001?variant=53025010745711",
+      "toolCalls": 22,
+      "totalInputTokens": 605968,
+      "wallS": 132.845,
+      "verdict": "failure",
+      "reason": "The agent explicitly did not add anything to the cart; it stopped over size ambiguity, and there was no login, purchase or personal-information barrier, so the task was not completed.",
+      "evidence": [
+        "F9",
+        "F10",
+        "F11",
+        "F12"
+      ],
+      "frameCount": 12,
+      "finalFrame": "F12",
+      "judgeVerdict": "failure",
+      "checks": null
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "tree",
+      "run": 2,
+      "finalUrl": "https://speedo.com/en-us/collections/women-recreation/products/womens-shaping-strappy-swimsuit-black-80037010001?variant=53025010745711",
+      "toolCalls": 81,
+      "totalInputTokens": 4261389,
+      "wallS": 283.021,
+      "verdict": "success",
+      "reason": "With Color=Black, Size=L and In stock applied, the cheapest one-piece swimsuit was the Strappy at $39.20 (F5, agent's summary). The agent added its 40/16 variant, and the cart drawer shows one item at $39.20 with checkout not clicked (F12). The L-to-40/16 mapping and the cheapest-item search were not fully verified: the agent checked only the Recreation, New Arrivals and Fastskin collections.",
+      "evidence": [
+        "F5",
+        "F6",
+        "F7",
+        "F12"
+      ],
+      "frameCount": 12,
+      "finalFrame": "F12",
+      "judgeVerdict": "success",
+      "checks": null
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "screenshot",
+      "run": 2,
+      "finalUrl": "https://speedo.com/en-us",
+      "toolCalls": 50,
+      "totalInputTokens": 645525,
+      "wallS": 111.715,
+      "verdict": "failure",
+      "reason": "The agent did not add the swimsuit to the cart. It stopped over a size-mapping question, which is not a login, purchase or personal-information step, and the final capture shows 'Quantity (0 in cart)'.",
+      "evidence": [
+        "F12",
+        "F11",
+        "F7"
+      ],
+      "frameCount": 12,
+      "finalFrame": "F12",
+      "judgeVerdict": "failure",
+      "checks": null
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "mantis",
+      "run": 3,
+      "finalUrl": "https://speedo.com/en-us/search?q=black+swimsuit+women&options%5Bprefix%5D=last&filter.v.option.size=gid%3A%2F%2Fshopify%2FFilterSettingGroup%2F150208879&filter.p.m.product.color_filter=gid%3A%2F%2Fshopify%2FMetaobject%2F276878098799&filter.p.m.product.product_type=Swimsuit&filter.v.availability=1&sort_by=price-ascending",
+      "toolCalls": 51,
+      "totalInputTokens": 1673879,
+      "wallS": 251.074,
+      "verdict": "failure",
+      "reason": "The agent did not add any swimsuit to the cart; it stopped after checking three products and reported that it could not confirm a size-L option. No login, purchase or personal-information step blocked it, so the task is incomplete.",
+      "evidence": [
+        "F5",
+        "F7",
+        "F11",
+        "F12"
+      ],
+      "frameCount": 12,
+      "finalFrame": "F12",
+      "judgeVerdict": "failure",
+      "checks": null
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "tree",
+      "run": 3,
+      "finalUrl": "https://speedo.com/en-us/collections/women-swimwear-all?filter.v.option.size=gid%3A%2F%2Fshopify%2FFilterSettingGroup%2F150208879&filter.p.m.product.color_filter=gid%3A%2F%2Fshopify%2FMetaobject%2F276878098799&filter.p.m.product.product_type=Swimsuit&filter.v.availability=1&sort_by=price-ascending",
+      "toolCalls": 73,
+      "totalInputTokens": 5114857,
+      "wallS": 376.059,
+      "verdict": "failure",
+      "reason": "The agent did not add any swimsuit to the cart; it stopped after finding that the product pages show numeric sizes and said it could not confirm a size L option. No login or purchase step blocked it.",
+      "evidence": [
+        "F12",
+        "F8",
+        "F9",
+        "F10",
+        "F11"
+      ],
+      "frameCount": 12,
+      "finalFrame": "F12",
+      "judgeVerdict": "failure",
+      "checks": null
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "screenshot",
+      "run": 3,
+      "finalUrl": "https://speedo.com/en-us",
+      "toolCalls": 52,
+      "totalInputTokens": 665665,
+      "wallS": 97.569,
+      "verdict": "failure",
+      "reason": "The agent never added the item to the cart. The final frame shows 0 in cart, and the agent stopped because it couldn't map size L to a numeric size, which is not a login, purchase, or personal-information step.",
+      "evidence": [
+        "F12",
+        "F10",
+        "F11",
+        "F6"
+      ],
+      "frameCount": 12,
+      "finalFrame": "F12",
+      "judgeVerdict": "failure",
+      "checks": null
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://smartasset.com/taxes/income-taxes",
+      "toolCalls": 13,
+      "totalInputTokens": 137126,
+      "wallS": 50.354,
+      "verdict": "failure",
+      "reason": "Checks failed: answer lacks \"30,887\"; no frame shows \"30,887\". The agent never reached a working calculator and gave no tax estimate; the site showed a client-side application error, which is not an explicit refusal of automation or access, and no login, purchase, or personal-information gate was involved.",
+      "evidence": [
+        "F2",
+        "F4",
+        "F6"
+      ],
+      "frameCount": 6,
+      "finalFrame": "F6",
+      "judgeVerdict": "failure",
+      "checks": {
+        "pass": false,
+        "failed": [
+          "answer lacks \"30,887\"",
+          "no frame shows \"30,887\""
+        ]
+      }
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://smartasset.com/taxes/income-taxes",
+      "toolCalls": 29,
+      "totalInputTokens": 572435,
+      "wallS": 86.477,
+      "verdict": "failure",
+      "reason": "Checks failed: answer lacks \"30,887\"; no frame shows \"30,887\". The SmartAsset calculator pages repeatedly showed a client-side application error, so the agent never entered the inputs or got a site-generated tax estimate. That is a site error, not an explicit refusal of automation or access, so it doesn't count as blocked.",
+      "evidence": [
+        "F3",
+        "F6",
+        "F7",
+        "F9",
+        "F12"
+      ],
+      "frameCount": 12,
+      "finalFrame": "F12",
+      "judgeVerdict": "failure",
+      "checks": {
+        "pass": false,
+        "failed": [
+          "answer lacks \"30,887\"",
+          "no frame shows \"30,887\""
+        ]
+      }
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://smartasset.com/taxes",
+      "toolCalls": 36,
+      "totalInputTokens": 371659,
+      "wallS": 64.656,
+      "verdict": "failure",
+      "reason": "Checks failed: answer lacks \"30,887\"; no frame shows \"30,887\". The agent never entered $158,500, ZIP 97007 or Single into the calculator and gave no site-generated tax estimate. The calculator page showed only default placeholders ($--) and the site threw a client-side error, which is not an explicit bot or access block.",
+      "evidence": [
+        "F3",
+        "F4",
+        "F7",
+        "F8",
+        "F9",
+        "F11",
+        "F12"
+      ],
+      "frameCount": 12,
+      "finalFrame": "F12",
+      "judgeVerdict": "failure",
+      "checks": {
+        "pass": false,
+        "failed": [
+          "answer lacks \"30,887\"",
+          "no frame shows \"30,887\""
+        ]
+      }
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "mantis",
+      "run": 2,
+      "finalUrl": "https://smartasset.com/taxes/income-taxes#q=federal%20income%20tax%20calculator",
+      "toolCalls": 35,
+      "totalInputTokens": 537226,
+      "wallS": 134.527,
+      "verdict": "failure",
+      "reason": "Checks failed: answer lacks \"30,887\"; no frame shows \"30,887\". The agent never got a site-generated federal tax estimate: the results stayed at \"$--\", the location was not accepted (the hidden input still shows Columbus, OH), and the agent gave no answer.",
+      "evidence": [
+        "F11",
+        "F12"
+      ],
+      "frameCount": 12,
+      "finalFrame": "F12",
+      "judgeVerdict": "failure",
+      "checks": {
+        "pass": false,
+        "failed": [
+          "answer lacks \"30,887\"",
+          "no frame shows \"30,887\""
+        ]
+      }
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "tree",
+      "run": 2,
+      "finalUrl": "https://smartasset.com/taxes/income-taxes",
+      "toolCalls": 50,
+      "totalInputTokens": 1132671,
+      "wallS": 174.689,
+      "verdict": "failure",
+      "reason": "Checks failed: answer lacks \"30,887\"; no frame shows \"30,887\". The agent never got a site-generated federal tax figure: the calculator's results stayed at \"$--\" and the reply gives no answer. The ZIP 97007 location was also never set, since the hidden state field still held Ohio/Columbus.",
+      "evidence": [
+        "F8",
+        "F11"
+      ],
+      "frameCount": 11,
+      "finalFrame": "F11",
+      "judgeVerdict": "failure",
+      "checks": {
+        "pass": false,
+        "failed": [
+          "answer lacks \"30,887\"",
+          "no frame shows \"30,887\""
+        ]
+      }
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "screenshot",
+      "run": 2,
+      "finalUrl": "https://smartasset.com/taxes/income-taxes",
+      "toolCalls": 130,
+      "totalInputTokens": 781230,
+      "wallS": 160.382,
+      "verdict": "failure",
+      "reason": "Checks failed: answer lacks \"30,887\"; no frame shows \"30,887\". The agent entered the inputs, but the calculator results stayed at \"$--\" in every frame, so no site-generated federal tax figure was produced, and the reply admits this. The page showed no CAPTCHA, access denial or other explicit block, so this is an incomplete attempt rather than a block.",
+      "evidence": [
+        "F5",
+        "F11",
+        "F12"
+      ],
+      "frameCount": 12,
+      "finalFrame": "F12",
+      "judgeVerdict": "failure",
+      "checks": {
+        "pass": false,
+        "failed": [
+          "answer lacks \"30,887\"",
+          "no frame shows \"30,887\""
+        ]
+      }
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "mantis",
+      "run": 3,
+      "finalUrl": "https://smartasset.com/taxes/income-taxes",
+      "toolCalls": 41,
+      "totalInputTokens": 753922,
+      "wallS": 130.49,
+      "verdict": "failure",
+      "reason": "Checks failed: answer lacks \"30,887\"; no frame shows \"30,887\". The agent never got a site-generated federal tax estimate: the result stayed at '$--' and the final form had reset to Columbus, OH. It also entered $174,250 gross income rather than $158,500, so the inputs didn't match the task as written.",
+      "evidence": [
+        "F6",
+        "F7",
+        "F8",
+        "F9"
+      ],
+      "frameCount": 9,
+      "finalFrame": "F9",
+      "judgeVerdict": "failure",
+      "checks": {
+        "pass": false,
+        "failed": [
+          "answer lacks \"30,887\"",
+          "no frame shows \"30,887\""
+        ]
+      }
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "tree",
+      "run": 3,
+      "finalUrl": "https://smartasset.com/taxes/income-taxes",
+      "toolCalls": 22,
+      "totalInputTokens": 428135,
+      "wallS": 119.35,
+      "verdict": "failure",
+      "reason": "Checks failed: answer lacks \"30,887\"; no frame shows \"30,887\". The Income Tax Calculator crashed with a client-side application error, so the agent never entered ZIP 97007, single, or $158,500 and got no site-generated estimate. The error is an ordinary site fault, not an explicit refusal of automation or access, so it isn't 'blocked'.",
+      "evidence": [
+        "F3",
+        "F6",
+        "F7",
+        "F8"
+      ],
+      "frameCount": 8,
+      "finalFrame": "F8",
+      "judgeVerdict": "failure",
+      "checks": {
+        "pass": false,
+        "failed": [
+          "answer lacks \"30,887\"",
+          "no frame shows \"30,887\""
+        ]
+      }
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "screenshot",
+      "run": 3,
+      "finalUrl": "https://smartasset.com/",
+      "toolCalls": 23,
+      "totalInputTokens": 149049,
+      "wallS": 59.222,
+      "verdict": "failure",
+      "reason": "Checks failed: answer lacks \"30,887\"; no frame shows \"30,887\". The agent never obtained a site-generated federal tax estimate: the calculator page threw a client-side application error, the guessed direct URL returned a not-available page, and the agent ended on the homepage with no result.",
+      "evidence": [
+        "F2",
+        "F3",
+        "F4",
+        "F5",
+        "F9",
+        "F12"
+      ],
+      "frameCount": 12,
+      "finalFrame": "F12",
+      "judgeVerdict": "failure",
+      "checks": {
+        "pass": false,
+        "failed": [
+          "answer lacks \"30,887\"",
+          "no frame shows \"30,887\""
+        ]
+      }
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://www.google.com/maps/search/gas+stations+Manhattan+New+York+NY/@40.7831,-73.9712,13z",
+      "toolCalls": 25,
+      "totalInputTokens": 256717,
+      "wallS": 70.719,
+      "verdict": "failure",
+      "reason": "The agent said it could not finish: it never opened a gas station listing, never reached the reviews, and never sorted them by lowest rating. The overlay it cited is not a login, purchase, or personal-information step.",
+      "evidence": [
+        "F3",
+        "F4"
+      ],
+      "frameCount": 4,
+      "finalFrame": "F4",
+      "judgeVerdict": "failure",
+      "checks": null
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://www.google.com/maps/search/gas+station+Manhattan+NY",
+      "toolCalls": 51,
+      "totalInputTokens": 859553,
+      "wallS": 153.993,
+      "verdict": "failure",
+      "reason": "The agent said it could not complete the task: it found no Manhattan gas station rated above 4.0, never opened a station's reviews, and never sorted them by lowest rating.",
+      "evidence": [
+        "F2",
+        "F9",
+        "F12"
+      ],
+      "frameCount": 12,
+      "finalFrame": "F12",
+      "judgeVerdict": "failure",
+      "checks": null
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://www.google.com/maps/search/Exxon+gas+station+Manhattan+NY",
+      "toolCalls": 73,
+      "totalInputTokens": 663836,
+      "wallS": 75.352,
+      "verdict": "failure",
+      "reason": "The agent said it did not complete the task: it never opened a station's reviews or sorted them by lowest rating, and it reported finding no Manhattan station above 4.0.",
+      "evidence": [
+        "F4",
+        "F6",
+        "F11",
+        "F12"
+      ],
+      "frameCount": 12,
+      "finalFrame": "F12",
+      "judgeVerdict": "failure",
+      "checks": null
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "mantis",
+      "run": 2,
+      "finalUrl": "https://www.google.com/maps/search/gas+station+Manhattan+New+York+NY+4+stars",
+      "toolCalls": 61,
+      "totalInputTokens": 1215036,
+      "wallS": 135.939,
+      "verdict": "failure",
+      "reason": "The agent said it never opened a gas station's reviews or sorted them by lowest rating, and the final frames show only a results list with no reviews panel or sort applied.",
+      "evidence": [
+        "F9",
+        "F7",
+        "F8"
+      ],
+      "frameCount": 9,
+      "finalFrame": "F9",
+      "judgeVerdict": "failure",
+      "checks": null
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "tree",
+      "run": 2,
+      "finalUrl": "https://www.google.com/maps/search/gas+station+near+Manhattan,+New+York,+NY",
+      "toolCalls": 22,
+      "totalInputTokens": 218495,
+      "wallS": 75.886,
+      "verdict": "failure",
+      "reason": "The agent never picked a gas station rated above 4.0 and never opened reviews or sorted them by lowest rating, so the task was not done; it only listed results from two searches that showed nothing above 4.0, and no login or purchase prompt blocked it.",
+      "evidence": [
+        "F3",
+        "F5"
+      ],
+      "frameCount": 5,
+      "finalFrame": "F5",
+      "judgeVerdict": "failure",
+      "checks": null
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "screenshot",
+      "run": 2,
+      "finalUrl": "https://www.google.com/maps/search/gas+station+Manhattan+NY",
+      "toolCalls": 29,
+      "totalInputTokens": 263056,
+      "wallS": 40.927,
+      "verdict": "failure",
+      "reason": "The agent never opened a station's reviews or sorted them by lowest rating, and it stated it could not finish; it also missed the bp at 255 E 125th St (4.0, which is not above 4.0) and so found no qualifying station.",
+      "evidence": [
+        "F4",
+        "F8",
+        "F12"
+      ],
+      "frameCount": 12,
+      "finalFrame": "F12",
+      "judgeVerdict": "failure",
+      "checks": null
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "mantis",
+      "run": 3,
+      "finalUrl": "https://www.google.com/maps/search/Global+Gas+Station/@40.8145,-73.9470,15z",
+      "toolCalls": 56,
+      "totalInputTokens": 824554,
+      "wallS": 119.306,
+      "verdict": "failure",
+      "reason": "The agent admitted it never opened a gas station listing or sorted reviews by lowest rating; it was blocked by an overlay, not by a login or purchase step.",
+      "evidence": [
+        "F7",
+        "F8",
+        "F9"
+      ],
+      "frameCount": 9,
+      "finalFrame": "F9",
+      "judgeVerdict": "failure",
+      "checks": null
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "tree",
+      "run": 3,
+      "finalUrl": "https://www.google.com/maps/search/gas+stations+in+Manhattan,+New+York",
+      "toolCalls": 65,
+      "totalInputTokens": 1305993,
+      "wallS": 209.576,
+      "verdict": "failure",
+      "reason": "The agent said it did not finish: it never opened a gas station's place page with a rating above 4.0 and never sorted the reviews by lowest rating. The frames show only search result lists and blank pages.",
+      "evidence": [
+        "F4",
+        "F6",
+        "F7",
+        "F12"
+      ],
+      "frameCount": 12,
+      "finalFrame": "F12",
+      "judgeVerdict": "failure",
+      "checks": null
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "screenshot",
+      "run": 3,
+      "finalUrl": "https://www.google.com/maps/search/gas+station+Manhattan+NY",
+      "toolCalls": 28,
+      "totalInputTokens": 222288,
+      "wallS": 33.97,
+      "verdict": "failure",
+      "reason": "The agent never opened a gas station's reviews or sorted them by lowest rating. It claimed no station rated above 4.0 existed, but it only saw a partial list, and the other 8 listed stations (all under 4.0) were not enough to prove that.",
+      "evidence": [
+        "F4",
+        "F7"
+      ],
+      "frameCount": 7,
+      "finalFrame": "F7",
+      "judgeVerdict": "failure",
+      "checks": null
+    }
+  ]
+}

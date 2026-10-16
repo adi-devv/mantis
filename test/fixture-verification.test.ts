@@ -7,11 +7,17 @@ import { TASKS } from '../bench/agent/tasks.js';
 import { LONG_EXPECT } from '../bench/fixtures-long.js';
 import { spawn } from 'node:child_process';
 import net from 'node:net';
-import { crc32, deflateSync } from 'node:zlib';
+import { deflateSync } from 'node:zlib';
 import { FINAL_TEXT_CAP, PAGE_STATE_FUNCTION, STEP_TEXT_CAP, packEvidence, parsePageState, selectFrames, toCapturedFrame } from '../bench/agent/evidence.js';
 import type { CapturedFrame } from '../bench/agent/evidence.js';
 import { createMcpProxy } from '../bench/agent/mcp-proxy.js';
 import { decodePng, encodePng, fitWithin, grayThumb, resizeImage, thumbDiff } from '../bench/agent/png.js';
+
+const crc32 = (buf: Uint8Array): number => {
+  let c = ~0;
+  for (const b of buf) { c ^= b; for (let k = 0; k < 8; k++) c = (c >>> 1) ^ (0xedb88320 & -(c & 1)); }
+  return ~c >>> 0;
+};
 
 const task = TASKS.find((entry) => entry.id === 'form-subscribe')!;
 let browser: Browser;

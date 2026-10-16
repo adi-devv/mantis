@@ -1,0 +1,2197 @@
+{
+  "metadata": {
+    "schemaVersion": 3,
+    "configFingerprint": "bd2246d4645d56c7294d8ac7e2445f1a7f3cd237e531212db64828b56bfc3dfb",
+    "settings": {
+      "provider": "claude",
+      "tasks": [
+        "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+        "bc2ce7f206045dd2d322e5695a947219",
+        "0e42c3a73f2aece1f854e0ba55b7c8b0"
+      ],
+      "approaches": [
+        "mantis",
+        "tree",
+        "screenshot"
+      ],
+      "runs": 3,
+      "model": "claude-haiku-5-5",
+      "reasoning": "not-applicable",
+      "timeoutMs": 600000,
+      "concurrency": 6,
+      "toolRestrictions": {
+        "builtins": [
+          "Claude built-ins disabled by --tools \"\""
+        ],
+        "approaches": {
+          "mantis": {
+            "allow": [
+              "mcp__mantis"
+            ],
+            "deny": [
+              "mcp__mantis__bench_capture"
+            ]
+          },
+          "tree": {
+            "allow": [
+              "mcp__playwright__browser_navigate",
+              "mcp__playwright__browser_navigate_back",
+              "mcp__playwright__browser_snapshot",
+              "mcp__playwright__browser_click",
+              "mcp__playwright__browser_type",
+              "mcp__playwright__browser_fill_form",
+              "mcp__playwright__browser_select_option",
+              "mcp__playwright__browser_press_key",
+              "mcp__playwright__browser_hover",
+              "mcp__playwright__browser_wait_for",
+              "mcp__playwright__browser_find",
+              "mcp__playwright__browser_tabs",
+              "mcp__playwright__browser_handle_dialog",
+              "mcp__playwright__browser_take_screenshot"
+            ],
+            "deny": [
+              "mcp__playwright__browser_evaluate",
+              "mcp__playwright__browser_run_code_unsafe"
+            ]
+          },
+          "screenshot": {
+            "allow": [
+              "mcp__screenshot"
+            ],
+            "deny": [
+              "mcp__screenshot__bench_capture"
+            ]
+          }
+        }
+      },
+      "runtime": {
+        "nodeVersion": "v22.22.0",
+        "platform": "linux",
+        "arch": "x64"
+      },
+      "environment": {
+        "MANTIS_MEMORY": null,
+        "MANTIS_HEADLESS": null,
+        "BENCH_CHROMIUM": null,
+        "MANTIS_CHROMIUM": "/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell",
+        "PLAYWRIGHT_BROWSERS_PATH": "/opt/pw-browsers",
+        "CODEX_BIN": null,
+        "CLAUDE_BIN": null,
+        "resolvedCliCommand": "claude"
+      },
+      "browserPaths": {
+        "chromiumForMcp": "/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell",
+        "browserUsePlaywrightBrowsersPath": "/opt/pw-browsers"
+      }
+    },
+    "sourceHashes": {
+      "bench/agent/run.ts": "156cd5aa7c178a1c31d9e456d941c7e9142cbc84b9e7eb5c4204b6ee213ce834",
+      "bench/agent/integrity.ts": "69829d9853f0166252050c3a0bf0a864ae595901c85bf8191c9e2714de024e99",
+      "bench/agent/tasks.ts": "752a4fa3da542fbcc72d591e485dbf142154e58be3359fe5aaf0778c03bb6d6b",
+      "bench/agent/bridge.mjs": "7648b01676db09199b9cda8546c63b0147963960b9b9ec6411921dc6a5cb8f19",
+      "bench/agent/codex.ts": "e7d16855e24ef025d87b4f18a4ec32c50b8cef701985ef85aa6d03f748ddd236",
+      "bench/agent/codex-config.ts": "7ea7bccfcbf19c4d9dbd236e6c30bdc6b366be78d54f63f88f670f4482a00435",
+      "bench/agent/realsite.ts": "7844c8f182d54e14aea855d538db29f2d39d7b1035b16e4240879a0c8ec784aa",
+      "bench/agent/realsite-tasks.json": "59c843c4f7b124ba3ecde7b61186cbaa79345a02a3e52c7db9fe010c10e52c25",
+      "bench/agent/screenshot-mcp.ts": "64d0ad2b12183399b8134be97df620918979f35246d75aed2a81972ccea834bc",
+      "bench/fixtures.ts": "315a6a1724e81b4519bc62443ce6ead7fc6c56bd2d547292c1fb845ac9f76dd6",
+      "bench/fixtures-more.ts": "c1a15f3e8f4d00366395994a4d81725203c736f25613150f26ca2b7a5006b594",
+      "bench/adapters.ts": "f5131942344133faecab2c93eb4bee2ebe771571a74b987bf5761e616f70b7b5",
+      "src/browser.ts": "f1844b05e3a41a53a5360fda6e4ffc6801d0b1e05e62585d23ac12e73ee6f380",
+      "src/capture/index.ts": "637c4cd540105630da976a4a1749c5e43f182b88fd499026bdd2eb97973ed721",
+      "src/capture/walker.ts": "a1b323b49c6ffbc20afb438eaf02c6554b5257274c4ff5c7f487eed60b9ab4cc",
+      "src/cli.ts": "ed184995d3442c646ad297d0a38edf0f5766d4df613a61bbe06f6f7f103bf64b",
+      "src/diff.ts": "b7daeeb547c59fca821160cd20785f961c2ac8e0b2b332a5cf713fc309e11f94",
+      "src/fallback/askHuman.ts": "013b786651865008b288edbd6b6f149263fec3c2598595e564153843c4706d25",
+      "src/fallback/captcha.ts": "4f58bec15adeabc83d659ca1c21a0f2da41ed89e98987bfd6f65b0c98a7381b8",
+      "src/fallback/look.ts": "a1fce059e961f8201de7e7d634b266d1531e89593d2b04f2491223413f991114",
+      "src/fallback/media.ts": "22e07e781bcd2697e201beee906182e8abd948486003aeebd31c64025fc3ed81",
+      "src/fallback/ocr.ts": "4a401a33ee5f8b6c32b3f957b080405f2e8de150fe8c13333d3c7c6e2f8bd50d",
+      "src/fallback/probe.ts": "aa57b2f89883ba44ec3fd69e8f2c4c0e45004246cea056c3fce232ac42c8ebfd",
+      "src/index.ts": "1bb51b56f839083c7ae3fca4066c48b6e16d2d4830d20d897b5c682366a2a83c",
+      "src/memory.ts": "2d7c5fe8f142a67a80bb73fc45aa66ff5dea6ffb6d038a48453ddd1514ac6e9f",
+      "src/server.ts": "0214c92788b4e7c9c0996ef7b6cb1395f48de16b2849b524a2a90046d9c4a14b",
+      "src/translate.ts": "3a22c6095969a859bb54efd55c829c814a9dd044bc90183d9271072af1b7cafa",
+      "src/userAgent.ts": "abda20081b3cc8af82da86d0a9134aeb9d478aca3e317773fcf4e692b2d66f51",
+      "dist/browser.d.ts": "a8fcc9696cd7b8a58ff60b8a40d1207ef77c0960c9b6a8b5fac485a9b6b966b3",
+      "dist/browser.js": "26537aa966969c6ebeb3229af5c187d90db2755907c1114540fe4fd9044883ce",
+      "dist/browser.js.map": "749ba0ea095813355062b8575e4568d7efbc3ff66af1d50823f8a81bfe75b64b",
+      "dist/capture/index.d.ts": "bc2d046a0485ecd3eda82fb8b371dea7ff3f1a103905fe83ad97e876ecde9dd5",
+      "dist/capture/index.js": "06217ca6bf33b1778d30796255e08d36ff74ac3e9f03a8c934241d7a84fd5603",
+      "dist/capture/index.js.map": "2322d3ed4d5c9f8dc57e4c27d3ad12d8b39baee3d7c945199409dad57edb9c44",
+      "dist/capture/walker.d.ts": "162c3bd763b2206e8291180b9c2b12fb1cfcb536b3305db3c79ee2ed1290e637",
+      "dist/capture/walker.js": "3c6e72b062e655385666ee730678f45cedc9a7c92617bcfc766e23b2f5e00a0b",
+      "dist/capture/walker.js.map": "d30966791d4df8bb577fa9063440ef8849069749286802918740e5cde1c6df32",
+      "dist/cli.d.ts": "43e818adf60173644896298637f47b01d5819b17eda46eaa32d0c7d64724d012",
+      "dist/cli.js": "36e9fec642fcd7d90930ad09516177874d681c627c964c5dc4fa5d205cc70a57",
+      "dist/cli.js.map": "29fc6fc6b9714a98392362f9582c81dcf5d1a3218353b3acd51978a9036f61f9",
+      "dist/diff.d.ts": "fc4194a9d2263adad0053ecea46f96b917b63c73f649f1069fa45ca1714c4a43",
+      "dist/diff.js": "1fd5e47b4dc023af815bd3d5494724607f5a78ef87ee37b2dabdfc2d5021862e",
+      "dist/diff.js.map": "5e3c8e7bfeb9427da6d42e013e7b8466ca5ec28fb7757fec63ab62869b01a6a0",
+      "dist/fallback/askHuman.d.ts": "cce5053ca7a8ad7fd21ec8d4cf3e69c11cb8fe817d34fa746eba144f1420acfd",
+      "dist/fallback/askHuman.js": "f479ea63e519fd3ce76d2059f6f1740c4fd86d0d74d1efe7b7e371b8f07caa6f",
+      "dist/fallback/askHuman.js.map": "f791903345c7ab1e479e9b76859c9fbda207a5a04baef33a606fa76b306533fc",
+      "dist/fallback/captcha.d.ts": "955f78313568c5b87874348e6b8b9a27047a9b299635518ea0ffbb324039eac5",
+      "dist/fallback/captcha.js": "5bf1da6bed04183ac7eb4935044e2bf6612d925582c1f873f94c6d11a8c8dbee",
+      "dist/fallback/captcha.js.map": "ef69099fde766b303c152b21a458fb4b1653179caab958dbc66a74e887801fa9",
+      "dist/fallback/look.d.ts": "955e64af5f409d668fdf46d9fdd877ae012f8d246caedeadfb313e0247ecd6af",
+      "dist/fallback/look.js": "8c33ec0526efad8885fad941d332472cd58115e417cb4f3ca9fb8e1f27329a30",
+      "dist/fallback/look.js.map": "9bcc391e5c964b1920fe5101c3fadcc40e053b5447b5e45ff4dff83e9692e805",
+      "dist/fallback/media.d.ts": "2b0f628dba91f7d9da7cb4ee08b102037cb165448c18fa8e0c7cabf05918a749",
+      "dist/fallback/media.js": "939fece5d160b210e6e1f751fa2db765d55c88ddea01bcdb534941858361287c",
+      "dist/fallback/media.js.map": "b56cee770e060ed1b76b9a0ea14d380d59d492cf68e9af3b2e6dc98fd82fdfb2",
+      "dist/fallback/ocr.d.ts": "5f5cb0e04091187d8989520626a8266349b9c1c5c1f934f66c6583f26db5267f",
+      "dist/fallback/ocr.js": "ffe361929c3cd290645f89f70f5dff46828b14136cc54297501478171fcb5b2c",
+      "dist/fallback/ocr.js.map": "a74d12f44c709a8313382da19857b5cb2c7c30162f9ce11b8bae27cd632a3b12",
+      "dist/fallback/probe.d.ts": "d171fbde232b1d41fe67faf83168d57023a66068c69c0aed976d5e0f068cd597",
+      "dist/fallback/probe.js": "2453d56f097a5cb087cbd62b3f82b5c9474128463a73d3a586cf99579f73e876",
+      "dist/fallback/probe.js.map": "8d2441a4855ff20a6b31761476d2a437798e4441ea4ecb5092882fd44b2b6176",
+      "dist/index.d.ts": "1bb51b56f839083c7ae3fca4066c48b6e16d2d4830d20d897b5c682366a2a83c",
+      "dist/index.js": "cf623ed316f23cd356ce68b741e8192234de378587c880d11ce7448692e37ae7",
+      "dist/index.js.map": "ab61ed5039b37dfd5cc78232ec20f2737a407ad3124e87f4b9c2e02d43904127",
+      "dist/memory.d.ts": "15258ea9433619fed0f2c921a8b4a584a79d7603acd26e4954cc535232668e46",
+      "dist/memory.js": "d886daad0a558521e4f0952ddb3a8e4fa0cc5a0b5830379d06d474014e44e65e",
+      "dist/memory.js.map": "092966360dd28b5acccbc1b2a5992d3fa8c4e7c6217e73219829e62535390481",
+      "dist/server.d.ts": "1933eeb4ddcdfff3b415d8bec8a674c31447a294cfdc77d1e5046bdbddae2bc0",
+      "dist/server.js": "aaab3b8ea265443d55431bac654abaa2a8e73942e6c5d2d0ec199a29d9926792",
+      "dist/server.js.map": "300e7160ecf5eca4b840c6401399292bbe48a53580d9d68648d5b76bb9992d3b",
+      "dist/translate.d.ts": "62b37d24579c352c4c1db1eef67bec92cb153121c89b0e5ba914f5dbffb84ecb",
+      "dist/translate.js": "1ae036acafe46f4f16b844e448f3f7b5d580b01a365d5afd51c65e1398e60e95",
+      "dist/translate.js.map": "51f0621bea48fa268fd3630b05776eac5a4345617cbbcf90d381b435d05a5620",
+      "dist/userAgent.d.ts": "efd6325cdcf78c8168c1fa0f9cf6a0df2cbf0f4ad21d0a7e0cf338700f02d1b8",
+      "dist/userAgent.js": "a5cf7d8e013b2da7125fa2027b4fe9753200329d481f87fad9f42d73033c1546",
+      "dist/userAgent.js.map": "6123149683ba8eeb24f7fcdeefd62c455251268a3774606e5ea2c1ab86736b9d",
+      "package-lock.json": "99a83003014f16494a40c78a18b1e1ca9a50fffc71c05bbca42c5adcbdb23b8e"
+    },
+    "cliVersion": "2.1.301 (Claude Code)"
+  },
+  "model": "claude-haiku-5-5",
+  "runs": 3,
+  "results": [
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--mantis--1--attempt-1-1792174565468-xr92ql.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I added the Women's Shaping Strappy One Piece in Black, size 38/14, to your cart at $39.20 (sale price, regular $98.00), quantity 1. I stopped there and did not",
+      "turns": 17,
+      "toolCalls": 16,
+      "toolErrors": 0,
+      "observationChars": 31329,
+      "observationImages": 0,
+      "inputTokens": 28,
+      "cacheWriteTokens": 26089,
+      "cacheReadTokens": 223031,
+      "totalInputTokens": 249148,
+      "outputTokens": 4308,
+      "costUsd": 0.009604909999999998,
+      "timings": {
+        "mcpStartupMs": 2047,
+        "cliStartupMs": 2591,
+        "cliExecutionMs": 102986,
+        "cliWallMs": 105577,
+        "verificationMs": 0,
+        "cleanupMs": 18
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--mantis--1--attempt-1-1792174565468-xr92ql.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I added the Women's Shaping Strappy One Piece in Black, size 38/14, to your cart at $39.20 (sale price, regular $98.00), quantity 1. I stopped there and did not",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 17,
+          "toolCalls": 16,
+          "toolErrors": 0,
+          "observationChars": 31329,
+          "observationImages": 0,
+          "totalInputTokens": 249148,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 28,
+            "cacheWriteTokens": 26089,
+            "cacheReadTokens": 223031,
+            "outputTokens": 4308,
+            "costUsd": 0.009604909999999998
+          },
+          "timings": {
+            "mcpStartupMs": 2047,
+            "cliStartupMs": 2591,
+            "cliExecutionMs": 102986,
+            "cliWallMs": 105577,
+            "verificationMs": 0,
+            "cleanupMs": 18
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--tree--1--attempt-1-1792174565475-sq1zo4.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I did not add anything to the cart. Speedo's women's swimsuits don't use a \"Large\" size, so I couldn't match your request exactly.\n\n- **Lowest-priced black one-",
+      "turns": 70,
+      "toolCalls": 69,
+      "toolErrors": 10,
+      "observationChars": 290299,
+      "observationImages": 0,
+      "inputTokens": 104,
+      "cacheWriteTokens": 152067,
+      "cacheReadTokens": 3995512,
+      "totalInputTokens": 4147683,
+      "outputTokens": 17235,
+      "costUsd": 0.25441434,
+      "timings": {
+        "mcpStartupMs": 2049,
+        "cliStartupMs": 2548,
+        "cliExecutionMs": 311525,
+        "cliWallMs": 314073,
+        "verificationMs": 0,
+        "cleanupMs": 42
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--tree--1--attempt-1-1792174565475-sq1zo4.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I did not add anything to the cart. Speedo's women's swimsuits don't use a \"Large\" size, so I couldn't match your request exactly.\n\n- **Lowest-priced black one-",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 70,
+          "toolCalls": 69,
+          "toolErrors": 10,
+          "observationChars": 290299,
+          "observationImages": 0,
+          "totalInputTokens": 4147683,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 104,
+            "cacheWriteTokens": 152067,
+            "cacheReadTokens": 3995512,
+            "outputTokens": 17235,
+            "costUsd": 0.25441434
+          },
+          "timings": {
+            "mcpStartupMs": 2049,
+            "cliStartupMs": 2548,
+            "cliExecutionMs": 311525,
+            "cliWallMs": 314073,
+            "verificationMs": 0,
+            "cleanupMs": 42
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--screenshot--1--attempt-1-1792174565481-ukprq5.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I added Women's Shaping Strappy One Piece Black to your cart at $39.20 (down from $98.00) and stopped before checkout. Nothing was logged in, purchased, or ente",
+      "turns": 60,
+      "toolCalls": 59,
+      "toolErrors": 0,
+      "observationChars": 5297,
+      "observationImages": 30,
+      "inputTokens": 62,
+      "cacheWriteTokens": 59072,
+      "cacheReadTokens": 905423,
+      "totalInputTokens": 964557,
+      "outputTokens": 8643,
+      "costUsd": 0.025196330000000006,
+      "timings": {
+        "mcpStartupMs": 2068,
+        "cliStartupMs": 2363,
+        "cliExecutionMs": 108982,
+        "cliWallMs": 111345,
+        "verificationMs": 0,
+        "cleanupMs": 4
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--screenshot--1--attempt-1-1792174565481-ukprq5.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I added Women's Shaping Strappy One Piece Black to your cart at $39.20 (down from $98.00) and stopped before checkout. Nothing was logged in, purchased, or ente",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 60,
+          "toolCalls": 59,
+          "toolErrors": 0,
+          "observationChars": 5297,
+          "observationImages": 30,
+          "totalInputTokens": 964557,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 62,
+            "cacheWriteTokens": 59072,
+            "cacheReadTokens": 905423,
+            "outputTokens": 8643,
+            "costUsd": 0.025196330000000006
+          },
+          "timings": {
+            "mcpStartupMs": 2068,
+            "cliStartupMs": 2363,
+            "cliExecutionMs": 108982,
+            "cliWallMs": 111345,
+            "verificationMs": 0,
+            "cleanupMs": 4
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "mantis",
+      "run": 2,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--mantis--2--attempt-1-1792174565486-evky68.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "The Women's Shaping Strappy One Piece in black is in your cart at $39.20 (sale price, regular $98.00), size 40/16, quantity 1. I stopped before checkout and did",
+      "turns": 28,
+      "toolCalls": 27,
+      "toolErrors": 4,
+      "observationChars": 43224,
+      "observationImages": 0,
+      "inputTokens": 50,
+      "cacheWriteTokens": 34819,
+      "cacheReadTokens": 547067,
+      "totalInputTokens": 581936,
+      "outputTokens": 7081,
+      "costUsd": 0.015979970000000003,
+      "timings": {
+        "mcpStartupMs": 2072,
+        "cliStartupMs": 2582,
+        "cliExecutionMs": 131363,
+        "cliWallMs": 133945,
+        "verificationMs": 0,
+        "cleanupMs": 82
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--mantis--2--attempt-1-1792174565486-evky68.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "The Women's Shaping Strappy One Piece in black is in your cart at $39.20 (sale price, regular $98.00), size 40/16, quantity 1. I stopped before checkout and did",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 28,
+          "toolCalls": 27,
+          "toolErrors": 4,
+          "observationChars": 43224,
+          "observationImages": 0,
+          "totalInputTokens": 581936,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 50,
+            "cacheWriteTokens": 34819,
+            "cacheReadTokens": 547067,
+            "outputTokens": 7081,
+            "costUsd": 0.015979970000000003
+          },
+          "timings": {
+            "mcpStartupMs": 2072,
+            "cliStartupMs": 2582,
+            "cliExecutionMs": 131363,
+            "cliWallMs": 133945,
+            "verificationMs": 0,
+            "cleanupMs": 82
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "tree",
+      "run": 2,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--tree--2--attempt-1-1792174565491-qrgwxy.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I didn't add anything to the cart. I couldn't find a black women's swimsuit in size L.\n\n- **Size L doesn't show up on swimsuit product pages.** The site's Size ",
+      "turns": 67,
+      "toolCalls": 66,
+      "toolErrors": 7,
+      "observationChars": 264140,
+      "observationImages": 0,
+      "inputTokens": 96,
+      "cacheWriteTokens": 143566,
+      "cacheReadTokens": 3497655,
+      "totalInputTokens": 3641317,
+      "outputTokens": 17998,
+      "costUsd": 0.20408690999999995,
+      "timings": {
+        "mcpStartupMs": 2070,
+        "cliStartupMs": 2514,
+        "cliExecutionMs": 350759,
+        "cliWallMs": 353273,
+        "verificationMs": 0,
+        "cleanupMs": 26
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--tree--2--attempt-1-1792174565491-qrgwxy.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I didn't add anything to the cart. I couldn't find a black women's swimsuit in size L.\n\n- **Size L doesn't show up on swimsuit product pages.** The site's Size ",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 67,
+          "toolCalls": 66,
+          "toolErrors": 7,
+          "observationChars": 264140,
+          "observationImages": 0,
+          "totalInputTokens": 3641317,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 96,
+            "cacheWriteTokens": 143566,
+            "cacheReadTokens": 3497655,
+            "outputTokens": 17998,
+            "costUsd": 0.20408690999999995
+          },
+          "timings": {
+            "mcpStartupMs": 2070,
+            "cliStartupMs": 2514,
+            "cliExecutionMs": 350759,
+            "cliWallMs": 353273,
+            "verificationMs": 0,
+            "cleanupMs": 26
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "screenshot",
+      "run": 2,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--screenshot--2--attempt-1-1792174565504-b1lc3b.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I added the Women's Solid Leaderback Swimsuit Black to your cart at $37.00 (on sale, was $74.00), size 40. I did not check out, log in, or enter any personal in",
+      "turns": 115,
+      "toolCalls": 114,
+      "toolErrors": 0,
+      "observationChars": 10395,
+      "observationImages": 59,
+      "inputTokens": 120,
+      "cacheWriteTokens": 111160,
+      "cacheReadTokens": 3300583,
+      "totalInputTokens": 3411863,
+      "outputTokens": 16535,
+      "costUsd": 0.10629405,
+      "timings": {
+        "mcpStartupMs": 2063,
+        "cliStartupMs": 2404,
+        "cliExecutionMs": 201785,
+        "cliWallMs": 204189,
+        "verificationMs": 0,
+        "cleanupMs": 50
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--screenshot--2--attempt-1-1792174565504-b1lc3b.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I added the Women's Solid Leaderback Swimsuit Black to your cart at $37.00 (on sale, was $74.00), size 40. I did not check out, log in, or enter any personal in",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 115,
+          "toolCalls": 114,
+          "toolErrors": 0,
+          "observationChars": 10395,
+          "observationImages": 59,
+          "totalInputTokens": 3411863,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 120,
+            "cacheWriteTokens": 111160,
+            "cacheReadTokens": 3300583,
+            "outputTokens": 16535,
+            "costUsd": 0.10629405
+          },
+          "timings": {
+            "mcpStartupMs": 2063,
+            "cliStartupMs": 2404,
+            "cliExecutionMs": 201785,
+            "cliWallMs": 204189,
+            "verificationMs": 0,
+            "cleanupMs": 50
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "mantis",
+      "run": 3,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--mantis--3--attempt-1-1792174673525-7dekpb.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I added the Women's Solid Leaderback Swimsuit Black (size 40) to your cart at $37.00 (sale price, regular $74.00). I stopped there and did not check out, log in",
+      "turns": 39,
+      "toolCalls": 38,
+      "toolErrors": 5,
+      "observationChars": 99557,
+      "observationImages": 0,
+      "inputTokens": 58,
+      "cacheWriteTokens": 56819,
+      "cacheReadTokens": 812924,
+      "totalInputTokens": 869801,
+      "outputTokens": 6667,
+      "costUsd": 0.022832339999999996,
+      "timings": {
+        "mcpStartupMs": 2011,
+        "cliStartupMs": 873,
+        "cliExecutionMs": 166168,
+        "cliWallMs": 167041,
+        "verificationMs": 0,
+        "cleanupMs": 2
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--mantis--3--attempt-1-1792174673525-7dekpb.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I added the Women's Solid Leaderback Swimsuit Black (size 40) to your cart at $37.00 (sale price, regular $74.00). I stopped there and did not check out, log in",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 39,
+          "toolCalls": 38,
+          "toolErrors": 5,
+          "observationChars": 99557,
+          "observationImages": 0,
+          "totalInputTokens": 869801,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 58,
+            "cacheWriteTokens": 56819,
+            "cacheReadTokens": 812924,
+            "outputTokens": 6667,
+            "costUsd": 0.022832339999999996
+          },
+          "timings": {
+            "mcpStartupMs": 2011,
+            "cliStartupMs": 873,
+            "cliExecutionMs": 166168,
+            "cliWallMs": 167041,
+            "verificationMs": 0,
+            "cleanupMs": 2
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "tree",
+      "run": 3,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--tree--3--attempt-1-1792174679241-0ui2ol.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I added the Women's Solid High Neck One Piece in Black, size L, to your cart at $58.00. I stopped there and did not check out, log in, or enter any personal inf",
+      "turns": 35,
+      "toolCalls": 34,
+      "toolErrors": 2,
+      "observationChars": 63626,
+      "observationImages": 0,
+      "inputTokens": 58,
+      "cacheWriteTokens": 34013,
+      "cacheReadTokens": 707672,
+      "totalInputTokens": 741743,
+      "outputTokens": 4309,
+      "costUsd": 0.016039619999999997,
+      "timings": {
+        "mcpStartupMs": 2004,
+        "cliStartupMs": 1385,
+        "cliExecutionMs": 162934,
+        "cliWallMs": 164319,
+        "verificationMs": 0,
+        "cleanupMs": 13
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--tree--3--attempt-1-1792174679241-0ui2ol.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I added the Women's Solid High Neck One Piece in Black, size L, to your cart at $58.00. I stopped there and did not check out, log in, or enter any personal inf",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 35,
+          "toolCalls": 34,
+          "toolErrors": 2,
+          "observationChars": 63626,
+          "observationImages": 0,
+          "totalInputTokens": 741743,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 58,
+            "cacheWriteTokens": 34013,
+            "cacheReadTokens": 707672,
+            "outputTokens": 4309,
+            "costUsd": 0.016039619999999997
+          },
+          "timings": {
+            "mcpStartupMs": 2004,
+            "cliStartupMs": 1385,
+            "cliExecutionMs": 162934,
+            "cliWallMs": 164319,
+            "verificationMs": 0,
+            "cleanupMs": 13
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "screenshot",
+      "run": 3,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--screenshot--3--attempt-1-1792174702229-mj55sa.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I added Women's Shaping Strappy One Piece Black (Black) to the cart, size 40/16, quantity 1, for $39.20. I stopped at the cart drawer and did not check out or e",
+      "turns": 163,
+      "toolCalls": 162,
+      "toolErrors": 0,
+      "observationChars": 7668,
+      "observationImages": 34,
+      "inputTokens": 68,
+      "cacheWriteTokens": 69735,
+      "cacheReadTokens": 1223798,
+      "totalInputTokens": 1293601,
+      "outputTokens": 13387,
+      "costUsd": 0.03288528,
+      "timings": {
+        "mcpStartupMs": 2014,
+        "cliStartupMs": 1539,
+        "cliExecutionMs": 144359,
+        "cliWallMs": 145898,
+        "verificationMs": 0,
+        "cleanupMs": 13
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/824eb7bb0ef1ce40bfd49c12182d9428_070826--screenshot--3--attempt-1-1792174702229-mj55sa.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I added Women's Shaping Strappy One Piece Black (Black) to the cart, size 40/16, quantity 1, for $39.20. I stopped at the cart drawer and did not check out or e",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 163,
+          "toolCalls": 162,
+          "toolErrors": 0,
+          "observationChars": 7668,
+          "observationImages": 34,
+          "totalInputTokens": 1293601,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 68,
+            "cacheWriteTokens": 69735,
+            "cacheReadTokens": 1223798,
+            "outputTokens": 13387,
+            "costUsd": 0.03288528
+          },
+          "timings": {
+            "mcpStartupMs": 2014,
+            "cliStartupMs": 1539,
+            "cliExecutionMs": 144359,
+            "cliWallMs": 145898,
+            "verificationMs": 0,
+            "cleanupMs": 13
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/bc2ce7f206045dd2d322e5695a947219--mantis--1--attempt-1-1792174772725-qkp4nj.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I couldn't get SmartAsset's estimate. The income tax calculator and the Taxes section both fail to load with \"Application error: a client-side exception has occ",
+      "turns": 22,
+      "toolCalls": 21,
+      "toolErrors": 0,
+      "observationChars": 20446,
+      "observationImages": 0,
+      "inputTokens": 32,
+      "cacheWriteTokens": 12458,
+      "cacheReadTokens": 204878,
+      "totalInputTokens": 217368,
+      "outputTokens": 2757,
+      "costUsd": 0.005922080000000001,
+      "timings": {
+        "mcpStartupMs": 2044,
+        "cliStartupMs": 2814,
+        "cliExecutionMs": 65898,
+        "cliWallMs": 68712,
+        "verificationMs": 0,
+        "cleanupMs": 2
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/bc2ce7f206045dd2d322e5695a947219--mantis--1--attempt-1-1792174772725-qkp4nj.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I couldn't get SmartAsset's estimate. The income tax calculator and the Taxes section both fail to load with \"Application error: a client-side exception has occ",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 22,
+          "toolCalls": 21,
+          "toolErrors": 0,
+          "observationChars": 20446,
+          "observationImages": 0,
+          "totalInputTokens": 217368,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 32,
+            "cacheWriteTokens": 12458,
+            "cacheReadTokens": 204878,
+            "outputTokens": 2757,
+            "costUsd": 0.005922080000000001
+          },
+          "timings": {
+            "mcpStartupMs": 2044,
+            "cliStartupMs": 2814,
+            "cliExecutionMs": 65898,
+            "cliWallMs": 68712,
+            "verificationMs": 0,
+            "cleanupMs": 2
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/bc2ce7f206045dd2d322e5695a947219--tree--1--attempt-1-1792174842818-y84ntq.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "The calculator page keeps crashing, so I couldn't get a result from it. I worked out the estimate by hand from the 2025 single-filer brackets that the same page",
+      "turns": 64,
+      "toolCalls": 63,
+      "toolErrors": 1,
+      "observationChars": 161514,
+      "observationImages": 0,
+      "inputTokens": 92,
+      "cacheWriteTokens": 76433,
+      "cacheReadTokens": 2227760,
+      "totalInputTokens": 2304285,
+      "outputTokens": 8881,
+      "costUsd": 0.042013900000000014,
+      "timings": {
+        "mcpStartupMs": 2007,
+        "cliStartupMs": 1432,
+        "cliExecutionMs": 174334,
+        "cliWallMs": 175766,
+        "verificationMs": 0,
+        "cleanupMs": 12
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/bc2ce7f206045dd2d322e5695a947219--tree--1--attempt-1-1792174842818-y84ntq.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "The calculator page keeps crashing, so I couldn't get a result from it. I worked out the estimate by hand from the 2025 single-filer brackets that the same page",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 64,
+          "toolCalls": 63,
+          "toolErrors": 1,
+          "observationChars": 161514,
+          "observationImages": 0,
+          "totalInputTokens": 2304285,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 92,
+            "cacheWriteTokens": 76433,
+            "cacheReadTokens": 2227760,
+            "outputTokens": 8881,
+            "costUsd": 0.042013900000000014
+          },
+          "timings": {
+            "mcpStartupMs": 2007,
+            "cliStartupMs": 1432,
+            "cliExecutionMs": 174334,
+            "cliWallMs": 175766,
+            "verificationMs": 0,
+            "cleanupMs": 12
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/bc2ce7f206045dd2d322e5695a947219--screenshot--1--attempt-1-1792174843579-2boqeh.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I could not get SmartAsset's calculator to return a result, so the figure below is a hand calculation, not the site's estimate.\n\n**What happened**\n- I opened th",
+      "turns": 45,
+      "toolCalls": 44,
+      "toolErrors": 0,
+      "observationChars": 3139,
+      "observationImages": 16,
+      "inputTokens": 34,
+      "cacheWriteTokens": 30691,
+      "cacheReadTokens": 296595,
+      "totalInputTokens": 327320,
+      "outputTokens": 5558,
+      "costUsd": 0.01188655,
+      "timings": {
+        "mcpStartupMs": 2007,
+        "cliStartupMs": 2646,
+        "cliExecutionMs": 58296,
+        "cliWallMs": 60942,
+        "verificationMs": 0,
+        "cleanupMs": 368
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/bc2ce7f206045dd2d322e5695a947219--screenshot--1--attempt-1-1792174843579-2boqeh.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I could not get SmartAsset's calculator to return a result, so the figure below is a hand calculation, not the site's estimate.\n\n**What happened**\n- I opened th",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 45,
+          "toolCalls": 44,
+          "toolErrors": 0,
+          "observationChars": 3139,
+          "observationImages": 16,
+          "totalInputTokens": 327320,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 34,
+            "cacheWriteTokens": 30691,
+            "cacheReadTokens": 296595,
+            "outputTokens": 5558,
+            "costUsd": 0.01188655
+          },
+          "timings": {
+            "mcpStartupMs": 2007,
+            "cliStartupMs": 2646,
+            "cliExecutionMs": 58296,
+            "cliWallMs": 60942,
+            "verificationMs": 0,
+            "cleanupMs": 368
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "mantis",
+      "run": 2,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/bc2ce7f206045dd2d322e5695a947219--mantis--2--attempt-1-1792174845884-90kqrq.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I couldn't get an answer from SmartAsset's calculator. The federal calculator page (`/taxes/income-taxes`) and the 2026 brackets article both show \"Application ",
+      "turns": 24,
+      "toolCalls": 23,
+      "toolErrors": 3,
+      "observationChars": 22078,
+      "observationImages": 0,
+      "inputTokens": 40,
+      "cacheWriteTokens": 13068,
+      "cacheReadTokens": 251086,
+      "totalInputTokens": 264194,
+      "outputTokens": 2806,
+      "costUsd": 0.00653146,
+      "timings": {
+        "mcpStartupMs": 2012,
+        "cliStartupMs": 1680,
+        "cliExecutionMs": 98841,
+        "cliWallMs": 100521,
+        "verificationMs": 0,
+        "cleanupMs": 179
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/bc2ce7f206045dd2d322e5695a947219--mantis--2--attempt-1-1792174845884-90kqrq.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I couldn't get an answer from SmartAsset's calculator. The federal calculator page (`/taxes/income-taxes`) and the 2026 brackets article both show \"Application ",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 24,
+          "toolCalls": 23,
+          "toolErrors": 3,
+          "observationChars": 22078,
+          "observationImages": 0,
+          "totalInputTokens": 264194,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 40,
+            "cacheWriteTokens": 13068,
+            "cacheReadTokens": 251086,
+            "outputTokens": 2806,
+            "costUsd": 0.00653146
+          },
+          "timings": {
+            "mcpStartupMs": 2012,
+            "cliStartupMs": 1680,
+            "cliExecutionMs": 98841,
+            "cliWallMs": 100521,
+            "verificationMs": 0,
+            "cleanupMs": 179
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "tree",
+      "run": 2,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/bc2ce7f206045dd2d322e5695a947219--tree--2--attempt-1-1792174851224-lt70at.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I couldn't get SmartAsset's calculator to produce a result, so the figure below is a manual calculation from the brackets on the same site.\n\n**Estimate: about $",
+      "turns": 54,
+      "toolCalls": 53,
+      "toolErrors": 3,
+      "observationChars": 106936,
+      "observationImages": 7,
+      "inputTokens": 76,
+      "cacheWriteTokens": 63834,
+      "cacheReadTokens": 1589304,
+      "totalInputTokens": 1653214,
+      "outputTokens": 8379,
+      "costUsd": 0.03285694,
+      "timings": {
+        "mcpStartupMs": 2023,
+        "cliStartupMs": 3481,
+        "cliExecutionMs": 109555,
+        "cliWallMs": 113036,
+        "verificationMs": 0,
+        "cleanupMs": 38
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/bc2ce7f206045dd2d322e5695a947219--tree--2--attempt-1-1792174851224-lt70at.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I couldn't get SmartAsset's calculator to produce a result, so the figure below is a manual calculation from the brackets on the same site.\n\n**Estimate: about $",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 54,
+          "toolCalls": 53,
+          "toolErrors": 3,
+          "observationChars": 106936,
+          "observationImages": 7,
+          "totalInputTokens": 1653214,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 76,
+            "cacheWriteTokens": 63834,
+            "cacheReadTokens": 1589304,
+            "outputTokens": 8379,
+            "costUsd": 0.03285694
+          },
+          "timings": {
+            "mcpStartupMs": 2023,
+            "cliStartupMs": 3481,
+            "cliExecutionMs": 109555,
+            "cliWallMs": 113036,
+            "verificationMs": 0,
+            "cleanupMs": 38
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "screenshot",
+      "run": 2,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/bc2ce7f206045dd2d322e5695a947219--screenshot--2--attempt-1-1792174882040-969cvc.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I couldn't get an estimate. The SmartAsset Federal Income Tax Calculator crashed every time I interacted with it, so I stopped there.\n\nWhat I did:\n- Opened smar",
+      "turns": 25,
+      "toolCalls": 24,
+      "toolErrors": 0,
+      "observationChars": 2016,
+      "observationImages": 10,
+      "inputTokens": 26,
+      "cacheWriteTokens": 18696,
+      "cacheReadTokens": 145614,
+      "totalInputTokens": 164336,
+      "outputTokens": 3253,
+      "costUsd": 0.00682444,
+      "timings": {
+        "mcpStartupMs": 2008,
+        "cliStartupMs": 3722,
+        "cliExecutionMs": 51280,
+        "cliWallMs": 55002,
+        "verificationMs": 0,
+        "cleanupMs": 1
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/bc2ce7f206045dd2d322e5695a947219--screenshot--2--attempt-1-1792174882040-969cvc.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I couldn't get an estimate. The SmartAsset Federal Income Tax Calculator crashed every time I interacted with it, so I stopped there.\n\nWhat I did:\n- Opened smar",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 25,
+          "toolCalls": 24,
+          "toolErrors": 0,
+          "observationChars": 2016,
+          "observationImages": 10,
+          "totalInputTokens": 164336,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 26,
+            "cacheWriteTokens": 18696,
+            "cacheReadTokens": 145614,
+            "outputTokens": 3253,
+            "costUsd": 0.00682444
+          },
+          "timings": {
+            "mcpStartupMs": 2008,
+            "cliStartupMs": 3722,
+            "cliExecutionMs": 51280,
+            "cliWallMs": 55002,
+            "verificationMs": 0,
+            "cleanupMs": 1
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "mantis",
+      "run": 3,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/bc2ce7f206045dd2d322e5695a947219--mantis--3--attempt-1-1792174908310-tor9u9.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I couldn't get SmartAsset's calculator to return a result, so this is a manual estimate from the federal brackets, not the calculator's output.\n\n**Estimated fed",
+      "turns": 34,
+      "toolCalls": 33,
+      "toolErrors": 3,
+      "observationChars": 47814,
+      "observationImages": 0,
+      "inputTokens": 56,
+      "cacheWriteTokens": 26903,
+      "cacheReadTokens": 512940,
+      "totalInputTokens": 539899,
+      "outputTokens": 5030,
+      "costUsd": 0.013030600000000002,
+      "timings": {
+        "mcpStartupMs": 2373,
+        "cliStartupMs": 2108,
+        "cliExecutionMs": 100545,
+        "cliWallMs": 102653,
+        "verificationMs": 0,
+        "cleanupMs": 7
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/bc2ce7f206045dd2d322e5695a947219--mantis--3--attempt-1-1792174908310-tor9u9.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I couldn't get SmartAsset's calculator to return a result, so this is a manual estimate from the federal brackets, not the calculator's output.\n\n**Estimated fed",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 34,
+          "toolCalls": 33,
+          "toolErrors": 3,
+          "observationChars": 47814,
+          "observationImages": 0,
+          "totalInputTokens": 539899,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 56,
+            "cacheWriteTokens": 26903,
+            "cacheReadTokens": 512940,
+            "outputTokens": 5030,
+            "costUsd": 0.013030600000000002
+          },
+          "timings": {
+            "mcpStartupMs": 2373,
+            "cliStartupMs": 2108,
+            "cliExecutionMs": 100545,
+            "cliWallMs": 102653,
+            "verificationMs": 0,
+            "cleanupMs": 7
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "tree",
+      "run": 3,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/bc2ce7f206045dd2d322e5695a947219--tree--3--attempt-1-1792174921270-g1iwrd.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "**Estimate: about $30,900 in federal income tax** (about $30,887 using the 2025 brackets; about $30,640 using the 2026 brackets). That is an effective rate of r",
+      "turns": 49,
+      "toolCalls": 48,
+      "toolErrors": 3,
+      "observationChars": 181999,
+      "observationImages": 0,
+      "inputTokens": 56,
+      "cacheWriteTokens": 81403,
+      "cacheReadTokens": 1388916,
+      "totalInputTokens": 1470375,
+      "outputTokens": 7044,
+      "costUsd": 0.03369736,
+      "timings": {
+        "mcpStartupMs": 2014,
+        "cliStartupMs": 1277,
+        "cliExecutionMs": 108348,
+        "cliWallMs": 109625,
+        "verificationMs": 0,
+        "cleanupMs": 5
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/bc2ce7f206045dd2d322e5695a947219--tree--3--attempt-1-1792174921270-g1iwrd.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "**Estimate: about $30,900 in federal income tax** (about $30,887 using the 2025 brackets; about $30,640 using the 2026 brackets). That is an effective rate of r",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 49,
+          "toolCalls": 48,
+          "toolErrors": 3,
+          "observationChars": 181999,
+          "observationImages": 0,
+          "totalInputTokens": 1470375,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 56,
+            "cacheWriteTokens": 81403,
+            "cacheReadTokens": 1388916,
+            "outputTokens": 7044,
+            "costUsd": 0.03369736
+          },
+          "timings": {
+            "mcpStartupMs": 2014,
+            "cliStartupMs": 1277,
+            "cliExecutionMs": 108348,
+            "cliWallMs": 109625,
+            "verificationMs": 0,
+            "cleanupMs": 5
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "screenshot",
+      "run": 3,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/bc2ce7f206045dd2d322e5695a947219--screenshot--3--attempt-1-1792174939225-pyep2k.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I could not get an estimate from SmartAsset's own calculator. The income tax calculator and the brackets guide both crashed with \"Application error: a client-si",
+      "turns": 30,
+      "toolCalls": 29,
+      "toolErrors": 0,
+      "observationChars": 2389,
+      "observationImages": 12,
+      "inputTokens": 26,
+      "cacheWriteTokens": 22949,
+      "cacheReadTokens": 176654,
+      "totalInputTokens": 199629,
+      "outputTokens": 4359,
+      "costUsd": 0.008538440000000001,
+      "timings": {
+        "mcpStartupMs": 2007,
+        "cliStartupMs": 1667,
+        "cliExecutionMs": 46483,
+        "cliWallMs": 48150,
+        "verificationMs": 0,
+        "cleanupMs": 1
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/bc2ce7f206045dd2d322e5695a947219--screenshot--3--attempt-1-1792174939225-pyep2k.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I could not get an estimate from SmartAsset's own calculator. The income tax calculator and the brackets guide both crashed with \"Application error: a client-si",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 30,
+          "toolCalls": 29,
+          "toolErrors": 0,
+          "observationChars": 2389,
+          "observationImages": 12,
+          "totalInputTokens": 199629,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 26,
+            "cacheWriteTokens": 22949,
+            "cacheReadTokens": 176654,
+            "outputTokens": 4359,
+            "costUsd": 0.008538440000000001
+          },
+          "timings": {
+            "mcpStartupMs": 2007,
+            "cliStartupMs": 1667,
+            "cliExecutionMs": 46483,
+            "cliWallMs": 48150,
+            "verificationMs": 0,
+            "cleanupMs": 1
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/0e42c3a73f2aece1f854e0ba55b7c8b0--mantis--1--attempt-1-1792174948797-02lacf.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I couldn't finish this. I didn't find a verified Manhattan gas station rated above 4.0, and I didn't reach the review sort.\n\n**What I found:**\n- Google Maps' se",
+      "turns": 39,
+      "toolCalls": 38,
+      "toolErrors": 6,
+      "observationChars": 23410,
+      "observationImages": 0,
+      "inputTokens": 58,
+      "cacheWriteTokens": 19498,
+      "cacheReadTokens": 378125,
+      "totalInputTokens": 397681,
+      "outputTokens": 5269,
+      "costUsd": 0.01032115,
+      "timings": {
+        "mcpStartupMs": 2025,
+        "cliStartupMs": 3502,
+        "cliExecutionMs": 91358,
+        "cliWallMs": 94860,
+        "verificationMs": 0,
+        "cleanupMs": 3
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/0e42c3a73f2aece1f854e0ba55b7c8b0--mantis--1--attempt-1-1792174948797-02lacf.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I couldn't finish this. I didn't find a verified Manhattan gas station rated above 4.0, and I didn't reach the review sort.\n\n**What I found:**\n- Google Maps' se",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 39,
+          "toolCalls": 38,
+          "toolErrors": 6,
+          "observationChars": 23410,
+          "observationImages": 0,
+          "totalInputTokens": 397681,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 58,
+            "cacheWriteTokens": 19498,
+            "cacheReadTokens": 378125,
+            "outputTokens": 5269,
+            "costUsd": 0.01032115
+          },
+          "timings": {
+            "mcpStartupMs": 2025,
+            "cliStartupMs": 3502,
+            "cliExecutionMs": 91358,
+            "cliWallMs": 94860,
+            "verificationMs": 0,
+            "cleanupMs": 3
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/0e42c3a73f2aece1f854e0ba55b7c8b0--tree--1--attempt-1-1792174966501-5r33f0.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I could not find a gas station in Manhattan rated above 4.0, so I did not reach the step of sorting reviews by lowest rating. I stopped there. I did not log in,",
+      "turns": 40,
+      "toolCalls": 39,
+      "toolErrors": 4,
+      "observationChars": 42704,
+      "observationImages": 3,
+      "inputTokens": 48,
+      "cacheWriteTokens": 28189,
+      "cacheReadTokens": 494520,
+      "totalInputTokens": 522757,
+      "outputTokens": 4235,
+      "costUsd": 0.012705299999999997,
+      "timings": {
+        "mcpStartupMs": 2007,
+        "cliStartupMs": 2341,
+        "cliExecutionMs": 109930,
+        "cliWallMs": 112271,
+        "verificationMs": 0,
+        "cleanupMs": 7
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/0e42c3a73f2aece1f854e0ba55b7c8b0--tree--1--attempt-1-1792174966501-5r33f0.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I could not find a gas station in Manhattan rated above 4.0, so I did not reach the step of sorting reviews by lowest rating. I stopped there. I did not log in,",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 40,
+          "toolCalls": 39,
+          "toolErrors": 4,
+          "observationChars": 42704,
+          "observationImages": 3,
+          "totalInputTokens": 522757,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 48,
+            "cacheWriteTokens": 28189,
+            "cacheReadTokens": 494520,
+            "outputTokens": 4235,
+            "costUsd": 0.012705299999999997
+          },
+          "timings": {
+            "mcpStartupMs": 2007,
+            "cliStartupMs": 2341,
+            "cliExecutionMs": 109930,
+            "cliWallMs": 112271,
+            "verificationMs": 0,
+            "cleanupMs": 7
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/0e42c3a73f2aece1f854e0ba55b7c8b0--screenshot--1--attempt-1-1792174989672-f0jnl0.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I did not finish the task. Google Maps got stuck on a \"Loading...\" overlay, and I could not reach a gas station rated above 4.0 or sort any reviews.\n\n- **Result",
+      "turns": 42,
+      "toolCalls": 41,
+      "toolErrors": 0,
+      "observationChars": 3375,
+      "observationImages": 18,
+      "inputTokens": 36,
+      "cacheWriteTokens": 33376,
+      "cacheReadTokens": 326415,
+      "totalInputTokens": 359827,
+      "outputTokens": 4509,
+      "costUsd": 0.012197450000000002,
+      "timings": {
+        "mcpStartupMs": 2007,
+        "cliStartupMs": 1470,
+        "cliExecutionMs": 45557,
+        "cliWallMs": 47027,
+        "verificationMs": 0,
+        "cleanupMs": 2
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/0e42c3a73f2aece1f854e0ba55b7c8b0--screenshot--1--attempt-1-1792174989672-f0jnl0.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I did not finish the task. Google Maps got stuck on a \"Loading...\" overlay, and I could not reach a gas station rated above 4.0 or sort any reviews.\n\n- **Result",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 42,
+          "toolCalls": 41,
+          "toolErrors": 0,
+          "observationChars": 3375,
+          "observationImages": 18,
+          "totalInputTokens": 359827,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 36,
+            "cacheWriteTokens": 33376,
+            "cacheReadTokens": 326415,
+            "outputTokens": 4509,
+            "costUsd": 0.012197450000000002
+          },
+          "timings": {
+            "mcpStartupMs": 2007,
+            "cliStartupMs": 1470,
+            "cliExecutionMs": 45557,
+            "cliWallMs": 47027,
+            "verificationMs": 0,
+            "cleanupMs": 2
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "mantis",
+      "run": 2,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/0e42c3a73f2aece1f854e0ba55b7c8b0--mantis--2--attempt-1-1792175013473-w9ser1.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I found a qualifying station but could not sort its reviews, so the task is not complete.\n\n- **Station found:** Global Gas Station, 89 St Nicholas Pl, Manhattan",
+      "turns": 42,
+      "toolCalls": 41,
+      "toolErrors": 6,
+      "observationChars": 27922,
+      "observationImages": 2,
+      "inputTokens": 70,
+      "cacheWriteTokens": 21309,
+      "cacheReadTokens": 584331,
+      "totalInputTokens": 605710,
+      "outputTokens": 4569,
+      "costUsd": 0.01239661,
+      "timings": {
+        "mcpStartupMs": 2011,
+        "cliStartupMs": 859,
+        "cliExecutionMs": 87939,
+        "cliWallMs": 88798,
+        "verificationMs": 0,
+        "cleanupMs": 2
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/0e42c3a73f2aece1f854e0ba55b7c8b0--mantis--2--attempt-1-1792175013473-w9ser1.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I found a qualifying station but could not sort its reviews, so the task is not complete.\n\n- **Station found:** Global Gas Station, 89 St Nicholas Pl, Manhattan",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 42,
+          "toolCalls": 41,
+          "toolErrors": 6,
+          "observationChars": 27922,
+          "observationImages": 2,
+          "totalInputTokens": 605710,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 70,
+            "cacheWriteTokens": 21309,
+            "cacheReadTokens": 584331,
+            "outputTokens": 4569,
+            "costUsd": 0.01239661
+          },
+          "timings": {
+            "mcpStartupMs": 2011,
+            "cliStartupMs": 859,
+            "cliExecutionMs": 87939,
+            "cliWallMs": 88798,
+            "verificationMs": 0,
+            "cleanupMs": 2
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "tree",
+      "run": 2,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/0e42c3a73f2aece1f854e0ba55b7c8b0--tree--2--attempt-1-1792175020731-ddpkai.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I couldn't finish the review sort. I found a qualifying gas station, but its listing page never rendered, so I couldn't reach the reviews.\n\n**What I did:**\n- Th",
+      "turns": 40,
+      "toolCalls": 39,
+      "toolErrors": 4,
+      "observationChars": 84219,
+      "observationImages": 3,
+      "inputTokens": 54,
+      "cacheWriteTokens": 44659,
+      "cacheReadTokens": 785508,
+      "totalInputTokens": 830221,
+      "outputTokens": 4723,
+      "costUsd": 0.01915378,
+      "timings": {
+        "mcpStartupMs": 2015,
+        "cliStartupMs": 784,
+        "cliExecutionMs": 112933,
+        "cliWallMs": 113717,
+        "verificationMs": 0,
+        "cleanupMs": 7
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/0e42c3a73f2aece1f854e0ba55b7c8b0--tree--2--attempt-1-1792175020731-ddpkai.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I couldn't finish the review sort. I found a qualifying gas station, but its listing page never rendered, so I couldn't reach the reviews.\n\n**What I did:**\n- Th",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 40,
+          "toolCalls": 39,
+          "toolErrors": 4,
+          "observationChars": 84219,
+          "observationImages": 3,
+          "totalInputTokens": 830221,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 54,
+            "cacheWriteTokens": 44659,
+            "cacheReadTokens": 785508,
+            "outputTokens": 4723,
+            "costUsd": 0.01915378
+          },
+          "timings": {
+            "mcpStartupMs": 2015,
+            "cliStartupMs": 784,
+            "cliExecutionMs": 112933,
+            "cliWallMs": 113717,
+            "verificationMs": 0,
+            "cleanupMs": 7
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "screenshot",
+      "run": 2,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/0e42c3a73f2aece1f854e0ba55b7c8b0--screenshot--2--attempt-1-1792175033106-ts29ch.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I did not finish the task. I could find gas stations in Manhattan, but I could not get past the first five results to find one rated above 4.0, and I never reac",
+      "turns": 24,
+      "toolCalls": 23,
+      "toolErrors": 0,
+      "observationChars": 2271,
+      "observationImages": 12,
+      "inputTokens": 26,
+      "cacheWriteTokens": 21587,
+      "cacheReadTokens": 174875,
+      "totalInputTokens": 196488,
+      "outputTokens": 2833,
+      "costUsd": 0.007485250000000001,
+      "timings": {
+        "mcpStartupMs": 2013,
+        "cliStartupMs": 764,
+        "cliExecutionMs": 30829,
+        "cliWallMs": 31593,
+        "verificationMs": 0,
+        "cleanupMs": 3
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/0e42c3a73f2aece1f854e0ba55b7c8b0--screenshot--2--attempt-1-1792175033106-ts29ch.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I did not finish the task. I could find gas stations in Manhattan, but I could not get past the first five results to find one rated above 4.0, and I never reac",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 24,
+          "toolCalls": 23,
+          "toolErrors": 0,
+          "observationChars": 2271,
+          "observationImages": 12,
+          "totalInputTokens": 196488,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 26,
+            "cacheWriteTokens": 21587,
+            "cacheReadTokens": 174875,
+            "outputTokens": 2833,
+            "costUsd": 0.007485250000000001
+          },
+          "timings": {
+            "mcpStartupMs": 2013,
+            "cliStartupMs": 764,
+            "cliExecutionMs": 30829,
+            "cliWallMs": 31593,
+            "verificationMs": 0,
+            "cleanupMs": 3
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "mantis",
+      "run": 3,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/0e42c3a73f2aece1f854e0ba55b7c8b0--mantis--3--attempt-1-1792175039096-o0ki71.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I didn't finish the task. I found a qualifying station but could not open its page to sort the reviews.\n\n**What I found:** Global Gas Station, 89 St Nicholas Pl",
+      "turns": 49,
+      "toolCalls": 48,
+      "toolErrors": 6,
+      "observationChars": 38895,
+      "observationImages": 1,
+      "inputTokens": 68,
+      "cacheWriteTokens": 28230,
+      "cacheReadTokens": 603870,
+      "totalInputTokens": 632168,
+      "outputTokens": 5815,
+      "costUsd": 0.014598999999999997,
+      "timings": {
+        "mcpStartupMs": 2009,
+        "cliStartupMs": 872,
+        "cliExecutionMs": 86858,
+        "cliWallMs": 87730,
+        "verificationMs": 0,
+        "cleanupMs": 1
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/0e42c3a73f2aece1f854e0ba55b7c8b0--mantis--3--attempt-1-1792175039096-o0ki71.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I didn't finish the task. I found a qualifying station but could not open its page to sort the reviews.\n\n**What I found:** Global Gas Station, 89 St Nicholas Pl",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 49,
+          "toolCalls": 48,
+          "toolErrors": 6,
+          "observationChars": 38895,
+          "observationImages": 1,
+          "totalInputTokens": 632168,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 68,
+            "cacheWriteTokens": 28230,
+            "cacheReadTokens": 603870,
+            "outputTokens": 5815,
+            "costUsd": 0.014598999999999997
+          },
+          "timings": {
+            "mcpStartupMs": 2009,
+            "cliStartupMs": 872,
+            "cliExecutionMs": 86858,
+            "cliWallMs": 87730,
+            "verificationMs": 0,
+            "cleanupMs": 1
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "tree",
+      "run": 3,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/0e42c3a73f2aece1f854e0ba55b7c8b0--tree--3--attempt-1-1792175045914-60uw1w.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I couldn't finish the task: I found a qualifying gas station but could not open its reviews, so I did not sort them by lowest rating.\n\n- **Search:** The Maps se",
+      "turns": 49,
+      "toolCalls": 48,
+      "toolErrors": 3,
+      "observationChars": 91532,
+      "observationImages": 2,
+      "inputTokens": 48,
+      "cacheWriteTokens": 47335,
+      "cacheReadTokens": 689132,
+      "totalInputTokens": 736515,
+      "outputTokens": 5524,
+      "costUsd": 0.019125120000000002,
+      "timings": {
+        "mcpStartupMs": 2008,
+        "cliStartupMs": 759,
+        "cliExecutionMs": 135101,
+        "cliWallMs": 135860,
+        "verificationMs": 0,
+        "cleanupMs": 7
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/0e42c3a73f2aece1f854e0ba55b7c8b0--tree--3--attempt-1-1792175045914-60uw1w.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I couldn't finish the task: I found a qualifying gas station but could not open its reviews, so I did not sort them by lowest rating.\n\n- **Search:** The Maps se",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 49,
+          "toolCalls": 48,
+          "toolErrors": 3,
+          "observationChars": 91532,
+          "observationImages": 2,
+          "totalInputTokens": 736515,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 48,
+            "cacheWriteTokens": 47335,
+            "cacheReadTokens": 689132,
+            "outputTokens": 5524,
+            "costUsd": 0.019125120000000002
+          },
+          "timings": {
+            "mcpStartupMs": 2008,
+            "cliStartupMs": 759,
+            "cliExecutionMs": 135101,
+            "cliWallMs": 135860,
+            "verificationMs": 0,
+            "cleanupMs": 7
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "screenshot",
+      "run": 3,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/0e42c3a73f2aece1f854e0ba55b7c8b0--screenshot--3--attempt-1-1792175067015-tq37g0.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I haven't been able to finish this, so I'm stopping here rather than continuing to retry.\n\n**What happened:**\n- I opened https://www.google.com/maps/ and search",
+      "turns": 24,
+      "toolCalls": 23,
+      "toolErrors": 0,
+      "observationChars": 2200,
+      "observationImages": 12,
+      "inputTokens": 26,
+      "cacheWriteTokens": 21314,
+      "cacheReadTokens": 172644,
+      "totalInputTokens": 193984,
+      "outputTokens": 2773,
+      "costUsd": 0.007378340000000001,
+      "timings": {
+        "mcpStartupMs": 2011,
+        "cliStartupMs": 912,
+        "cliExecutionMs": 29581,
+        "cliWallMs": 30493,
+        "verificationMs": 0,
+        "cleanupMs": 2
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-6/0e42c3a73f2aece1f854e0ba55b7c8b0--screenshot--3--attempt-1-1792175067015-tq37g0.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I haven't been able to finish this, so I'm stopping here rather than continuing to retry.\n\n**What happened:**\n- I opened https://www.google.com/maps/ and search",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 24,
+          "toolCalls": 23,
+          "toolErrors": 0,
+          "observationChars": 2200,
+          "observationImages": 12,
+          "totalInputTokens": 193984,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 26,
+            "cacheWriteTokens": 21314,
+            "cacheReadTokens": 172644,
+            "outputTokens": 2773,
+            "costUsd": 0.007378340000000001
+          },
+          "timings": {
+            "mcpStartupMs": 2011,
+            "cliStartupMs": 912,
+            "cliExecutionMs": 29581,
+            "cliWallMs": 30493,
+            "verificationMs": 0,
+            "cleanupMs": 2
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    }
+  ]
+}

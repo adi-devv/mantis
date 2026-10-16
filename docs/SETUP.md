@@ -61,5 +61,5 @@ yet. Guessed names (`~`) come from a small icon vocabulary.
 
 ## Where things are
 
-Where work stands: [PROGRESS.md](PROGRESS.md). Design: [PLAN.md](PLAN.md). How it works: [APPROACH.md](APPROACH.md).
+Where work stands and design: [PLAN.md](PLAN.md). How it works: [APPROACH.md](APPROACH.md).
 Issues and PRs welcome; run `npm run build && npm test` first.
