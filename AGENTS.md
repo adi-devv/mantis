@@ -13,7 +13,7 @@ Rules for any coding agent working in this repo (Codex reads this file; Claude C
 | Agent | Planning, analysis, review | Implementation (writing and editing code) |
 |---|---|---|
 | Claude Code | Opus, high effort | Sonnet subagent (`model: "sonnet"`) |
-| Codex | `gpt-6.1-sol`, high reasoning effort | `gpt-6-luna` |
+| Codex | `gpt-6.1-sol`, high reasoning effort | `gpt-6-sol` (not `gpt-6-luna`: its code needed too many fixes) |
 
 Plan on the strong model and hand the coding to the cheaper one with a clear brief (files, what done looks like). Then review the diff on the strong model.
 
