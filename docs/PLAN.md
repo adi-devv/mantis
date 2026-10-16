@@ -1,6 +1,6 @@
 # Mantis: build plan
 
-What Mantis is: [README.md](README.md). How it works in depth: [docs/APPROACH.md](docs/APPROACH.md).
+What Mantis is: [README.md](../README.md). How it works in depth: [docs/APPROACH.md](APPROACH.md).
 Status: [PROGRESS.md](PROGRESS.md). This file keeps the code layout, design decisions and milestone scope.
 
 ## Code layout
@@ -48,5 +48,5 @@ landmarks and dialogs; headings as `#`-prefixed text without an id; other text o
 - **M8 Faster than the tree.** Time every step; cheap scan; one scan per action; short settle.
 - **M9 Better than the tree.** Script-only clickables, inline iframes, a pointer to canvas charts.
 - **M10 Real-agent eval.** Agent CLIs do a fixed task set with each approach; measure correctness,
-  tool calls, tokens, time, cost. New failures become new tasks; publish losses too. Method: [bench/README.md](bench/README.md).
-- **M11 Launch.** Publish 0.1.1 with the eval's numbers, README top section, demo video. Plan: [docs/LAUNCH.md](docs/LAUNCH.md).
+  tool calls, tokens, time, cost. New failures become new tasks; publish losses too. Method: [bench/README.md](../bench/README.md).
+- **M11 Launch.** Publish 0.1.1 with the eval's numbers, README top section, demo video. Plan: [docs/LAUNCH.md](LAUNCH.md).

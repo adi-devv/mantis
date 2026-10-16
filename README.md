@@ -107,7 +107,7 @@ Time and cost are in the results files.
 
 Caveat: 25 of the 26 agent tasks are local pages written by the Mantis authors, and the
 screenshot baseline is our own minimal tool. An unbiased eval on real sites is next
-([PROGRESS.md](PROGRESS.md)).
+([docs/PROGRESS.md](docs/PROGRESS.md)).
 
 ## Configuration
 
@@ -137,7 +137,7 @@ npx tsx src/cli.ts read https://example.com
 
 To use a local build instead of npm: `claude mcp add mantis -- node /abs/path/to/mantis/dist/server.js`.
 
-Where work stands: [PROGRESS.md](PROGRESS.md). Design: [PLAN.md](PLAN.md). Issues and PRs
+Where work stands: [docs/PROGRESS.md](docs/PROGRESS.md). Design: [docs/PLAN.md](docs/PLAN.md). Issues and PRs
 welcome; run `npm run build && npm test` first.
 
 ## License

@@ -14,7 +14,7 @@ Where work stands, so it can be resumed after a restart. Design: [PLAN.md](PLAN.
 - [x] M8 — Faster than the accessibility tree
 - [x] M9 — Better than the accessibility tree
 - [ ] M10 — Real-agent eval (biased first pass done; unbiased eval is step 3 below)
-- [ ] M11 — Launch (0.1.1, README top, demo video; plan in [docs/LAUNCH.md](docs/LAUNCH.md))
+- [ ] M11 — Launch (0.1.1, README top, demo video; plan in [docs/LAUNCH.md](LAUNCH.md))
 
 ## Next steps
 

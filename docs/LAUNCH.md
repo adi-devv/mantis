@@ -17,7 +17,7 @@ Launch on numbers from the unbiased eval: real sites, the frozen v0.1.1, and eac
 
 ## 2. Gate: don't launch until all of these are done
 
-- [ ] Mantis is frozen at v0.1.1 (git tag) and the unbiased eval has run on it (see PROGRESS.md, next steps).
+- [ ] Mantis is frozen at v0.1.1 (git tag) and the unbiased eval has run on it (see [PROGRESS.md](PROGRESS.md), next steps).
 - [ ] A 30-second side-by-side video: the same task with the agent's own browser vs with Mantis, with a live token counter. Also export a GIF for the README.
 - [ ] The README opens with: the GIF, the claim, the install line, then a 3-line example.
 - [ ] Install is still one line: `claude mcp add mantis -- npx -y -p mantis-browser mantis-mcp`
