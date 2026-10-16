@@ -1,6 +1,6 @@
 {
   "name": "mantis-browser",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A lean browser interface for AI agents: web pages as short numbered text.",
   "type": "module",
   "license": "MIT",

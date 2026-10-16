@@ -68,6 +68,7 @@ How this works, with diagrams: [docs/APPROACH.md](docs/APPROACH.md).
 | `read(region?, full?, fresh?)` | The current page, or one region of it (`"nav"`, `"main"`) |
 | `find(text)` | Search the whole page, trimmed parts included |
 | `click(id)` · `type(id, text, submit?)` · `select(id, option)` | Act on element `#id` |
+| `fill(fields)` | Fill a whole form in one call: `[{id, value}]`, text / option / true-false |
 | `press(key)` · `scroll(direction \| id)` · `back()` | Keyboard, scrolling, history |
 | `media()` · `data(id)` | List images and charts; get their text and chart values |
 | `ocr(id)` | Text inside an image (no image returned) |

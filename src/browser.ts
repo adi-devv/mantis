@@ -239,32 +239,87 @@ export class MantisBrowser {
     return this.act(async (page) => {
       const { el, label } = await this.target(page, id);
       try {
-        const found = await el.evaluate((node, want) => {
-          if (!(node instanceof HTMLSelectElement)) return { notSelect: true as const };
-          const opts = Array.from(node.options).map((o, index) => ({
-            index, value: o.value, label: (o.label || o.text).replace(/\s+/g, ' ').trim(),
-          }));
-          const w = want.toLowerCase();
-          const hit =
-            opts.find((o) => o.value === want) ??
-            opts.find((o) => o.label === want) ??
-            opts.find((o) => o.label.toLowerCase() === w) ??
-            opts.find((o) => o.label.toLowerCase().includes(w));
-          return { index: hit ? hit.index : -1, labels: opts.map((o) => o.label), picked: hit?.label };
-        }, option);
-        if ('notSelect' in found) {
-          throw new ActionError(`${label} is not a <select>; click it, then click the option you want`);
-        }
-        if (found.index < 0) {
-          throw new ActionError(`no option "${option}" in ${label}; options: ${found.labels.slice(0, 15).join(' | ')}`);
-        }
-        await el.selectOption({ index: found.index }, { timeout: this.actionTimeout });
-        return `selected "${found.picked}" in ${label}`;
+        const picked = await this.chooseOption(el, label, option);
+        return `selected "${picked}" in ${label}`;
       } catch (e) {
         throw e instanceof ActionError ? e : new ActionError(this.explain(e, label));
       } finally {
         await el.dispose();
       }
+    });
+  }
+
+  /** Match `option` against a <select>'s options (value, exact label, case-insensitive label, substring) and choose it. */
+  private async chooseOption(el: ElementHandle<Element>, label: string, option: string): Promise<string> {
+    const found = await el.evaluate((node, want) => {
+      if (!(node instanceof HTMLSelectElement)) return { notSelect: true as const };
+      const opts = Array.from(node.options).map((o, index) => ({
+        index, value: o.value, label: (o.label || o.text).replace(/\s+/g, ' ').trim(),
+      }));
+      const w = want.toLowerCase();
+      const hit =
+        opts.find((o) => o.value === want) ??
+        opts.find((o) => o.label === want) ??
+        opts.find((o) => o.label.toLowerCase() === w) ??
+        opts.find((o) => o.label.toLowerCase().includes(w));
+      return { index: hit ? hit.index : -1, labels: opts.map((o) => o.label), picked: hit?.label };
+    }, option);
+    if ('notSelect' in found) {
+      throw new ActionError(`${label} is not a <select>; click it, then click the option you want`);
+    }
+    if (found.index < 0) {
+      throw new ActionError(`no option "${option}" in ${label}; options: ${found.labels.slice(0, 15).join(' | ')}`);
+    }
+    await el.selectOption({ index: found.index }, { timeout: this.actionTimeout });
+    return found.picked ?? option;
+  }
+
+  /** Fill several fields in one call: text, dropdown option, or true/false for checkboxes and radios. */
+  async fill(fields: { id: number; value: string | boolean }[]): Promise<string> {
+    return this.act(async (page) => {
+      if (!fields.length) throw new ActionError('no fields given');
+      const done: number[] = [];
+      const parts: string[] = [];
+      for (const { id, value } of fields) {
+        let el: ElementHandle<Element> | undefined;
+        let name = '';
+        try {
+          const t = await this.target(page, id);
+          el = t.el;
+          const secret = t.label.includes('(password)');
+          name = t.label.replace(' (password)', '').replace(/^#\d+ /, '');
+          const kind = await el.evaluate((n) =>
+            n instanceof HTMLSelectElement
+              ? 'select'
+              : n instanceof HTMLInputElement && (n.type === 'checkbox' || n.type === 'radio')
+                ? 'check'
+                : 'text',
+          );
+          if (kind === 'select') {
+            parts.push(`selected "${await this.chooseOption(el, name, String(value))}" in ${name}`);
+          } else if (kind === 'check') {
+            const on = /^(true|on|yes)$/i.test(String(value));
+            if (!on && !/^(false|off|no)$/i.test(String(value))) {
+              throw new ActionError(`${name} is a checkbox; use true or false, not "${value}"`);
+            }
+            await el.setChecked(on, { timeout: this.actionTimeout });
+            parts.push(`${on ? 'checked' : 'unchecked'} ${name}`);
+          } else {
+            const text = String(value);
+            await el.fill(text, { timeout: this.actionTimeout });
+            const shown = secret ? '•••' : `"${text.length > 40 ? text.slice(0, 39) + '…' : text}"`;
+            parts.push(`${shown} into ${name}`);
+          }
+          done.push(id);
+        } catch (e) {
+          const why = e instanceof ActionError ? e.message : this.explain(e, name || `#${id}`);
+          const so = done.length ? `filled ${done.map((d) => `#${d}`).join(', ')}` : 'nothing filled';
+          throw new ActionError(`${so}; #${id}: ${why}`);
+        } finally {
+          await el?.dispose();
+        }
+      }
+      return `filled ${parts.length} field${parts.length === 1 ? '' : 's'}: ${parts.join('; ')}`;
     });
   }
 

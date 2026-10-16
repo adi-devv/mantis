@@ -44,10 +44,11 @@ Mantis turns a web page into short numbered text. You act on elements by their
 - Prefer one targeted `read` over repeated full reads. Do not re-read after an action
   unless the reply says something unexpected.
 - Use `type(id, text, true)` to type and press Enter in one call.
+- Forms: `fill([{id: 12, value: "Ann"}, {id: 9, value: "Canada"}, {id: 15, value: true}])` sets text, dropdowns and checkboxes in one call.
 
 ## Tools
 
-Page tools: `open`, `read`, `find`, `click`, `type`, `select`, `press`, `scroll`, `back`, `forget`.
+Page tools: `open`, `read`, `find`, `click`, `type`, `select`, `fill`, `press`, `scroll`, `back`, `forget`.
 
 Fallback ladder, only when `read` is not enough. Go in order and stop at the first that works:
 

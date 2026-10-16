@@ -18,7 +18,7 @@ Where work stands, so it can be resumed after a restart. Design: [PLAN.md](PLAN.
 
 ## Next steps
 
-1. Freeze as v0.1.1 (git tag). No tuning against the held-out set after this.
+1. Done: frozen as v0.1.1 (git tag). No tuning against the held-out set after this.
 2. Unbiased eval on the frozen version: ~50 tasks from WebVoyager or Online-Mind2Web on real
    sites. Mantis vs Playwright MCP vs each agent's native browser tool (Claude in Chrome or
    computer use; Codex's built-in browser). Blind LLM judge, 3 runs, report per task.
@@ -87,3 +87,7 @@ Later: fallback tools inside iframes; add Chrome DevTools MCP and browser-use to
   weak spots were already gone in the fresh runs. Luna smoke (`codex-luna-final-smoke`, 7 tasks x 3): 21/21;
   `long-laptops` took 9–14 calls vs 8 before (the product view is complete, so likely run-to-run variance).
   Replay median unchanged at 28 tokens/step. 205 tests.
+- 2026-10-16: `fill` tool: several text fields, dropdowns and checkboxes in one call. Luna (`codex-luna-fill`,
+  long-shop and long-onboard x 3): 6/6 correct; calls 25.3 → 19.7 and 30.3 → 21.3; tokens flat (308k vs 303k,
+  305k vs 263k; runs with equal calls vary 200–374k, so 3 runs can't show a token change). 208 tests.
+  Frozen as v0.1.1.

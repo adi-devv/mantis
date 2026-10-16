@@ -122,3 +122,71 @@ describe('select', () => {
     expect(await b.select(id, 'Mars')).toBe(`error: no option "Mars" in #${id} combobox "Country"; options: France | Spain`);
   });
 });
+
+describe('fill', () => {
+  const form = () =>
+    'data:text/html,' +
+    encodeURIComponent(
+      '<title>Form</title>' +
+        '<label for=n>Name</label><input id=n>' +
+        '<label for=p>Secret</label><input id=p type=password>' +
+        '<label for=c>Planet</label><select id=c><option value=ea>Earth</option><option value=ma>Mars rock</option></select>' +
+        '<label><input id=t type=checkbox> Terms</label>',
+    );
+
+  it('sets text, password, dropdown and checkbox in one call with one diff', async () => {
+    const view = await b.open(form());
+    const ids = {
+      name: idOf(view, 'textbox "Name"'),
+      pw: idOf(view, 'Secret'),
+      planet: idOf(view, 'combobox "Planet"'),
+      terms: idOf(view, 'checkbox'),
+    };
+    const res = await b.fill([
+      { id: ids.name, value: 'Ann' },
+      { id: ids.pw, value: 'hunter2' },
+      { id: ids.planet, value: 'mars' },
+      { id: ids.terms, value: true },
+    ]);
+    const [msg, ...diff] = res.split('\n');
+    expect(msg).toBe(
+      'filled 4 fields: "Ann" into textbox "Name"; ••• into textbox "Secret"; selected "Mars rock" in combobox "Planet"; checked checkbox "Terms"',
+    );
+    expect(res).not.toContain('hunter2');
+    expect(diff.length).toBeGreaterThan(0);
+    expect(diff.join('\n')).toContain('Mars rock');
+    const pageValues = await (await (b as any).activePage()).evaluate(() => ({
+      n: (document.getElementById('n') as HTMLInputElement).value,
+      p: (document.getElementById('p') as HTMLInputElement).value,
+      c: (document.getElementById('c') as HTMLSelectElement).value,
+      t: (document.getElementById('t') as HTMLInputElement).checked,
+    }));
+    expect(pageValues).toEqual({ n: 'Ann', p: 'hunter2', c: 'ma', t: true });
+
+    expect(await b.fill([{ id: ids.terms, value: false }])).toMatch(/^filled 1 field: unchecked checkbox "Terms"/);
+  });
+
+  it('stops at a bad option and says what was filled; earlier fields stay filled', async () => {
+    const view = await b.open(form());
+    const name = idOf(view, 'textbox "Name"');
+    const planet = idOf(view, 'combobox "Planet"');
+    const terms = idOf(view, 'checkbox');
+    const res = await b.fill([
+      { id: name, value: 'Bob' },
+      { id: planet, value: 'Pluto' },
+      { id: terms, value: true },
+    ]);
+    expect(res).toBe(`error: filled #${name}; #${planet}: no option "Pluto" in combobox "Planet"; options: Earth | Mars rock`);
+    const after = await b.read();
+    expect(after).toContain('value "Bob"');
+    expect(after).not.toMatch(/checkbox "Terms" \(checked\)/);
+  });
+
+  it('errors on no fields, an unknown id, and a non-boolean for a checkbox', async () => {
+    const view = await b.open(form());
+    expect(await b.fill([])).toBe('error: no fields given');
+    expect(await b.fill([{ id: 9999, value: 'x' }])).toBe('error: nothing filled; #9999: no element #9999 on this page; call read() to see current numbers');
+    const terms = idOf(view, 'checkbox');
+    expect(await b.fill([{ id: terms, value: 'maybe' }])).toContain('use true or false');
+  });
+});

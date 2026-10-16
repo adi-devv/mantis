@@ -13,7 +13,7 @@ const reply = (text: string) => ({
 
 /** Build the MCP server around a browser (launched lazily on first tool call). */
 export function createServer(browser: MantisBrowser = new MantisBrowser()): McpServer {
-  const server = new McpServer({ name: 'mantis', version: '0.1.0' });
+  const server = new McpServer({ name: 'mantis', version: '0.1.1' });
   const id = z.number().int();
 
   server.registerTool(
@@ -69,6 +69,14 @@ export function createServer(browser: MantisBrowser = new MantisBrowser()): McpS
     'select',
     { description: 'Choose option (label or value) in dropdown #id.', inputSchema: { id, option: z.string() } },
     async ({ id, option }) => reply(await browser.select(id, option)),
+  );
+  server.registerTool(
+    'fill',
+    {
+      description: 'Fill several fields at once: text, dropdown option, or true/false for checkboxes.',
+      inputSchema: { fields: z.array(z.object({ id, value: z.union([z.string(), z.boolean()]) })) },
+    },
+    async ({ fields }) => reply(await browser.fill(fields)),
   );
   server.registerTool(
     'press',
