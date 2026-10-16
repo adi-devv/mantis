@@ -6,7 +6,7 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { loadRealsiteTasks, mulberry32, parseFinalUrl, realsitePrompt, sampleRealsite, sanitizeAnswer } from '../bench/agent/realsite.js';
+import { evaluateChecks, loadRealsiteRows, loadRealsiteTasks, mulberry32, parseFinalUrl, realsitePrompt, sampleRealsite, sanitizeAnswer } from '../bench/agent/realsite.js';
 import type { RealsiteRow } from '../bench/agent/realsite.js';
 import { buildJudgePrompt, parseJudgeOutput, readFinalTexts, renderJudgedMarkdown, runKey } from '../bench/agent/judge.js';
 import type { JudgedRun } from '../bench/agent/judge.js';
@@ -200,5 +200,85 @@ describe('judge helpers', () => {
     expect(md).toContain('| Task | mantis | tree |');
     expect(md).toMatch(/easy-0.*\| success \| success \|/);
     expect(md).toMatch(/easy-1.*\| failure \| unsure \|/);
+  });
+});
+
+describe('answer-key checks', () => {
+  const file = (rows: object[]): string => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'realsite-checks-'));
+    const f = path.join(dir, 'tasks.json');
+    writeFileSync(f, JSON.stringify(rows));
+    return f;
+  };
+  const base = { task_id: 'a', website: 'https://example.com/', confirmed_task: 'Find it', level: 'easy' };
+
+  it('keeps well-formed checks and ignores malformed ones', () => {
+    const rows = loadRealsiteRows(file([
+      { ...base, checks: { answerIncludes: [' 30,887 '], evidenceIncludes: ['Total'] } },
+      { ...base, task_id: 'b', checks: { answerIncludes: [], evidenceIncludes: 'Total' } },
+      { ...base, task_id: 'c', checks: { answerIncludes: ['ok', 3], evidenceIncludes: ['fine'] } },
+      { ...base, task_id: 'd', checks: ['x'] },
+      { ...base, task_id: 'e', checks: 'x' },
+      { ...base, task_id: 'f' },
+    ]));
+    const byId = Object.fromEntries(rows.map((r) => [r.task_id, r]));
+    expect(byId.a!.checks).toEqual({ answerIncludes: ['30,887'], evidenceIncludes: ['Total'] });
+    expect(byId.b!.checks).toBeUndefined();
+    expect(byId.c!.checks).toEqual({ evidenceIncludes: ['fine'] }); // the list with a non-string is dropped
+    for (const id of ['d', 'e', 'f']) expect('checks' in byId[id]!).toBe(false);
+  });
+
+  it('passes when the reply and some frame contain the key, ignoring case and spacing', () => {
+    const checks = { answerIncludes: ['30,887'], evidenceIncludes: ['Monthly  payment: $1,200'] };
+    expect(evaluateChecks(checks, 'The total is 30,887 dollars.', ['Home', 'monthly payment:\n$1,200 per month'])).toEqual({ pass: true, failed: [] });
+    expect(evaluateChecks({ answerIncludes: ['BLUE mug'] }, 'the  blue\nmug', [])).toEqual({ pass: true, failed: [] });
+  });
+
+  it('fails a near miss and says what failed', () => {
+    const checks = { answerIncludes: ['30,887'], evidenceIncludes: ['Monthly payment: $1,200'] };
+    expect(evaluateChecks(checks, 'The total is 30,888.', ['monthly payment: $1,200'])).toEqual({ pass: false, failed: ['answer lacks "30,887"'] });
+    expect(evaluateChecks(checks, '30,887', ['Monthly payment: $1,201'])).toEqual({ pass: false, failed: ['no frame shows "Monthly payment: $1,200"'] });
+    expect(evaluateChecks(checks, '30,887', [])).toEqual({ pass: false, failed: ['no frame shows "Monthly payment: $1,200"'] });
+  });
+
+  it('returns null without checks', () => {
+    expect(evaluateChecks(undefined, 'x', [])).toBeNull();
+    expect(evaluateChecks({}, 'x', [])).toBeNull();
+    expect(evaluateChecks({ answerIncludes: [] }, 'x', [])).toBeNull();
+  });
+});
+
+describe('judged report with evidence and checks', () => {
+  const rows = new Map(makeRows({ easy: 3 }).map((r) => [r.task_id, r]));
+  const old = (task: string, approach: string, verdict: JudgedRun['verdict']): JudgedRun => ({ task, approach, run: 1, verdict, reason: 'r', finalUrl: null, toolCalls: 1, totalInputTokens: 1, wallS: 1 });
+  const withEvidence = (task: string, approach: string, verdict: JudgedRun['verdict'], extra: Partial<JudgedRun>): JudgedRun => ({ ...old(task, approach, verdict), frameCount: 3, finalFrame: 'F3', ...extra });
+
+  it('leaves the report unchanged when no run has evidence or check data', () => {
+    const md = renderJudgedMarkdown('demo', [old('easy-0', 'mantis', 'success'), old('easy-1', 'tree', 'failure')], rows, 'judge');
+    expect(md).not.toContain('Evidence and checks');
+    expect(md.trimEnd().split('\n').at(-1)).toMatch(/^\| `easy-1`/);
+  });
+
+  it('appends an evidence section with counts and check/judge disagreements', () => {
+    const md = renderJudgedMarkdown('demo', [
+      withEvidence('easy-0', 'mantis', 'failure', { judgeVerdict: 'success', checks: { pass: false, failed: ['answer lacks "30,887"'] }, evidence: ['F3'] }),
+      withEvidence('easy-1', 'mantis', 'success', { judgeVerdict: 'success', checks: { pass: true, failed: [] }, evidence: ['F1', 'F3'] }),
+      withEvidence('easy-2', 'tree', 'failure', { judgeVerdict: 'failure', checks: { pass: true, failed: [] } }),
+      withEvidence('easy-0', 'tree', 'failure', { judgeVerdict: 'failure', checks: { pass: false, failed: ['no frame shows "x"'] }, frameCount: 0, finalFrame: null }),
+    ], rows, 'judge');
+    const section = md.slice(md.indexOf('## Evidence and checks'));
+    expect(md.indexOf('## Per task')).toBeLessThan(md.indexOf('## Evidence and checks'));
+    expect(section).toContain('| mantis | 2 | 1 | 1 | 0 | 0 | 2 | 1 |');
+    expect(section).toContain('| tree | 2 | 0 | 2 | 0 | 0 | 1 | 0 |');
+    expect(section).toContain('- `easy-0` mantis run 1: judge success; checks failed (answer lacks "30,887")');
+    expect(section).toContain('- `easy-2` tree run 1: judge failure; checks passed');
+    expect(section).not.toContain('easy-1` mantis'); // check and judge agree
+    expect(section).not.toContain('no frame shows "x"'); // judge also said failure
+    expect(section).not.toContain('None.');
+  });
+
+  it('says None. when checks and judge agree', () => {
+    const md = renderJudgedMarkdown('demo', [withEvidence('easy-0', 'mantis', 'success', { judgeVerdict: 'success', checks: { pass: true, failed: [] } })], rows, 'judge');
+    expect(md).toContain('### Check vs judge disagreements\n\nNone.');
   });
 });

@@ -25,6 +25,10 @@ import type { AgentTask } from './tasks.js';
 import { aggregateUsage, assertCompatibleResume, classifyAttempt, hashSources, makeMetadata, parseClaudeStream, validateFlag, validatePositiveInt } from './integrity.js';
 import type { AttemptStatus, RunMetadata, StreamUsage } from './integrity.js';
 import { codexArgs, rawMcpToolName } from './codex-config.js';
+import { PAGE_STATE_FUNCTION, packEvidence, parsePageState, toCapturedFrame } from './evidence.js';
+import type { CapturedFrame } from './evidence.js';
+import { createMcpProxy } from './mcp-proxy.js';
+import type { McpProxy } from './mcp-proxy.js';
 import { parseCodexStream } from './codex.js';
 import type { ParsedCodexStream } from './codex.js';
 
@@ -58,50 +62,30 @@ const VENV_PY = path.join(REPO, 'bench', 'agent', '.venv', process.platform === 
 const TSX = import.meta.resolve('tsx');
 interface ServerSpec { command: string; args: string[]; env?: Record<string, string> }
 
-/** Capture through the still-running approach server, after the CLI has closed its bridge. */
-async function captureFinalPage(port: number, approach: Approach, file: string): Promise<void> {
-  const socket = net.connect(port, '127.0.0.1');
-  const pending = new Map<number, { resolve: (value: any) => void; reject: (error: Error) => void }>();
-  let buffer = '';
-  const timer = setTimeout(() => socket.destroy(new Error('capture timed out')), 15_000);
-  socket.setEncoding('utf8');
-  socket.on('data', (chunk: string) => {
-    buffer += chunk;
-    for (let end = buffer.indexOf('\n'); end >= 0; end = buffer.indexOf('\n')) {
-      const line = buffer.slice(0, end).trim();
-      buffer = buffer.slice(end + 1);
-      if (!line) continue;
-      try {
-        const message = JSON.parse(line);
-        if (typeof message.id !== 'number') continue;
-        const request = pending.get(message.id);
-        if (!request) continue;
-        pending.delete(message.id);
-        if (message.error) request.reject(new Error(message.error.message ?? 'MCP error'));
-        else request.resolve(message.result);
-      } catch { /* ignore malformed server output */ }
+interface RawCapture { step: number; png: Buffer; state: string | null; final: boolean }
+type ToolResult = { isError?: boolean; content?: { type: string; mimeType?: string; data?: string; text?: string }[] };
+
+/** Viewport PNG plus page state (URL, text, form values) of the live page, through the harness channel; rejects after 15 s. */
+async function captureOnce(server: Pick<McpProxy, 'call'>, approach: Approach, step: number, final: boolean): Promise<RawCapture> {
+  const pngOf = (result: ToolResult): Buffer => {
+    const data = result.content?.find((item) => item.type === 'image' && item.mimeType === 'image/png')?.data;
+    if (result.isError || typeof data !== 'string') throw new Error('capture returned no PNG');
+    return Buffer.from(data, 'base64');
+  };
+  const stateOf = (result: ToolResult): string | null => result.isError ? null : (result.content ?? []).flatMap((item) => item.type === 'text' && typeof item.text === 'string' ? [item.text] : []).find((text) => parsePageState(text)) ?? null;
+  const capture = async (): Promise<RawCapture> => {
+    if (approach === 'tree') {
+      const png = pngOf(await server.call('tools/call', { name: 'browser_take_screenshot', arguments: { type: 'png', fullPage: false, scale: 'css' } }));
+      const state = await server.call('tools/call', { name: 'browser_evaluate', arguments: { function: PAGE_STATE_FUNCTION } }).then(stateOf, () => null);
+      return { step, png, state, final };
     }
-  });
-  socket.on('error', (error) => { for (const p of pending.values()) p.reject(error); pending.clear(); });
-  socket.on('close', () => { for (const p of pending.values()) p.reject(new Error('capture connection closed')); pending.clear(); });
-  let id = 0;
-  const call = (method: string, params: object): Promise<any> => new Promise((resolve, reject) => {
-    const next = ++id;
-    pending.set(next, { resolve, reject });
-    socket.write(JSON.stringify({ jsonrpc: '2.0', id: next, method, params }) + '\n');
-  });
+    const result: ToolResult = await server.call('tools/call', { name: 'bench_capture', arguments: { evaluate: PAGE_STATE_FUNCTION } });
+    return { step, png: pngOf(result), state: stateOf(result), final };
+  };
+  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    await new Promise<void>((resolve, reject) => { socket.once('connect', resolve); socket.once('error', reject); });
-    await call('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'bench-capture', version: '1.0' } });
-    socket.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n');
-    const tool = approach === 'tree' ? 'browser_take_screenshot' : 'bench_capture';
-    const args = approach === 'tree' ? { type: 'png', fullPage: false, scale: 'css' } : {};
-    const result = await call('tools/call', { name: tool, arguments: args });
-    if (result.isError) throw new Error('capture tool failed');
-    const data = result.content?.find((item: { type: string; mimeType?: string }) => item.type === 'image' && item.mimeType === 'image/png')?.data;
-    if (typeof data !== 'string') throw new Error('capture returned no PNG');
-    writeFileSync(file, Buffer.from(data, 'base64'));
-  } finally { clearTimeout(timer); socket.destroy(); }
+    return await Promise.race([capture(), new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('capture timed out')), 15_000); })]);
+  } finally { clearTimeout(timer); }
 }
 
 function sourceFilesUnder(folder: string): string[] {
@@ -117,7 +101,7 @@ function sourceFilesUnder(folder: string): string[] {
  * server (browser-use: ~6 s of Python imports) is still "pending" when the agent starts, the model gets
  * no tools and imitates tool calls as text. Startup time stays out of every approach's measured time.
  */
-async function startServer(spec: ServerSpec, warmMs: number, log: string): Promise<{ port: number; stop: () => void; failure: () => string | null }> {
+async function startServer(spec: ServerSpec, warmMs: number, log: string): Promise<{ port: number; stop: () => void; failure: () => string | null } & Pick<McpProxy, 'call' | 'onToolResult'>> {
   const child: ChildProcess = spawn(spec.command, spec.args, { stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, ...(spec.env ?? {}) } });
   let stderr = '';
   let stopping = false;
@@ -136,16 +120,12 @@ async function startServer(spec: ServerSpec, warmMs: number, log: string): Promi
   child.stderr?.on('data', (d) => { stderr += d; });
   child.stdin?.on('error', () => { /* a reconnecting MCP client may close its socket */ });
   child.stdout?.on('error', (error) => { if (!stopping) childFailure = `server stdout failed: ${error.message}`; });
+  // Line-framed proxy: forwards the agent's traffic as before and gives the harness its own channel (see mcp-proxy.ts).
+  const proxy = createMcpProxy({ stdin: child.stdin!, stdout: child.stdout! });
   const srv = net.createServer((sock) => {
     sockets.add(sock);
-    sock.on('error', () => { /* MCP clients can disconnect while the child remains healthy */ });
-    sock.on('close', () => {
-      sockets.delete(sock);
-      sock.unpipe(child.stdin!);
-      child.stdout!.unpipe(sock);
-    });
-    sock.pipe(child.stdin!, { end: false });
-    child.stdout!.pipe(sock, { end: false });
+    sock.on('close', () => sockets.delete(sock));
+    proxy.attach(sock);
   });
   try {
     await new Promise<void>((ok, fail) => {
@@ -164,7 +144,7 @@ async function startServer(spec: ServerSpec, warmMs: number, log: string): Promi
   const port = (srv.address() as net.AddressInfo).port;
   let stopped = false;
   return {
-    port,
+    port, call: proxy.call, onToolResult: proxy.onToolResult,
     failure: () => childFailure,
     stop: () => {
       if (stopped) return;
@@ -172,7 +152,7 @@ async function startServer(spec: ServerSpec, warmMs: number, log: string): Promi
       stopping = true;
       srv.close();
       for (const sock of sockets) sock.destroy();
-      child.stdout?.unpipe();
+      proxy.close('server stopped');
       child.stdin?.end();
       writeFileSync(log, stderr);
       // The server may have started a browser: end the whole process tree.
@@ -290,6 +270,9 @@ function claudeBin(): string {
 interface AttemptResult {
   attempt: number;
   finalScreenshotPath: string | null;
+  /** Evidence sidecar (bench/agent/evidence.ts) and the PNGs of its kept frames, chronological, final last. */
+  evidencePath: string | null;
+  evidenceFrames: string[];
   status: AttemptStatus;
   connected: boolean;
   connectionState: 'connected' | 'failed' | 'unknown';
@@ -305,7 +288,7 @@ interface AttemptResult {
   totalInputTokens: number | null;
   usageComplete: boolean;
   usage: StreamUsage;
-  timings: { mcpStartupMs: number; cliStartupMs: number | null; cliExecutionMs: number | null; cliWallMs: number | null; verificationMs: number; cleanupMs: number };
+  timings: { mcpStartupMs: number; cliStartupMs: number | null; cliExecutionMs: number | null; cliWallMs: number | null; verificationMs: number; cleanupMs: number; /** Harness frame capture (steps + final); not part of any CLI timing. */ captureMs: number };
   exitCode: number | null;
   signal: string | null;
   timedOut: boolean;
@@ -316,6 +299,7 @@ interface AttemptResult {
 interface RunResult {
   task: string; approach: Approach; run: number;
   finalScreenshotPath?: string | null;
+  evidencePath: string | null; evidenceFrames: string[];
   status: AttemptStatus; ok: boolean; error: string; answer: string;
   /** A connection failure is excluded from correctness; a timeout after launch remains attempted. */
   valid: boolean;
@@ -324,7 +308,7 @@ interface RunResult {
   /** Legacy total of normal + cache input tokens. */
   totalInputTokens: number | null;
   outputTokens: number | null; costUsd: number | null;
-  timings: { mcpStartupMs: number; cliStartupMs: number | null; cliExecutionMs: number | null; cliWallMs: number | null; verificationMs: number; cleanupMs: number };
+  timings: { mcpStartupMs: number; cliStartupMs: number | null; cliExecutionMs: number | null; cliWallMs: number | null; verificationMs: number; cleanupMs: number; /** Harness frame capture (steps + final); not part of any CLI timing. */ captureMs: number };
   resolvedModels: string[];
   attempts: AttemptResult[];
 }
@@ -348,12 +332,39 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
   let cleanupMs = 0;
   let parsed: ReturnType<typeof parseClaudeStream> | ReturnType<typeof parseCodexStream> = parseClaudeStream('');
   let finalScreenshotPath: string | null = null;
+  let evidencePath: string | null = null;
+  let evidenceFrames: string[] = [];
+  let captureMs = 0;
+  let captureFailures = 0;
   try {
     const cfg = path.join(dir, 'mcp.json');
     const [name, spec] = Object.entries(APPROACHES[approach].server(dir))[0]!;
     server = await startServer(spec, APPROACHES[approach].warmMs ?? 2_000, serverLog);
     mcpStartupMs = Date.now() - startupStarted;
     if (server.failure()) throw new Error(server.failure()!);
+    // Judged real-site runs: after each agent tool result, grab a viewport frame and page state in the background.
+    // Never delays the agent: at most one capture runs at a time, and results arriving meanwhile get one more capture.
+    const live = server;
+    const capturing = !!task.judged && (approach === 'mantis' || approach === 'tree' || approach === 'screenshot');
+    const raw: RawCapture[] = [];
+    let toolsDone = 0;
+    let capturedAt = -1;
+    let stepsOpen = true;
+    let stepRun: Promise<void> | null = null;
+    if (capturing) {
+      live.onToolResult((count) => {
+        toolsDone = count;
+        if (stepRun || !stepsOpen) return;
+        stepRun = (async () => {
+          while (stepsOpen && capturedAt < toolsDone) {
+            const step = capturedAt = toolsDone;
+            const started = Date.now();
+            try { raw.push(await captureOnce(live, approach, step, false)); } catch { captureFailures++; }
+            captureMs += Date.now() - started;
+          }
+        })().finally(() => { stepRun = null; });
+      });
+    }
     const bridge = { command: node, args: [path.join(REPO, 'bench', 'agent', 'bridge.mjs'), String(server.port)] };
     writeFileSync(cfg, JSON.stringify({ mcpServers: { [name]: bridge } }));
     const taskBase = task.site === 'local' ? fixtures.baseFor(task.id, attemptId) : base;
@@ -432,13 +443,26 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
       });
     });
     parsed = PROVIDER === 'codex' ? parseCodexStream(processResult.out, name) : parseClaudeStream(processResult.out);
-    if (task.judged && (approach === 'mantis' || approach === 'tree' || approach === 'screenshot')) {
-      const shot = path.join(logDir, `${unique}.final.png`);
-      try {
-        await captureFinalPage(server.port, approach, shot);
-        finalScreenshotPath = shot;
-      } catch (error) {
+    if (capturing) {
+      stepsOpen = false;
+      if (stepRun) await Promise.race([stepRun, new Promise((resolve) => setTimeout(resolve, 20_000))]);
+      const started = Date.now();
+      try { raw.push(await captureOnce(live, approach, toolsDone, true)); } catch (error) {
         console.warn(`[agent] final capture failed for ${unique}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+      captureMs += Date.now() - started;
+      // Drop near-duplicates, cap the count, and save the kept frames beside the run log.
+      const frames = raw.flatMap((c): CapturedFrame[] => { const frame = toCapturedFrame(c.png, c.state, c.step, c.final); return frame ? [frame] : []; });
+      const { sidecar, pngs } = packEvidence(frames, unique, captureMs);
+      try {
+        for (const { file, png } of pngs) writeFileSync(path.join(logDir, file), png);
+        evidencePath = path.join(logDir, `${unique}.evidence.json`);
+        writeFileSync(evidencePath, JSON.stringify(sidecar, null, 2));
+        evidenceFrames = pngs.map(({ file }) => path.join(logDir, file));
+        if (sidecar.frames.some((f) => f.final)) finalScreenshotPath = path.join(logDir, `${unique}.final.png`);
+      } catch (error) {
+        evidencePath = null; evidenceFrames = [];
+        console.warn(`[agent] could not save evidence for ${unique}: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
     if (task.site === 'local' && task.check) {
@@ -484,7 +508,7 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
   const cliExitAt = processResult.exitAt;
   const cliWallMs = cliStart === null || cliExitAt === null ? null : cliExitAt - cliStart;
   return {
-    attempt, finalScreenshotPath, status, connected, connectionState, error, answer, initModel: parsed.initModel, resolvedModels: parsed.resolvedModels,
+    attempt, finalScreenshotPath, evidencePath, evidenceFrames, status, connected, connectionState, error, answer, initModel: parsed.initModel, resolvedModels: parsed.resolvedModels,
     turns: parsed.turns, toolCalls: parsed.toolCalls, toolErrors: parsed.toolErrors,
     observationChars: parsed.observationChars, observationImages: parsed.observationImages,
     totalInputTokens: PROVIDER === 'codex' ? (parsed as ReturnType<typeof parseCodexStream>).totalInputTokens :
@@ -494,10 +518,10 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
     timings: {
       mcpStartupMs, cliStartupMs: processResult.initAt === null || cliStart === null ? null : processResult.initAt - cliStart,
       cliExecutionMs: processResult.initAt === null || cliExitAt === null ? null : cliExitAt - processResult.initAt,
-      cliWallMs, verificationMs, cleanupMs,
+      cliWallMs, verificationMs, cleanupMs, captureMs,
     },
     exitCode: processResult.exitCode, signal: processResult.signal, timedOut: processResult.timedOut, fixtureCheck,
-    diagnostics: PROVIDER === 'codex' ? (parsed as ParsedCodexStream).diagnostics : [],
+    diagnostics: [...(PROVIDER === 'codex' ? (parsed as ParsedCodexStream).diagnostics : []), ...(captureFailures ? [`${captureFailures} step capture(s) failed or timed out`] : [])],
   };
 }
 
@@ -526,9 +550,9 @@ function report(results: RunResult[], approaches: Approach[], tasks: AgentTask[]
   L.push(`| | ${approaches.map((a) => APPROACHES[a].label).join(' | ')} |`);
   L.push(`|---|${approaches.map(() => '---:').join('|')}|`);
   const by = (a: Approach): RunResult[] => results.filter((r) => r.approach === a);
-  const sumNumber = (rs: RunResult[], k: 'toolCalls' | 'toolErrors' | 'observationChars' | 'observationImages' | 'mcpStartupMs' | 'verificationMs' | 'cleanupMs'): number => rs.reduce((s, r) => {
+  const sumNumber = (rs: RunResult[], k: 'toolCalls' | 'toolErrors' | 'observationChars' | 'observationImages' | 'mcpStartupMs' | 'verificationMs' | 'cleanupMs' | 'captureMs'): number => rs.reduce((s, r) => {
     if (k === 'toolCalls' || k === 'toolErrors' || k === 'observationChars' || k === 'observationImages') return s + r[k];
-    return s + r.timings[k];
+    return s + (r.timings[k] ?? 0);
   }, 0);
   const sumNullable = (rs: RunResult[], k: 'inputTokens' | 'cacheWriteTokens' | 'cacheReadTokens' | 'outputTokens' | 'costUsd' | 'totalInputTokens'): number | null => {
     const vals = rs.map((r) => r[k]);
@@ -556,6 +580,7 @@ function report(results: RunResult[], approaches: Approach[], tasks: AgentTask[]
   L.push(`| CLI wall (total, s) | ${approaches.map((a) => { const n = sumTiming(by(a), 'cliWallMs'); return n === null ? 'unknown' : (n / 1000).toFixed(1); }).join(' | ')} |`);
   L.push(`| Fixture verification (total, s) | ${approaches.map((a) => (sumNumber(by(a), 'verificationMs') / 1000).toFixed(1)).join(' | ')} |`);
   L.push(`| Cleanup (total, s) | ${approaches.map((a) => (sumNumber(by(a), 'cleanupMs') / 1000).toFixed(1)).join(' | ')} |`);
+  L.push(`| Harness capture (total, s) | ${approaches.map((a) => (sumNumber(by(a), 'captureMs') / 1000).toFixed(1)).join(' | ')} |`);
   L.push(`| Cost estimate (USD; including retries) | ${approaches.map((a) => { const n = sumNullable(by(a), 'costUsd'); return n === null ? 'unknown' : n.toFixed(2); }).join(' | ')} |`);
   L.push('');
   L.push('## Per run');
@@ -634,7 +659,7 @@ const settings = {
 preflightApproaches(approaches);
 const sourceFiles = [
   'bench/agent/run.ts', 'bench/agent/integrity.ts', 'bench/agent/tasks.ts', 'bench/agent/bridge.mjs',
-  'bench/agent/codex.ts', 'bench/agent/codex-config.ts', 'bench/agent/realsite.ts',
+  'bench/agent/codex.ts', 'bench/agent/codex-config.ts', 'bench/agent/realsite.ts', 'bench/agent/evidence.ts', 'bench/agent/png.ts', 'bench/agent/mcp-proxy.ts',
   ...(existsSync(path.join(REPO, 'bench', 'agent', 'realsite-tasks.json')) ? ['bench/agent/realsite-tasks.json'] : []),
   'bench/agent/screenshot-mcp.ts', 'bench/fixtures.ts', 'bench/fixtures-more.ts', 'bench/adapters.ts',
   ...sourceFilesUnder('src'), ...sourceFilesUnder('dist'), 'package-lock.json',
@@ -680,6 +705,7 @@ try {
       const allTurnsKnown = attempts.every((x) => x.turns !== null);
       const r: RunResult = {
         task: t.id, approach: a, run, status: finalAttempt.status, finalScreenshotPath: finalAttempt.finalScreenshotPath,
+        evidencePath: finalAttempt.evidencePath, evidenceFrames: finalAttempt.evidenceFrames,
         valid: finalAttempt.status !== 'connection_failure', ok: finalAttempt.status === 'success',
         error: finalAttempt.error, answer: finalAttempt.answer,
         turns: allTurnsKnown ? attempts.reduce((s, x) => s + (x.turns ?? 0), 0) : null,
@@ -698,6 +724,7 @@ try {
           cliWallMs: attempts.every((x) => x.timings.cliWallMs !== null) ? attempts.reduce((s, x) => s + (x.timings.cliWallMs ?? 0), 0) : null,
           verificationMs: attempts.reduce((s, x) => s + x.timings.verificationMs, 0),
           cleanupMs: attempts.reduce((s, x) => s + x.timings.cleanupMs, 0),
+          captureMs: attempts.reduce((s, x) => s + x.timings.captureMs, 0),
         }, attempts,
         resolvedModels: [...new Set(attempts.flatMap((x) => x.resolvedModels))],
       };

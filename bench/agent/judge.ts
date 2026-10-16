@@ -7,6 +7,9 @@
  * screenshot, then falls back to loading that URL in fresh Chromium. Codex (`codex exec`, screenshot
  * attached, read-only) or `claude -p` (Read tool only) returns {"verdict","reason"}. The judge never
  * sees which approach produced a run: tool-revealing lines are stripped from the reply and the run order is shuffled.
+ * Newer runs also carry evidence frames (bench/agent/evidence.ts): the judge then sees a chronological packet of
+ * harness-captured frames (URL, page text, image) instead of one final screenshot, and rows with answer-key `checks`
+ * (bench/agent/realsite.ts) are also checked deterministically; a failed check turns the verdict into a failure.
  * Writes results/<name>-judged.{json,md}. Env: JUDGE_PROVIDER (codex | claude, default codex), JUDGE_MODEL
  * (gpt-6.1-sol / claude-sonnet-5-5), JUDGE_REASONING (high, Codex only), JUDGE_CONCURRENCY (6), JUDGE_SEED (1),
  * JUDGE_TIMEOUT_S (240), CODEX_BIN, CLAUDE_BIN.
@@ -19,8 +22,10 @@ import { pathToFileURL } from 'node:url';
 import { chromiumExecutable } from '../../src/userAgent.js';
 import { parseClaudeStream } from './integrity.js';
 import { parseCodexStream } from './codex.js';
-import { loadRealsiteRows, mulberry32, parseFinalUrl, sanitizeAnswer, shuffled } from './realsite.js';
+import { evaluateChecks, loadRealsiteRows, mulberry32, parseFinalUrl, sanitizeAnswer, shuffled } from './realsite.js';
 import type { RealsiteRow } from './realsite.js';
+import type { EvidenceFrame, EvidenceSidecar, FormValue } from './evidence.js';
+import { decodePng, encodePng, fitWithin } from './png.js';
 
 const REPO = path.resolve(import.meta.dirname, '..', '..');
 const RESULTS = path.join(REPO, 'bench', 'results');
@@ -32,6 +37,8 @@ export interface SavedRun {
   task: string; approach: string; run: number;
   status: string; answer?: string;
   finalScreenshotPath?: string | null;
+  /** Evidence-format rows (newer runs) have `evidenceFrames`, even when empty; older rows lack the property. */
+  evidencePath?: string | null; evidenceFrames?: string[];
   toolCalls: number; totalInputTokens: number | null;
   timings?: { cliWallMs?: number | null };
 }
@@ -40,6 +47,9 @@ export interface JudgedRun {
   task: string; approach: string; run: number;
   verdict: Verdict; reason: string; finalUrl: string | null;
   toolCalls: number; totalInputTokens: number | null; wallS: number | null;
+  /** Evidence-format rows only: frame IDs the judge cited, frames shown, the judge's own verdict, deterministic checks. */
+  evidence?: string[]; frameCount?: number; finalFrame?: string | null; judgeVerdict?: Verdict;
+  checks?: { pass: boolean; failed: string[] } | null;
 }
 
 // ---- Logs ----
@@ -83,6 +93,9 @@ export async function selectJudgeScreenshot(savedPath: string | null | undefined
 
 // ---- Judge prompt and reply parsing ----
 
+const RULES =
+  'Mark "success" only if the task was actually accomplished (or, for questions, the answer is correct and supported by the evidence). Mark "failure" if it was not, or the reply is wrong, evasive, or off-task. If the reply says a required login, purchase, or personal-information prompt stopped it but no such prompt is visible on a live capture, mark "unsure" unless other evidence shows failure. If the task asks for a result the site computes and the agent gives its own estimate or calculation instead, mark "failure". Mark "blocked" only for an explicit site refusal of automation or access, such as a CAPTCHA/bot check, HTTP 403/Access Denied, or country/region block, supported by the evidence. An ordinary 404, network error, or incomplete agent attempt is not blocked. Mark "unsure" if the evidence is not enough to decide. A normal login, purchase, or personal-information step after correct prior work counts as success, not blocked.';
+
 export function buildJudgePrompt(input: { task: string; website: string; finalUrl: string | null; answer: string; screenshotPath: string | null; screenshotSource?: 'live' | 'fresh'; attached?: boolean }): string {
   return [
     'You are grading whether a web agent completed a task on a real website. You are not told how the agent worked; judge only the evidence below.',
@@ -104,16 +117,125 @@ export function buildJudgePrompt(input: { task: string; website: string; finalUr
         : `A screenshot of that URL, freshly loaded in a new browser (1280x800), ${input.attached ? 'is attached' : `is at ${input.screenshotPath}. Open it with the Read tool and`} use it as evidence. Because it is a fresh load, a page may lack state the agent created (a search, a filter, a form entry); do not penalise that alone when the reply is specific and consistent with the page.`
       : 'No screenshot is available (the final URL could not be loaded); judge on the reply and URL alone, and answer "unsure" if that is not enough.',
     '',
-    'Mark "success" only if the task was actually accomplished (or, for questions, the answer is correct and supported by the evidence). Mark "failure" if it was not, or the reply is wrong, evasive, or off-task. If the reply says a required login, purchase, or personal-information prompt stopped it but no such prompt is visible on a live capture, mark "unsure" unless other evidence shows failure. If the task asks for a result the site computes and the agent gives its own estimate or calculation instead, mark "failure". Mark "blocked" only for an explicit site refusal of automation or access, such as a CAPTCHA/bot check, HTTP 403/Access Denied, or country/region block, supported by the evidence. An ordinary 404, network error, or incomplete agent attempt is not blocked. Mark "unsure" if the evidence is not enough to decide. A normal login, purchase, or personal-information step after correct prior work counts as success, not blocked.',
+    RULES,
     'Reply with only strict JSON, no code fence: {"verdict":"success"|"failure"|"unsure"|"blocked","reason":"<one sentence>"}',
   ].join('\n');
+}
+
+// ---- Evidence packet (newer runs) ----
+
+/** One harness frame as the judge sees it: blind image name, page text as captured, no step numbers or tool names. */
+export interface PacketFrame { id: string; url: string; text: string; final: boolean; forms?: FormValue[]; image: string }
+
+const EARLIER_EXCERPT_CHARS = 1_200;
+const FINAL_EXCERPT_CHARS = 30_000;
+const EARLIER_FRAME_MAX = { width: 640, height: 400 };
+
+const excerpt = (text: string, max: number): string => {
+  const t = text.trim();
+  return t ? (t.length > max ? `${t.slice(0, max)} [...]` : t) : '(no text)';
+};
+
+/**
+ * The judge prompt for a run with evidence frames: the frames in chronological order, each with its URL, image and
+ * page text. When there are no frames, `freshImage` (a fresh load of the final URL) or nothing replaces them.
+ */
+export function buildEvidencePrompt(input: { task: string; website: string; finalUrl: string | null; answer: string; frames: PacketFrame[]; attached: boolean; freshImage?: string }): string {
+  const { frames, attached } = input;
+  const where = (image: string): string => (attached ? `${image} (attached)` : `${image} (open it with the Read tool)`);
+  const hasFinal = frames.some((f) => f.final);
+  const evidence: string[] = frames.length
+    ? [
+      `Evidence: ${frames.length} frame${frames.length === 1 ? '' : 's'} captured by the evaluation harness (not by the agent) after the agent's browser actions, in chronological order. ` +
+        (hasFinal ? 'Earlier frames are downscaled to about 640x400; the final frame is full size (1280x800).' : 'Frames are downscaled to about 640x400.'),
+      ...frames.flatMap((f, i) => {
+        const note = f.final ? ' (final, captured after the agent finished)' : i === frames.length - 1 ? ' (last frame captured during the run)' : '';
+        return [
+          '',
+          `${f.id}${note}`,
+          `URL: ${f.url || '(unknown)'}`,
+          `Image: ${where(f.image)}`,
+          f.final ? 'Page text:' : `Page text (first ${EARLIER_EXCERPT_CHARS.toLocaleString('en-US')} characters):`,
+          '"""', excerpt(f.text, f.final ? FINAL_EXCERPT_CHARS : EARLIER_EXCERPT_CHARS), '"""',
+          ...(f.final ? ['Form values:', ...(f.forms?.length ? f.forms.map((v) => `- ${v.label || '(unlabelled)'}: ${v.value}`) : ['none'])] : []),
+        ];
+      }),
+    ]
+    : input.freshImage
+      ? [`No frames were captured during the run. ${attached ? 'The attached image' : `The image at ${input.freshImage} (open it with the Read tool)`} is a fresh load of the final URL in a new browser (1280x800). It only shows that the page exists, not the state the agent's session reached (searches, filters, cart, form entries); do not penalise a page that lacks such state when the reply is specific and consistent with it.`]
+      : ['No evidence is available (no frames were captured and the final URL could not be loaded); judge on the reply and URL alone, and answer "unsure" if the reply alone is not enough.'];
+  return [
+    'You are grading whether a web agent completed a task on a real website. You are not told how the agent worked; judge only the evidence below.',
+    '',
+    `Starting site: ${input.website}`,
+    `Task: ${input.task}`,
+    '',
+    'The agent was told not to log in, buy anything, or enter personal information, and to stop before that step. Stopping at such a step counts as success if everything before it was done correctly.',
+    '',
+    `Final URL the agent reported: ${input.finalUrl ?? '(none given)'}`,
+    "Agent's final reply:",
+    '"""',
+    input.answer || '(empty)',
+    '"""',
+    '',
+    ...evidence,
+    '',
+    RULES + ' Missing verification of a required detail (variant, price, inputs, results, or a claimed required gate) means unsure unless evidence establishes failure. An explicitly substituted self-calculation fails when the task requires a site-generated result; missing on-screen output alone does not establish substitution.' +
+      (frames.length ? ' Base your verdict on the frames; cite the frame IDs you rely on.' : ''),
+    'Reply with only strict JSON, no code fence: {"verdict":"success"|"failure"|"unsure"|"blocked","reason":"<one sentence>","evidence":["F1",...]}',
+  ].join('\n');
+}
+
+/** Newer runs record `evidenceFrames` (even when empty); only they get the evidence packet and answer-key checks. */
+export const isEvidenceRun = (run: SavedRun): boolean => Object.hasOwn(run, 'evidenceFrames');
+
+/** The sidecar written by run.ts, only if it sits inside `allowedRoot` and has the expected shape; otherwise null. */
+export function readEvidenceSidecar(sidecarPath: string | null | undefined, allowedRoot: string): EvidenceSidecar | null {
+  if (!sidecarPath || !existsSync(sidecarPath)) return null;
+  const relative = path.relative(path.resolve(allowedRoot), path.resolve(sidecarPath));
+  if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) return null;
+  try {
+    const raw = JSON.parse(readFileSync(sidecarPath, 'utf8')) as { frames?: unknown };
+    if (!Array.isArray(raw.frames)) return null;
+    const frames = raw.frames.filter((f): f is EvidenceFrame => !!f && typeof f === 'object' && typeof f.id === 'string' && typeof f.file === 'string' && typeof f.url === 'string' && typeof f.text === 'string');
+    return { ...(raw as EvidenceSidecar), frames };
+  } catch { return null; }
+}
+
+/** Earlier frames shrink to fit 640x400 (never enlarged); the final frame and undecodable PNGs are kept as captured. */
+export function prepareFrameImage(png: Buffer, final: boolean): { png: Buffer; downscaled: boolean } {
+  if (final) return { png, downscaled: false };
+  try {
+    const image = decodePng(png);
+    const small = fitWithin(image, EARLIER_FRAME_MAX.width, EARLIER_FRAME_MAX.height);
+    return small === image ? { png, downscaled: false } : { png: encodePng(small), downscaled: true };
+  } catch { return { png, downscaled: false }; }
+}
+
+/**
+ * Copy a run's evidence frames into the blind judge folder as f1.png..fn.png and return them in order. `texts` holds the
+ * page text of every frame in the sidecar (also those whose image is missing), for the deterministic checks.
+ */
+export function buildEvidencePacket(sidecarPath: string | null | undefined, allowedRoot: string, destDir: string): { frames: PacketFrame[]; texts: string[] } {
+  const sidecar = readEvidenceSidecar(sidecarPath, allowedRoot);
+  if (!sidecar) return { frames: [], texts: [] };
+  const folder = path.dirname(path.resolve(sidecarPath!));
+  const frames: PacketFrame[] = [];
+  sidecar.frames.forEach((frame, i) => {
+    const source = path.join(folder, path.basename(frame.file)); // a basename only: never leave the run's log folder
+    if (!existsSync(source) || !statSync(source).isFile()) return;
+    const image = `f${i + 1}.png`;
+    writeFileSync(path.join(destDir, image), prepareFrameImage(readFileSync(source), frame.final === true).png);
+    frames.push({ id: frame.id, url: frame.url, text: frame.text, final: frame.final === true, ...(frame.final ? { forms: frame.forms ?? [] } : {}), image });
+  });
+  return { frames, texts: sidecar.frames.map((f) => f.text) };
 }
 
 /**
  * Parse the output of `claude -p --output-format json` (an object with a `result` string) into a verdict.
  * Also accepts the bare verdict JSON, optionally in a code fence or surrounded by prose.
  */
-export function parseJudgeOutput(output: string): { verdict: Verdict; reason: string } {
+export function parseJudgeOutput(output: string): { verdict: Verdict; reason: string; evidence?: string[] } {
   const unsure = (reason: string): { verdict: Verdict; reason: string } => ({ verdict: 'unsure', reason });
   let text = output.trim();
   try {
@@ -129,7 +251,10 @@ export function parseJudgeOutput(output: string): { verdict: Verdict; reason: st
     try {
       const v = JSON.parse(m[0]) as Record<string, unknown>;
       if (v.verdict === 'success' || v.verdict === 'failure' || v.verdict === 'unsure' || v.verdict === 'blocked') {
-        return { verdict: v.verdict, reason: typeof v.reason === 'string' ? v.reason.trim() : '' };
+        const reason = typeof v.reason === 'string' ? v.reason.trim() : '';
+        // Cited frame IDs (F1, F2..): keep the well-formed ones, in order, without repeats.
+        const cited = Array.isArray(v.evidence) ? [...new Set(v.evidence.filter((id): id is string => typeof id === 'string' && /^F\d+$/.test(id)))] : [];
+        return cited.length ? { verdict: v.verdict, reason, evidence: cited } : { verdict: v.verdict, reason };
       }
     } catch { /* keep looking */ }
   }
@@ -192,7 +317,30 @@ export function renderJudgedMarkdown(name: string, runs: JudgedRun[], tasks: Map
     const cells = approaches.map((a) => runs.filter((r) => r.task === id && r.approach === a).sort((x, y) => x.run - y.run).map((r) => r.verdict).join(', ') || '-');
     L.push(`| ${label} | ${cells.join(' | ')} |`);
   }
+  if (runs.some((r) => r.frameCount !== undefined || r.checks !== undefined || r.judgeVerdict !== undefined || r.evidence !== undefined)) L.push(...renderEvidenceSection(runs));
   return L.join('\n') + '\n';
+}
+
+/** Appended after the usual tables, only when some run has evidence or check data. */
+function renderEvidenceSection(runs: JudgedRun[]): string[] {
+  const L: string[] = ['', '## Evidence and checks', ''];
+  const withEvidence = runs.filter((r) => r.frameCount !== undefined || r.evidence !== undefined);
+  // A cited frame is "earlier" unless it is the final one (the last frame when no frame was marked final).
+  const citesEarlier = (r: JudgedRun): boolean => (r.evidence ?? []).some((id) => id !== (r.finalFrame ?? `F${r.frameCount ?? 0}`));
+  L.push('| Approach | Evidence runs | Success | Failure | Unsure | Blocked | With frames | Citing an earlier frame |');
+  L.push('|---|---:|---:|---:|---:|---:|---:|---:|');
+  for (const a of [...new Set(runs.map((r) => r.approach))]) {
+    const rs = withEvidence.filter((r) => r.approach === a);
+    const count = (v: Verdict): number => rs.filter((r) => r.verdict === v).length;
+    L.push(`| ${a} | ${rs.length} | ${count('success')} | ${count('failure')} | ${count('unsure')} | ${count('blocked')} | ${rs.filter((r) => (r.frameCount ?? 0) > 0).length} | ${rs.filter(citesEarlier).length} |`);
+  }
+  L.push('', '### Check vs judge disagreements', '');
+  const clash = runs.filter((r) => r.checks && (r.checks.pass ? (r.judgeVerdict ?? r.verdict) === 'failure' : (r.judgeVerdict ?? r.verdict) !== 'failure'));
+  if (!clash.length) L.push('None.');
+  for (const r of clash) {
+    L.push(`- \`${r.task.slice(0, 8)}\` ${r.approach} run ${r.run}: judge ${r.judgeVerdict ?? r.verdict}; ${r.checks!.pass ? 'checks passed' : `checks failed (${r.checks!.failed.join('; ')})`}`);
+  }
+  return L;
 }
 
 // ---- Running ----
@@ -203,11 +351,11 @@ function claudeBin(): string {
   return process.platform === 'win32' && existsSync(win) ? win : 'claude';
 }
 
-/** Run one Codex judge call: read-only, no user config, the screenshot attached; returns the last message. */
-function callCodexJudge(prompt: string, cwd: string, model: string, reasoning: string, shot: string | null, timeoutMs: number): Promise<string> {
+/** Run one Codex judge call: read-only, no user config, the images attached; returns the last message. */
+function callCodexJudge(prompt: string, cwd: string, model: string, reasoning: string, shots: string[], timeoutMs: number): Promise<string> {
   const last = path.join(cwd, 'last.txt');
   const args = ['exec', '--ephemeral', '--skip-git-repo-check', '--ignore-user-config', '-s', 'read-only', '-m', model,
-    '-c', `model_reasoning_effort=${reasoning}`, ...(shot ? ['-i', shot] : []), '-o', last, '-'];
+    '-c', `model_reasoning_effort=${reasoning}`, ...shots.flatMap((shot) => ['-i', shot]), '-o', last, '-'];
   return runCli(process.env.CODEX_BIN ?? 'codex', args, prompt, cwd, timeoutMs).then(() => {
     if (!existsSync(last)) throw new Error('codex judge wrote no reply');
     return readFileSync(last, 'utf8');
@@ -292,26 +440,54 @@ async function main(): Promise<void> {
       toolCalls: r.toolCalls, totalInputTokens: r.totalInputTokens,
       wallS: r.timings?.cliWallMs == null ? null : r.timings.cliWallMs / 1000,
     };
-    let result: { verdict: Verdict; reason: string };
+    const logs = path.join(RESULTS, 'agent-logs', name);
+    const evidenceRun = isEvidenceRun(r);
+    // Per-judge folder, named by position only so nothing about the approach leaks into the path.
+    const dir = path.join(work, `j${index}`);
+    mkdirSync(dir, { recursive: true });
+    const packet = evidenceRun && r.status !== 'connection_failure' ? buildEvidencePacket(r.evidencePath, logs, dir) : { frames: [] as PacketFrame[], texts: [] as string[] };
+    let result: { verdict: Verdict; reason: string; evidence?: string[] };
     if (r.status === 'connection_failure') result = { verdict: 'unsure', reason: 'MCP connection failure; the run never started.' };
     else if (r.status !== 'success' && !shouldJudgeNonSuccess(r, text)) result = { verdict: 'failure', reason: `The run did not finish (${r.status}).` };
     else {
-      // Per-judge folder, named by position only so nothing about the approach leaks into the path.
-      const dir = path.join(work, `j${index}`);
-      mkdirSync(dir, { recursive: true });
       try {
-        const shot = path.join(dir, 'final.png');
-        const source = await selectJudgeScreenshot(r.finalScreenshotPath, shot, finalUrl, screenshot, path.join(RESULTS, 'agent-logs', name));
-        const prompt = buildJudgePrompt({ task: row.task, website: row.website, finalUrl, answer: sanitizeAnswer(text), screenshotPath: source ? shot : null, screenshotSource: source ?? undefined, attached: judgeProvider === 'codex' });
-        result = parseJudgeOutput(judgeProvider === 'codex'
-          ? await callCodexJudge(prompt, dir, model, reasoning, source ? shot : null, timeoutMs)
-          : await callJudge(prompt, dir, model, timeoutMs, reasoning));
+        const answer = sanitizeAnswer(text);
+        const images = (names: string[]): string[] => names.map((n) => path.join(dir, n));
+        if (evidenceRun) {
+          // Without frames (capture failed), fall back to a fresh load of the final URL, if any.
+          const fresh = !packet.frames.length && finalUrl && await screenshot(finalUrl, path.join(dir, 'fresh.png')) ? 'fresh.png' : undefined;
+          const names = fresh ? [fresh] : packet.frames.map((f) => f.image);
+          const attached = judgeProvider === 'codex';
+          const prompt = buildEvidencePrompt({
+            task: row.task, website: row.website, finalUrl, answer, attached, freshImage: fresh && (attached ? fresh : path.join(dir, fresh)),
+            frames: packet.frames.map((f) => ({ ...f, image: attached ? f.image : path.join(dir, f.image) })),
+          });
+          result = parseJudgeOutput(attached
+            ? await callCodexJudge(prompt, dir, model, reasoning, images(names), timeoutMs)
+            : await callJudge(prompt, dir, model, timeoutMs, reasoning));
+        } else {
+          const shot = path.join(dir, 'final.png');
+          const source = await selectJudgeScreenshot(r.finalScreenshotPath, shot, finalUrl, screenshot, logs);
+          const prompt = buildJudgePrompt({ task: row.task, website: row.website, finalUrl, answer, screenshotPath: source ? shot : null, screenshotSource: source ?? undefined, attached: judgeProvider === 'codex' });
+          result = parseJudgeOutput(judgeProvider === 'codex'
+            ? await callCodexJudge(prompt, dir, model, reasoning, source ? [shot] : [], timeoutMs)
+            : await callJudge(prompt, dir, model, timeoutMs, reasoning));
+        }
       } catch (error) {
         result = { verdict: 'unsure', reason: `judge error: ${error instanceof Error ? error.message : String(error)}`.slice(0, 200) };
       }
     }
-    result = applyRunStatus(r.status, result);
-    judged.push({ ...base, ...result });
+    const { evidence, ...plain } = result;
+    result = applyRunStatus(r.status, plain);
+    let extra: Partial<JudgedRun> = {};
+    if (evidenceRun) {
+      const judgeVerdict = result.verdict;
+      // Deterministic answer-key checks (evidence-format rows only); a failed check overrides the judge.
+      const checks = r.status === 'connection_failure' ? null : evaluateChecks(row.checks, text, packet.texts);
+      if (checks && !checks.pass) result = { verdict: 'failure', reason: `Checks failed: ${checks.failed.join('; ')}. ${result.reason}`.trim() };
+      extra = { evidence, frameCount: packet.frames.length, finalFrame: packet.frames.find((f) => f.final)?.id ?? null, judgeVerdict, checks };
+    }
+    judged.push({ ...base, ...result, ...extra });
     console.log(`[judge] (${judged.length}/${judgedRuns.length}) ${r.task.slice(0, 8)} ... ${result.verdict}`);
   };
 

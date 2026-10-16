@@ -12,7 +12,9 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import type { AgentTask } from './tasks.js';
 
-export interface RealsiteRow { task_id: string; website: string; task: string; level: string }
+/** Optional deterministic answer key for a row: substrings the final reply / some evidence frame must contain. */
+export interface RealsiteChecks { answerIncludes?: string[]; evidenceIncludes?: string[] }
+export interface RealsiteRow { task_id: string; website: string; task: string; level: string; checks?: RealsiteChecks }
 
 export const REALSITE_FILE = path.join(import.meta.dirname, 'realsite-tasks.json');
 
@@ -91,8 +93,38 @@ export function loadRealsiteRows(file: string = REALSITE_FILE): RealsiteRow[] {
     // Online-Mind2Web calls the task text `confirmed_task`; plain `task` is also accepted.
     const task = text(o.confirmed_task) ?? text(o.task);
     if (!task_id || !website || !task) return [];
-    return [{ task_id, website, task, level: text(o.level) ?? 'unknown' }];
+    const checks = parseChecks(o.checks);
+    return [{ task_id, website, task, level: text(o.level) ?? 'unknown', ...(checks ? { checks } : {}) }];
   });
+}
+
+/** `checks` objects keep only the lists that are non-empty arrays of non-empty strings; anything else is ignored. */
+function parseChecks(value: unknown): RealsiteChecks | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const o = value as Record<string, unknown>;
+  const list = (v: unknown): string[] | undefined =>
+    Array.isArray(v) && v.length > 0 && v.every((x) => typeof x === 'string' && x.trim()) ? (v as string[]).map((x) => x.trim()) : undefined;
+  const answerIncludes = list(o.answerIncludes);
+  const evidenceIncludes = list(o.evidenceIncludes);
+  return answerIncludes || evidenceIncludes ? { ...(answerIncludes ? { answerIncludes } : {}), ...(evidenceIncludes ? { evidenceIncludes } : {}) } : undefined;
+}
+
+const norm = (s: string): string => s.replace(/\s+/g, ' ').trim().toLowerCase();
+
+/**
+ * Run a row's answer-key checks (case-insensitive, whitespace collapsed): every `answerIncludes` string must be in
+ * the agent's full final reply and every `evidenceIncludes` string in at least one frame's page text.
+ * Null when the row has no checks.
+ */
+export function evaluateChecks(checks: RealsiteChecks | undefined, answer: string, frameTexts: string[]): { pass: boolean; failed: string[] } | null {
+  if (!checks || (!checks.answerIncludes?.length && !checks.evidenceIncludes?.length)) return null;
+  const reply = norm(answer);
+  const texts = frameTexts.map(norm);
+  const failed = [
+    ...(checks.answerIncludes ?? []).filter((x) => !reply.includes(norm(x))).map((x) => `answer lacks "${x}"`),
+    ...(checks.evidenceIncludes ?? []).filter((x) => !texts.some((t) => t.includes(norm(x)))).map((x) => `no frame shows "${x}"`),
+  ];
+  return { pass: failed.length === 0, failed };
 }
 
 export function realsitePrompt(row: Pick<RealsiteRow, 'website' | 'task'>): string {
