@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Page } from 'playwright';
 import { MantisBrowser } from '../src/index.js';
-import { fixture } from './helpers.js';
+import { fixture, idOf } from './helpers.js';
 
 let browser: MantisBrowser;
 beforeAll(() => { browser = new MantisBrowser({ actionTimeoutMs: 5000 }); });
@@ -102,5 +102,57 @@ describe('covered clicks fail fast', () => {
     const res = await browser.click(id);
     expect(res).toMatch(/^clicked/);
     expect(await browser.read()).toContain('Bought');
+  });
+});
+
+describe('covered click false positives', () => {
+  it('does not call a control under a sticky header covered; it scrolls it clear', async () => {
+    await browser.open(fixture('hidden/covered-layers.html'));
+    const id = await idByName('Pick me');
+    const page = await pageOf();
+    // park the button just below the top of the viewport, so its center is under the 200px header
+    await page.evaluate(() => scrollTo(0, document.getElementById('target')!.offsetTop - 80));
+    const res = await browser.click(id);
+    expect(res).toMatch(/^clicked/);
+    expect(await browser.read()).toContain('Target clicked');
+  });
+
+  it('clicks through an invisible empty layer, also inside a pane with content elsewhere', async () => {
+    for (const flag of ['', '?wrapped']) {
+      await browser.open(fixture('hidden/covered-layers.html') + flag);
+      const id = await idByName('Open result');
+      const res = await browser.click(id);
+      expect(res).toMatch(/^clicked/);
+      expect(await browser.read()).toContain('Opened result');
+    }
+  });
+
+  it('still reports a layer that shows text or a background (near miss)', async () => {
+    for (const flag of ['text', 'bg', 'scrim']) {
+      await browser.open(`${fixture('hidden/covered-layers.html')}?${flag}`);
+      const id = await idByName('Open result');
+      const res = await browser.click(id);
+      expect(res).toMatch(/^error: .*is covered by another element/);
+      expect(await browser.read()).not.toContain('Opened result');
+    }
+  });
+});
+
+describe('stale ids', () => {
+  it('follows a replaced control that has the same role and name', async () => {
+    const id = idOf(await browser.open(fixture('hidden/stale-id.html')), 'button "Save draft"');
+    const page = await pageOf();
+    await page.evaluate(() => (window as unknown as { replaceButton(n: number): void }).replaceButton(1));
+    const res = await browser.click(id);
+    expect(res).toContain(`(was #${id}; the page re-rendered)`);
+    expect(await browser.read()).toContain('Saved');
+  });
+
+  it('still errors when several controls match (near miss)', async () => {
+    const id = idOf(await browser.open(fixture('hidden/stale-id.html')), 'button "Save draft"');
+    const page = await pageOf();
+    await page.evaluate(() => (window as unknown as { replaceButton(n: number): void }).replaceButton(2));
+    expect(await browser.click(id)).toMatch(/^error: #\d+ no longer exists/);
+    expect(await browser.read()).not.toContain('Saved');
   });
 });

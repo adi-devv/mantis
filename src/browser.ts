@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
 import type { Browser, BrowserContext, ElementHandle, Page } from 'playwright';
 import { capture, resolve } from './capture/index.js';
-import type { Snapshot } from './capture/index.js';
+import type { RawNode, Snapshot } from './capture/index.js';
 import { findInSnapshot, translate } from './translate.js';
 import type { ReadOptions } from './translate.js';
 import { SiteMemory, originOf } from './memory.js';
@@ -133,6 +133,8 @@ interface Cover {
   desc: string;
   hitId?: number;
   close?: { id: number; name: string };
+  /** Nothing visible in the overlay (no text, background, border, shadow or content): a real pointer is blocked but a user would not see why. */
+  invisible: boolean;
 }
 
 /**
@@ -146,6 +148,8 @@ export class MantisBrowser {
   private context: BrowserContext | null = null;
   private page: Page | null = null;
   private labels = new Map<number, string>();
+  /** Role and name each number had when last read; kept across reads so an id that went stale can be matched by what it was. */
+  private known = new Map<number, { role: string; name: string }>();
   private notes: string[] = [];
   private scratch: BrowserContext | null = null;
   private readonly actionTimeout: number;
@@ -268,7 +272,10 @@ export class MantisBrowser {
       } catch (e) {
         const msg = String(e instanceof Error ? e.message : e);
         if (!(await this.clickFallback(page, el, id, msg))) {
-          throw new ActionError(cover && /intercepts pointer events|Timeout/.test(msg) ? this.coveredMessage(label, cover) : this.explain(e, label));
+          const blocked = cover && /intercepts pointer events|Timeout/.test(msg) ? cover : null;
+          // An empty transparent layer is nothing the agent could dismiss: click the element itself.
+          if (blocked?.invisible) await el.evaluate((n) => n instanceof HTMLElement ? n.click() : n.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })));
+          else throw new ActionError(blocked ? this.coveredMessage(label, blocked) : this.explain(e, label));
         }
       } finally {
         await el.dispose();
@@ -719,15 +726,33 @@ export class MantisBrowser {
     this.labels.clear();
     for (const n of snap.nodes) {
       if (n.kind === 'interactive' && n.id !== undefined) {
-        const name = n.name ? ` ${n.inferred ? '~' : ''}"${n.name.replace(/"/g, "'")}"` : '';
-        this.labels.set(n.id, `#${n.id} ${n.role}${name}${n.secret ? ' (password)' : ''}`);
+        this.labels.set(n.id, this.labelOf(n));
+        if (n.name) this.known.set(n.id, { role: n.role, name: n.name });
+        else this.known.delete(n.id);
       }
     }
+  }
+
+  private labelOf(n: RawNode): string {
+    const name = n.name ? ` ${n.inferred ? '~' : ''}"${n.name.replace(/"/g, "'")}"` : '';
+    return `#${n.id} ${n.role}${name}${n.secret ? ' (password)' : ''}`;
+  }
+
+  /** A number whose element a re-render replaced: follow it to the one control with the same role and name now. */
+  private async rematch(page: Page, id: number): Promise<{ el: ElementHandle<Element>; label: string } | null> {
+    const was = this.known.get(id);
+    if (!was) return null;
+    const same = (await capture(page)).nodes.filter((n) => n.kind === 'interactive' && n.id !== undefined && n.role === was.role && n.name === was.name);
+    if (same.length !== 1) return null;
+    const found = await resolve(page, same[0]!.id!);
+    return found.ok ? { el: found.el, label: `${this.labelOf(same[0]!)} (was #${id}; the page re-rendered)` } : null;
   }
 
   private async target(page: Page, id: number): Promise<{ el: ElementHandle<Element>; label: string }> {
     const found = await resolve(page, id);
     if (!found.ok) {
+      const again = found.reason === 'gone' ? await this.rematch(page, id) : null;
+      if (again) return again;
       throw new ActionError(
         found.reason === 'unknown'
           ? `no element #${id} on this page; call read() to see current numbers`
@@ -748,21 +773,40 @@ export class MantisBrowser {
       if (!r0.width || !r0.height || getComputedStyle(target).pointerEvents === 'none') return null;
       const off = (r: DOMRect): boolean => r.left + r.width / 2 < 0 || r.top + r.height / 2 < 0 || r.left + r.width / 2 >= innerWidth || r.top + r.height / 2 >= innerHeight;
       if (off(r0)) target.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' as ScrollBehavior });
-      const r = target.getBoundingClientRect();
-      if (off(r)) return null;
-      const x = r.left + r.width / 2;
-      const y = r.top + r.height / 2;
-      const root = target.getRootNode() as Document | ShadowRoot;
-      let hit: Element | null = (root instanceof ShadowRoot ? root : document).elementFromPoint(x, y);
-      while (hit?.shadowRoot) {
-        const inner = hit.shadowRoot.elementFromPoint(x, y);
-        if (!inner || inner === hit) break;
-        hit = inner;
-      }
-      if (!hit || hit === document.documentElement || hit === document.body) return null;
       const parent = (node: Element): Element | null => node.parentElement ?? (node.getRootNode() instanceof ShadowRoot ? (node.getRootNode() as ShadowRoot).host : null);
-      for (let n: Element | null = hit; n; n = parent(n)) if (n === target) return null; // the element or inside it
-      for (let n: Element | null = target; n; n = parent(n)) if (n === hit) return null; // wraps the element
+      // The unrelated element on top of the center right now, or null.
+      const probe = (): Element | null => {
+        const r = target.getBoundingClientRect();
+        if (off(r)) return null;
+        const x = r.left + r.width / 2;
+        const y = r.top + r.height / 2;
+        const root = target.getRootNode() as Document | ShadowRoot;
+        let top: Element | null = (root instanceof ShadowRoot ? root : document).elementFromPoint(x, y);
+        while (top?.shadowRoot) {
+          const inner = top.shadowRoot.elementFromPoint(x, y);
+          if (!inner || inner === top) break;
+          top = inner;
+        }
+        if (!top || top === document.documentElement || top === document.body) return null;
+        for (let n: Element | null = top; n; n = parent(n)) if (n === target) return null; // the element or inside it
+        for (let n: Element | null = target; n; n = parent(n)) if (n === top) return null; // wraps the element
+        return top;
+      };
+      let hit = probe();
+      if (!hit) return null;
+      // A sticky/fixed bar over the center is not a blocker: Playwright scrolls past it. Centre the element and look again.
+      const floats = (): boolean => {
+        for (let n: Element | null = hit; n && n !== document.documentElement && !n.contains(target); n = parent(n)) {
+          const pos = getComputedStyle(n).position;
+          if (pos === 'fixed' || pos === 'sticky') return true;
+        }
+        return false;
+      };
+      if (floats()) {
+        target.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' as ScrollBehavior });
+        hit = probe();
+        if (!hit) return null;
+      }
       const reg = (window as unknown as { __mantis?: { ids: WeakMap<Element, number> } }).__mantis;
       const idOfNode = (node: Element): number | undefined => reg?.ids.get(node);
       const text = (node: Element): string => (node.getAttribute('aria-label') || (node.textContent ?? '')).replace(/\s+/g, ' ').trim();
@@ -789,7 +833,25 @@ export class MantisBrowser {
           if (id !== undefined && CLOSE.test(name)) { close = { id, name }; break; }
         }
       }
-      return { desc: describe(hit), hitId, close };
+      // Visually empty: the hit element has no text, content, background, border or shadow, and no layer above
+      // it (up to the one that holds the target) paints over the center. Ancestors' content elsewhere does not matter.
+      const clear = (c: string): boolean => c === 'transparent' || /^rgba\(.*,\s*0\)$/.test(c) || /\/\s*0(\.0+)?%?\s*\)$/.test(c);
+      const paints = (node: Element): boolean => {
+        const cs = getComputedStyle(node);
+        return !clear(cs.backgroundColor) || cs.backgroundImage !== 'none' || (cs.backdropFilter || 'none') !== 'none' || cs.filter !== 'none';
+      };
+      const empty = (node: Element): boolean => {
+        if (/\S/.test(node.textContent ?? '') || node.matches('img, svg, canvas, video, iframe, input, button, a, [role]') || node.querySelector('img, svg, canvas, video, iframe, input, button, a, [role]')) return false;
+        const cs = getComputedStyle(node);
+        const border = ['top', 'right', 'bottom', 'left'].every((s) => {
+          const style = cs.getPropertyValue(`border-${s}-style`);
+          return style === 'none' || style === 'hidden' || parseFloat(cs.getPropertyValue(`border-${s}-width`)) === 0;
+        });
+        return !paints(node) && border && cs.boxShadow === 'none';
+      };
+      let invisible = empty(hit);
+      for (let n: Element | null = parent(hit); invisible && n && n !== document.documentElement && !n.contains(target); n = parent(n)) if (paints(n)) invisible = false;
+      return { desc: describe(hit), hitId, close, invisible };
     }).catch(() => null);
   }
 
