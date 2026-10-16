@@ -198,6 +198,8 @@ const APPROACHES: Record<Approach, { label: string; server: (dir: string) => Rec
         args: [
           path.join(REPO, 'node_modules', '@playwright', 'mcp', 'cli.js'), '--headless', '--isolated', '--user-agent', BENCH_UA, '--viewport-size', '1280x800', '--output-dir', path.join(dir, 'tree-output'),
           ...(MCP_CHROMIUM ? ['--executable-path', MCP_CHROMIUM] : []),
+          // Chromium refuses to start as root (cloud containers) with its sandbox on; Mantis's Playwright launch already disables it.
+          ...(process.getuid?.() === 0 ? ['--no-sandbox'] : []),
         ],
       },
     }),

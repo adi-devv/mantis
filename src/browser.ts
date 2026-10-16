@@ -40,23 +40,35 @@ const TRACKER = `(() => {
   if (window.__mantisDoc) return;
   window.__mantisDoc = Math.random().toString(36).slice(2) + Date.now().toString(36);
   const st = window.setTimeout, ct = window.clearTimeout;
-  let timers = 0, net = 0;
-  const live = new Map();
+  // Every pending short timer and request remembers its "origin": when the work that caused it began.
+  // Work started inside a tracked timer callback inherits that timer's origin, so a polling chain
+  // (a timer re-arming itself) keeps its first origin forever and is told apart from what an action
+  // started. settle() only waits for work whose origin is at or after the action.
+  let currentOrigin = null;
+  const live = new Map(); // timer id -> origin
+  const reqs = new Set(); // one entry {origin} per in-flight request
+  const originNow = () => (currentOrigin !== null ? currentOrigin : performance.now());
   window.__mantisSetTimeout = st.bind(window);
   window.setTimeout = function (fn, ms, ...rest) {
-    if (typeof fn !== 'function' || Number(ms || 0) > 1000) return st.call(this, fn, ms, ...rest);
-    timers++;
+    if (typeof fn !== 'function') return st.call(this, fn, ms, ...rest);
+    const origin = originNow();
+    const short = Number(ms || 0) <= 1000;
     let id;
-    const end = () => { if (live.delete(id)) timers--; };
-    id = st.call(this, function () { end(); return fn.apply(this, arguments); }, ms, ...rest);
-    live.set(id, end);
+    id = st.call(this, function () {
+      live.delete(id);
+      const prev = currentOrigin;
+      currentOrigin = origin;
+      try { return fn.apply(this, arguments); } finally { currentOrigin = prev; }
+    }, ms, ...rest);
+    if (short) live.set(id, origin);
     return id;
   };
-  window.clearTimeout = function (id) { const end = live.get(id); if (end) end(); return ct.call(this, id); };
+  window.clearTimeout = function (id) { live.delete(id); return ct.call(this, id); };
   const f = window.fetch;
   if (f) window.fetch = function () {
-    net++;
-    const done = () => { net--; };
+    const req = { origin: originNow() };
+    reqs.add(req);
+    const done = () => { reqs.delete(req); };
     let p;
     try { p = f.apply(this, arguments); } catch (e) { done(); throw e; }
     p.then(done, done);
@@ -64,13 +76,19 @@ const TRACKER = `(() => {
   };
   const send = XMLHttpRequest.prototype.send;
   XMLHttpRequest.prototype.send = function () {
-    net++;
-    let over = false;
-    const done = () => { if (!over) { over = true; net--; } };
+    const req = { origin: originNow() };
+    reqs.add(req);
+    const done = () => { reqs.delete(req); };
     this.addEventListener('loadend', done);
     try { return send.apply(this, arguments); } catch (e) { done(); throw e; }
   };
-  window.__mantisBusy = () => timers > 0 || net > 0;
+  // Is a short timer or request that began at or after \`since\` (performance.now()) still pending? No argument: any.
+  window.__mantisBusy = (since) => {
+    const from = since === undefined ? -Infinity : since;
+    for (const origin of live.values()) if (origin >= from) return true;
+    for (const req of reqs) if (req.origin >= from) return true;
+    return false;
+  };
   // Elements given a click-type listener in script: clickable even without a role, link or tabindex.
   const clicky = new WeakSet();
   window.__mantisClick = clicky;
@@ -106,6 +124,16 @@ function brief(e: unknown): string {
 
 /** Playwright errors for a control that is hidden, off-screen or covered: the cases the click fallbacks handle. */
 const NOT_CLICKABLE = /element is not visible|waiting for element to be visible|outside of the viewport|intercepts pointer events/;
+
+/** How long Playwright keeps retrying a click on an element something else is covering. */
+const COVERED_CLICK_TIMEOUT = 600;
+
+/** The unrelated element on top of a click target (see coveredBy). */
+interface Cover {
+  desc: string;
+  hitId?: number;
+  close?: { id: number; name: string };
+}
 
 /**
  * One Chromium, one active page. Actions return short text; read() returns the
@@ -232,11 +260,15 @@ export class MantisBrowser {
   async click(id: number): Promise<string> {
     return this.act(async (page) => {
       const { el, label } = await this.target(page, id);
+      // An element under an overlay will not become clickable by waiting: give Playwright a short
+      // window (the overlay may be about to close), then fail fast and name what covers it.
+      const cover = await this.coveredBy(el);
       try {
-        await el.click({ timeout: this.actionTimeout });
+        await el.click({ timeout: cover ? COVERED_CLICK_TIMEOUT : this.actionTimeout });
       } catch (e) {
-        if (!(await this.clickFallback(page, el, id, String(e instanceof Error ? e.message : e)))) {
-          throw new ActionError(this.explain(e, label));
+        const msg = String(e instanceof Error ? e.message : e);
+        if (!(await this.clickFallback(page, el, id, msg))) {
+          throw new ActionError(cover && /intercepts pointer events|Timeout/.test(msg) ? this.coveredMessage(label, cover) : this.explain(e, label));
         }
       } finally {
         await el.dispose();
@@ -606,8 +638,10 @@ export class MantisBrowser {
       const page = await this.activePage();
       const before = (await this.unchanged(page)) ?? (await this.observe(page).catch(() => null));
       if (before) this.remember(before.snap);
+      // Stamp the action's start in-page so settle() ignores timers/requests that were already running.
+      await page.evaluate(() => { (window as unknown as { __mantisEpoch?: number }).__mantisEpoch = performance.now(); }).catch(() => undefined);
       const msg = await fn(page);
-      await this.settle(page);
+      await this.settle(page, true);
       const lines = [msg];
       const now = this.page ?? page;
       if (now !== page) {
@@ -701,6 +735,69 @@ export class MantisBrowser {
       );
     }
     return { el: found.el, label: this.labels.get(id) ?? `#${id}` };
+  }
+
+  /**
+   * What sits on top of the element's center, if it is something unrelated to the element (an overlay).
+   * Hit-tests through open shadow roots. A descendant, an ancestor and an associated label all
+   * count as the element itself, as does anything when the center cannot be tested.
+   */
+  private async coveredBy(el: ElementHandle<Element>): Promise<Cover | null> {
+    return el.evaluate((target) => {
+      const r0 = target.getBoundingClientRect();
+      if (!r0.width || !r0.height || getComputedStyle(target).pointerEvents === 'none') return null;
+      const off = (r: DOMRect): boolean => r.left + r.width / 2 < 0 || r.top + r.height / 2 < 0 || r.left + r.width / 2 >= innerWidth || r.top + r.height / 2 >= innerHeight;
+      if (off(r0)) target.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' as ScrollBehavior });
+      const r = target.getBoundingClientRect();
+      if (off(r)) return null;
+      const x = r.left + r.width / 2;
+      const y = r.top + r.height / 2;
+      const root = target.getRootNode() as Document | ShadowRoot;
+      let hit: Element | null = (root instanceof ShadowRoot ? root : document).elementFromPoint(x, y);
+      while (hit?.shadowRoot) {
+        const inner = hit.shadowRoot.elementFromPoint(x, y);
+        if (!inner || inner === hit) break;
+        hit = inner;
+      }
+      if (!hit || hit === document.documentElement || hit === document.body) return null;
+      const parent = (node: Element): Element | null => node.parentElement ?? (node.getRootNode() instanceof ShadowRoot ? (node.getRootNode() as ShadowRoot).host : null);
+      for (let n: Element | null = hit; n; n = parent(n)) if (n === target) return null; // the element or inside it
+      for (let n: Element | null = target; n; n = parent(n)) if (n === hit) return null; // wraps the element
+      const reg = (window as unknown as { __mantis?: { ids: WeakMap<Element, number> } }).__mantis;
+      const idOfNode = (node: Element): number | undefined => reg?.ids.get(node);
+      const text = (node: Element): string => (node.getAttribute('aria-label') || (node.textContent ?? '')).replace(/\s+/g, ' ').trim();
+      const describe = (node: Element): string => {
+        const attrs: string[] = [];
+        const cls = (node.getAttribute('class') ?? '').split(/\s+/).filter(Boolean).slice(0, 2).join('.');
+        if (cls) attrs.push(`.${cls}`);
+        const role = node.getAttribute('role');
+        if (role) attrs.push(` role=${role}`);
+        const name = text(node);
+        if (name) attrs.push(` "${name.length > 40 ? name.slice(0, 39) + '…' : name}"`);
+        return `<${node.localName}${attrs.join('')}>`;
+      };
+      // A close/dismiss control in the same overlay, if it has a number from the last read.
+      const CLOSE = /^(close|dismiss|cancel|no thanks|not now|decline|reject|[x×✕✖])$/i;
+      let close: { id: number; name: string } | undefined;
+      let hitId: number | undefined;
+      for (let n: Element | null = hit; n && n !== document.documentElement && !n.contains(target) && !close; n = parent(n)) {
+        hitId ??= idOfNode(n);
+        const scope: ParentNode = n.parentElement ? n : (n.getRootNode() as ParentNode); // top of a shadow tree: search the whole tree
+        for (const b of Array.from(scope.querySelectorAll('button, [role="button"], a'))) {
+          const name = (b.getAttribute('aria-label') || b.getAttribute('title') || b.textContent || '').replace(/\s+/g, ' ').trim();
+          const id = idOfNode(b);
+          if (id !== undefined && CLOSE.test(name)) { close = { id, name }; break; }
+        }
+      }
+      return { desc: describe(hit), hitId, close };
+    }).catch(() => null);
+  }
+
+  private coveredMessage(label: string, cover: Cover): string {
+    const plain = label.replace(' (password)', '');
+    const by = cover.hitId !== undefined ? `${cover.desc} (#${cover.hitId})` : cover.desc;
+    const close = cover.close ? ` (try #${cover.close.id} "${cover.close.name}")` : '';
+    return `${plain} is covered by another element, ${by}; dismiss that first${close}`;
   }
 
   private explain(e: unknown, label: string): string {
@@ -880,16 +977,20 @@ export class MantisBrowser {
   /**
    * Wait for load, then for the page to go quiet: no DOM mutation for 150ms (3s cap) and no short
    * timer or request still pending (1.5s cap), so delayed effects of an action are included.
+   * After an action only work begun since it counts (not background polling), and attributes that
+   * keep changing on one element (animation) stop resetting the quiet timer.
    */
-  private async settle(page: Page): Promise<void> {
+  private async settle(page: Page, afterAction = false): Promise<void> {
     await page.waitForLoadState('domcontentloaded', { timeout: 5000 }).catch(() => undefined);
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
         await page.evaluate(
-          ({ quiet, max, busyMax }) =>
+          ({ quiet, max, busyMax, useEpoch }) =>
             new Promise<void>((done) => {
-              const w = window as unknown as { __mantisSetTimeout?: typeof setTimeout; __mantisBusy?: () => boolean };
+              const w = window as unknown as { __mantisSetTimeout?: typeof setTimeout; __mantisBusy?: (since?: number) => boolean; __mantisEpoch?: number };
               const st = w.__mantisSetTimeout ?? setTimeout;
+              // Only work begun since the action counts as pending; a missing epoch (new document) counts everything.
+              const since = useEpoch ? (w.__mantisEpoch ?? 0) : 0;
               const start = Date.now();
               let timer: ReturnType<typeof setTimeout>;
               const finish = (): void => {
@@ -899,10 +1000,57 @@ export class MantisBrowser {
                 done();
               };
               const check = (): void => {
-                if (w.__mantisBusy?.() && Date.now() - start < busyMax) timer = st(check, 50);
+                if (w.__mantisBusy?.(since) && Date.now() - start < busyMax) timer = st(check, 50);
                 else finish();
               };
-              const obs = new MutationObserver(() => {
+              // An element whose same attribute keeps changing (carousel, spinner, ticker) is an animation:
+              // after its 3rd change it no longer resets the quiet timer. New or removed content always does.
+              // A carousel advancing across many slides touches each element only once or twice, so the same
+              // change is also counted per kind (attribute + tag + first class).
+              const repeats = new WeakMap<Node, Map<string, number>>();
+              const kinds = new Map<string, number>();
+              const NOISE = new Set(['script', 'style', 'link', 'meta', 'noscript', 'template']);
+              const noise = (n: Node): boolean => {
+                if (n.nodeType === 8) return true;
+                if (n.nodeType === 3) return !(n.textContent ?? '').trim();
+                if (!(n instanceof Element)) return false;
+                if (NOISE.has(n.localName)) return true;
+                if (n.localName === 'iframe' || n.localName === 'img') {
+                  const r = n.getBoundingClientRect();
+                  return r.width <= 1 && r.height <= 1;
+                }
+                return false;
+              };
+              const animated = (m: MutationRecord): boolean => {
+                if (m.type === 'characterData') return false;
+                if (m.type === 'childList') {
+                  // Analytics and ad scripts injecting into <head>, or only tags that show nothing, are not new content.
+                  const t = m.target;
+                  if (t instanceof Element && (t.localName === 'head' || t.closest('head'))) return true;
+                  const moved = [...Array.from(m.addedNodes), ...Array.from(m.removedNodes)];
+                  return moved.length > 0 && moved.every(noise);
+                }
+                let per = repeats.get(m.target);
+                if (!per) repeats.set(m.target, (per = new Map()));
+                const name = m.attributeName ?? '';
+                const n = (per.get(name) ?? 0) + 1;
+                per.set(name, n);
+                let repeated = n >= 3;
+                if (m.target instanceof Element) {
+                  const cls = m.target.classList[0];
+                  if (cls) {
+                    const kind = `${name}|${m.target.localName}|${cls}`;
+                    const k = (kinds.get(kind) ?? 0) + 1;
+                    kinds.set(kind, k);
+                    if (k >= 3) repeated = true;
+                  }
+                }
+                return repeated;
+              };
+              const obs = new MutationObserver((records) => {
+                let real = false;
+                for (const m of records) if (!animated(m)) real = true;
+                if (!real) return;
                 clearTimeout(timer);
                 timer = st(check, quiet);
               });
@@ -910,7 +1058,7 @@ export class MantisBrowser {
               timer = st(check, quiet);
               const cap = st(finish, max);
             }),
-          { quiet: 150, max: 3000, busyMax: 1500 },
+          { quiet: 150, max: 3000, busyMax: 1500, useEpoch: afterAction },
         );
         return;
       } catch {
