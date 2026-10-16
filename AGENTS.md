@@ -5,6 +5,9 @@ Rules for any coding agent working in this repo (Codex reads this file; Claude C
 ## Talking to the user
 - Keep replies short and to the point: lead with the result in 1–3 lines. Use tables only when they replace more text. Skip background and caveats unless they change a decision.
 
+## Working
+- Do independent tasks in parallel, not one after another: when a plan has steps that don't depend on each other, run them at the same time (parallel tool calls, background jobs, subagents or sessions). Only steps that need an earlier result wait.
+
 ## Models
 | Agent | Planning, analysis, review | Implementation (writing and editing code) |
 |---|---|---|
