@@ -1,0 +1,15 @@
+<!doctype html><title>Late dialog</title>
+<button disabled>Continue</button><button disabled>Save</button>
+<template><div role="dialog" aria-modal="true"><button>Template button</button></div></template>
+<script>
+  const interval = setInterval(() => {
+    clearInterval(interval);
+    const dialog = document.createElement('div');
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-modal', 'true');
+    dialog.setAttribute('aria-label', 'Consent choices');
+    dialog.innerHTML = '<button id="accept">Accept</button>';
+    Object.assign(dialog.style, { position: 'fixed', inset: '0', background: 'white', zIndex: '100' });
+    document.body.append(dialog);
+  }, 600);
+</script>

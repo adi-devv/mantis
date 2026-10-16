@@ -1,0 +1,16 @@
+<!doctype html><title>Capture visibility</title>
+<style>
+.sr-clip { position:absolute; clip:rect(0,0,0,0); width:1px; height:1px; }
+.sr-path { position:absolute; clip-path:inset(50%); width:20px; height:20px; }
+.sr-tiny { position:absolute; width:1px; height:1px; overflow:hidden; }
+.sr-opacity { opacity:.0001; }
+.round { clip-path:inset(0 round 8px); }
+</style>
+<h1>Visible <span class="sr-clip">hidden heading part</span> heading</h1>
+<button class="round">Round clip visible</button>
+<span class="sr-clip">Clipped text</span>
+<span class="sr-path">Path text</span>
+<span class="sr-tiny">Tiny text</span>
+<div class="sr-opacity"><button>Faint button</button></div>
+<div style="display:none"><button>Display none button</button></div>
+<div style="visibility:hidden"><button>Hidden visibility button</button><button style="visibility:visible">Visible child button</button></div>

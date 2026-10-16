@@ -9,7 +9,7 @@ const CONTEXT_LOST = /Execution context was destroyed|Target (page, context or b
 
 // The result goes back as one JSON string: Playwright's structured serializer is several times
 // slower on a 3000-node result than a native JSON.stringify / JSON.parse round trip.
-const WALK = `JSON.stringify((${walker.toString()})())`;
+const WALK = (includeSrOnly: boolean): string => `JSON.stringify((${walker.toString()})(${includeSrOnly}))`;
 
 /** Numbers inside a child frame start at its base, so they never clash with the page's or each other's. */
 const FRAME_STEP = 10_000;
@@ -32,11 +32,11 @@ function baseOf(frame: Frame): number {
   return b;
 }
 
-async function walk(frame: Frame, base: number): Promise<Snapshot> {
+async function walk(frame: Frame, base: number, includeSrOnly = false): Promise<Snapshot> {
   // A reused range: a document still holding an older range starts over in the new one.
   const script = base
-    ? `((w) => { if (w.__mantisBase !== ${base}) { w.__mantisBase = ${base}; delete w.__mantis; } return ${WALK}; })(window)`
-    : WALK;
+    ? `((w) => { if (w.__mantisBase !== ${base}) { w.__mantisBase = ${base}; delete w.__mantis; } return ${WALK(includeSrOnly)}; })(window)`
+    : WALK(includeSrOnly);
   for (let attempt = 0; ; attempt++) {
     try {
       return JSON.parse((await frame.evaluate(script)) as string) as Snapshot;
@@ -105,6 +105,16 @@ async function fillFrames(frame: Frame, snap: Snapshot, depth: number, budget: {
 export async function capture(page: Page): Promise<Snapshot> {
   const snap = await walk(page.mainFrame(), 0);
   await fillFrames(page.mainFrame(), snap, 1, { frames: MAX_FRAMES });
+  if (!snap.nodes.length) {
+    const fallback = await walk(page.mainFrame(), 0, true);
+    await fillFrames(page.mainFrame(), fallback, 1, { frames: MAX_FRAMES });
+    // A canvas marker or empty frame is not enough evidence of readable page content.
+    if (fallback.nodes.some((n) =>
+      (n.kind === 'heading' || n.kind === 'interactive' || n.kind === 'prose' ||
+        (n.kind === 'text' && !n.name.startsWith('[canvas'))) && /[\p{L}\p{N}]/u.test(n.name))) {
+      return fallback;
+    }
+  }
   return snap;
 }
 

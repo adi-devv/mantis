@@ -1,0 +1,8 @@
+<!doctype html><title>Late enabled controls</title>
+<button id="next" disabled>Continue</button><button disabled>Save</button>
+<script>
+  const interval = setInterval(() => {
+    clearInterval(interval);
+    document.querySelector('#next').disabled = false;
+  }, 600);
+</script>

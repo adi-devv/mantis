@@ -172,7 +172,24 @@ export class MantisBrowser {
         }
       }
       await this.settle(page);
-      return this.view(page);
+      const initial = await this.observe(page);
+      const controls = initial.snap.nodes.filter((n) => n.kind === 'interactive');
+      const disabled = controls.filter((n) => n.states.includes('disabled') || n.states.includes('looks disabled'));
+      const blocked = controls.filter((n) => n.covered || disabled.includes(n));
+      const dialogAlreadyShown = initial.snap.nodes.some((n) => n.kind === 'region' && n.role === 'dialog' && n.inViewport);
+      // A majority of controls being blocked is a meaningful late-dialog signal. A single
+      // covered control can also signal a backdrop, even before the dialog is represented.
+      // Several truly disabled controls on first load usually mean the page is still hydrating.
+      const hydrating = disabled.filter((n) => n.states.includes('disabled')).length >= 3;
+      const gated = !dialogAlreadyShown && (hydrating || blocked.some((n) => n.covered) || (blocked.length >= 2 && blocked.length * 2 >= controls.length));
+      let snap = initial.snap;
+      if (gated && await this.waitForLateDialog(page, disabled.map((n) => n.id!).filter((id) => id !== undefined))) {
+        snap = (await this.observe(page)).snap;
+      }
+      let text = this.render(snap);
+      const captcha = await detectCaptcha(page);
+      if (captcha) text += `\n${captcha}`;
+      return this.notes.length ? `${text}\n${this.notes.splice(0).join('\n')}` : text;
     });
   }
 
@@ -211,7 +228,14 @@ export class MantisBrowser {
       try {
         await el.click({ timeout: this.actionTimeout });
       } catch (e) {
-        throw new ActionError(this.explain(e, label));
+        const msg = String(e instanceof Error ? e.message : e);
+        if (/intercepts pointer events/.test(msg) && await this.clickAssociatedLabel(el)) {
+          // A visible label can legitimately receive the pointer for its control.
+        } else if (/element is not visible|waiting for element to be visible|outside of the viewport|intercepts pointer events/.test(msg) && await this.clickSrOnly(page, el, id)) {
+          // The snapshot verified a screen-reader-only control.
+        } else {
+          throw new ActionError(this.explain(e, label));
+        }
       } finally {
         await el.dispose();
       }
@@ -646,6 +670,81 @@ export class MantisBrowser {
     if (/not an <input>|not editable|Element is not/.test(msg)) return `${plain} is not a text field`;
     if (/Timeout/.test(msg)) return `${plain} did not become clickable in time`;
     return `${plain}: ${brief(e)}`;
+  }
+
+  /** A label may intercept a pointer aimed at its own native control. No other overlay qualifies. */
+  private async clickAssociatedLabel(el: ElementHandle<Element>): Promise<boolean> {
+    return el.evaluate((target) => {
+      if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement || target instanceof HTMLButtonElement)) return false;
+      const r = target.getBoundingClientRect();
+      if (!r.width || !r.height) return false;
+      const x = Math.max(0, Math.min(innerWidth - 1, r.left + r.width / 2));
+      const y = Math.max(0, Math.min(innerHeight - 1, r.top + r.height / 2));
+      let hit: Element | null = document.elementFromPoint(x, y);
+      // elementFromPoint on document returns the host; descend through open roots.
+      while (hit?.shadowRoot) {
+        const inner = hit.shadowRoot.elementFromPoint(x, y);
+        if (!inner || inner === hit) break;
+        hit = inner;
+      }
+      const parent = (node: Element): Element | null => node.parentElement ?? (node.getRootNode() instanceof ShadowRoot ? (node.getRootNode() as ShadowRoot).host : null);
+      for (let node = hit; node; node = parent(node)) {
+        if (node instanceof HTMLLabelElement && node.control === target) {
+          node.click();
+          return true;
+        }
+      }
+      return false;
+    }).catch(() => false);
+  }
+
+  /** Snapshot eligibility is established by the walker's narrow screen-reader-only predicate. */
+  private async clickSrOnly(page: Page, el: ElementHandle<Element>, id: number): Promise<boolean> {
+    const snap = (await this.observe(page).catch(() => null))?.snap;
+    if (!snap?.nodes.some((n) => n.id === id && n.srOnly === true)) return false;
+    return el.evaluate((node) => {
+      if (!(node instanceof HTMLElement) || !node.isConnected) return false;
+      if (node instanceof HTMLInputElement && (node.type === 'checkbox' || node.type === 'radio')) {
+        node.click();
+        return true;
+      }
+      node.focus();
+      node.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      node.click();
+      node.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
+      return true;
+    }).catch(() => false);
+  }
+
+  /** Observe only a blocked page for a rendered dialog or a disabled control becoming enabled. */
+  private async waitForLateDialog(page: Page, disabledIds: number[]): Promise<boolean> {
+    return page.evaluate((ids) => new Promise<boolean>((done) => {
+      const registry = (window as unknown as { __mantis?: { byId: Map<number, WeakRef<Element>> } }).__mantis;
+      const initial = new Map(ids.map((id) => [id, registry?.byId.get(id)?.deref()]));
+      const rendered = (el: Element): boolean => {
+        if (el.closest('template')) return false;
+        for (let node: Element | null = el; node; node = node.parentElement) {
+          const style = getComputedStyle(node);
+          if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') return false;
+        }
+        return el.getClientRects().length > 0;
+      };
+      const changed = (): boolean => {
+        if (Array.from(document.querySelectorAll('dialog[open], [role="dialog"], [role="alertdialog"], [aria-modal="true"]')).some(rendered)) return true;
+        return Array.from(initial.values()).some((el) => {
+          if (!el?.isConnected) return false;
+          const style = getComputedStyle(el);
+          const blocked = el.matches(':disabled') || el.getAttribute('aria-disabled') === 'true' ||
+            style.pointerEvents === 'none' || Number(style.opacity) < 0.5;
+          return !blocked;
+        });
+      };
+      if (changed()) { done(true); return; }
+      const finish = (value: boolean): void => { observer.disconnect(); clearTimeout(timer); done(value); };
+      const observer = new MutationObserver(() => { if (changed()) finish(true); });
+      observer.observe(document, { subtree: true, childList: true, attributes: true });
+      const timer = setTimeout(() => finish(false), 1500);
+    }), disabledIds).catch(() => false);
   }
 
   private isHeadless(): boolean {

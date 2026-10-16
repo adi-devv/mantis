@@ -1,0 +1,18 @@
+<!doctype html><title>Pointer association</title>
+<style>
+  .choice { position: relative; display: block; width: 220px; height: 40px; margin: 20px; }
+  .choice input { position: absolute; inset: 0; width: 220px; height: 40px; margin: 0; }
+  .choice label { position: absolute; inset: 0; background: #eee; text-align: center; line-height: 40px; }
+  #foreign { position: absolute; left: 20px; top: 80px; width: 220px; height: 40px; background: #ddd; }
+  #covered { position: absolute; left: 20px; top: 80px; width: 220px; height: 40px; }
+  #none { pointer-events: none; margin: 100px 20px 0; }
+</style>
+<div class="choice"><input id="valid" type="radio" name="choice" aria-label="Valid radio"><label for="valid">Valid radio</label></div>
+<button id="covered">Covered button</button><div id="foreign">Foreign overlay</div>
+<button id="none">Pointerless button</button>
+<output id="result"></output>
+<script>
+  document.querySelector('#valid').addEventListener('change', () => { document.querySelector('#result').textContent = 'radio selected'; });
+  document.querySelector('#covered').addEventListener('click', () => { document.querySelector('#result').textContent = 'covered clicked'; });
+  document.querySelector('#none').addEventListener('click', () => { document.querySelector('#result').textContent = 'pointerless clicked'; });
+</script>

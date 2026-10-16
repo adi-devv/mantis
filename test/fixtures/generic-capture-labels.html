@@ -1,0 +1,15 @@
+<!doctype html><title>Labels and images</title>
+<style>
+label { display:inline-block; padding:18px; }
+input { width:16px; height:16px; }
+[role=img] { display:inline-block; width:16px; height:16px; }
+#covered { position:relative; }
+#overlay { position:absolute; background:#aaa; width:200px; height:100px; left:0; top:0; z-index:10; }
+</style>
+<label>Wrapped<input type="checkbox" id="wrapped"></label>
+<label for="linked">Linked</label><input type="checkbox" id="linked">
+<div id="covered"><input type="checkbox" aria-label="Overlay target"><div id="overlay">Overlay</div></div>
+<p>Rated <span role="img" aria-label="five stars"></span> by readers.</p>
+<span role="img" aria-label="Chart overview"></span>
+<button>Save <span role="img" aria-label="disk icon"></span></button>
+<div role="status">Ready now</div>

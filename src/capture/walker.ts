@@ -56,6 +56,8 @@ export interface RawNode {
   inline?: boolean;
   /** Interactive only: a text-entry field that has keyboard focus (site memory never hides it). */
   focused?: boolean;
+  /** Control found only by the empty-page screen-reader-content pass. */
+  srOnly?: boolean;
   /** Bounding box in document coordinates: [x, y, width, height], rounded. */
   box?: [number, number, number, number];
 }
@@ -70,7 +72,7 @@ export interface WalkResult {
   page?: { vw: number; vh: number; docW: number; docH: number };
 }
 
-export function walker(): WalkResult {
+export function walker(includeSrOnly = false): WalkResult {
   interface Registry {
     ids: WeakMap<Element, number>;
     next: number;
@@ -133,6 +135,20 @@ export function walker(): WalkResult {
     return Array.from(e.childNodes);
   }
 
+  /** Non-interactive roles whose aria-label is their content (star ratings, gauges). */
+  const LABELLED_ROLES = new Set(['img', 'image', 'meter', 'progressbar']);
+
+  /** Clipped, near-transparent and tiny content is useful only on an otherwise empty page. */
+  function screenReaderOnly(e: Element, cs: CSSStyleDeclaration, r: DOMRect): boolean {
+    const clip = cs.clip.replace(/\s+/g, '').toLowerCase();
+    const path = cs.clipPath.replace(/\s+/g, '').toLowerCase();
+    return (r.width <= 1.5 && r.height <= 1.5) ||
+      /^rect\((?:0(?:px)?,){3}0(?:px)?\)$/.test(clip) ||
+      /^inset\((?:50%|100%)(?:\)|\s)/.test(cs.clipPath.trim().toLowerCase()) ||
+      path === 'inset(50%)' || path === 'inset(100%)' ||
+      (Number.isFinite(parseFloat(cs.opacity)) && parseFloat(cs.opacity) > 0 && parseFloat(cs.opacity) < 0.01);
+  }
+
   /** Rendered text of a subtree, skipping hidden parts; stops once past `limit` chars. */
   function deepText(root: Element, limit: number): string {
     let out = '';
@@ -141,7 +157,7 @@ export function walker(): WalkResult {
       const t = e.localName;
       let block = false;
       if (!isRoot) {
-        if (SKIP.has(t) || e.getAttribute('aria-hidden') === 'true') return;
+        if (SKIP.has(t) || e.getAttribute('aria-hidden') === 'true' || (e as HTMLElement).inert) return;
         if (t === 'img') { out += ' ' + (e.getAttribute('alt') || '') + ' '; return; }
         if (t === 'input') {
           const ty = (e as HTMLInputElement).type;
@@ -150,7 +166,13 @@ export function walker(): WalkResult {
         }
         if (t === 'textarea' || t === 'select') return;
         const cs = getComputedStyle(e);
-        if (cs.display === 'none' || cs.visibility === 'hidden') return;
+        if (cs.display === 'none') return;
+        if (cs.visibility === 'hidden') { for (const c of childrenOf(e)) if (c.nodeType === 1) rec(c as Element, false); return; }
+        const semantic = explicitRole(e);
+        if (semantic && LABELLED_ROLES.has(semantic)) {
+          const label = collapse(e.getAttribute('aria-label') || '');
+          if (label) { out += ' ' + label + ' '; return; }
+        }
         block = !cs.display.startsWith('inline') && cs.display !== 'contents';
       }
       if (block) out += ' ';
@@ -501,7 +523,14 @@ export function walker(): WalkResult {
     const scope: Document | ShadowRoot = root instanceof ShadowRoot ? root : document;
     const hit = scope.elementFromPoint(x, y);
     if (!hit) return false;
-    return !(composedContains(el, hit) || composedContains(hit, el));
+    if (composedContains(el, hit) || composedContains(hit, el)) return false;
+    const control = el as HTMLInputElement;
+    const labels = control.labels;
+    if (labels && Array.from(labels).some((label) => composedContains(label, hit))) return false;
+    // A custom label in an open shadow tree may use for=; verify the association through
+    // the control's ID and root rather than treating an arbitrary enclosing body as a label.
+    if (el.id && hit.closest('label')?.htmlFor === el.id && hit.getRootNode() === el.getRootNode()) return false;
+    return true;
   }
 
   function hrefOf(el: Element): string | undefined {
@@ -661,13 +690,14 @@ export function walker(): WalkResult {
 
   const buttonish: { node: RawNode; el: Element; r: DOMRect; cs: CSSStyleDeclaration }[] = [];
 
-  function emitInteractive(el: Element, role: string, parent: number, depth: number, r: DOMRect): void {
+  function emitInteractive(el: Element, role: string, parent: number, depth: number, r: DOMRect, srOnly = false): void {
     const t = el.localName;
     const states: string[] = [];
     const node: RawNode = {
       kind: 'interactive', role, name: accName(el, role), states, parent, depth,
       inViewport: inView(r), covered: isCovered(el, r),
     };
+    if (srOnly) node.srOnly = true;
     if (!node.name) {
       const guess = cap(inferName(el, role), 40);
       if (guess) { node.name = guess; node.inferred = true; }
@@ -686,7 +716,7 @@ export function walker(): WalkResult {
     if ((t === 'button' || t === 'input') && input.type === 'submit' && input.form) states.push('submit');
     if ((el as HTMLInputElement).required || attr('aria-required') === 'true') states.push('required');
     if (el.matches(':disabled') || attr('aria-disabled') === 'true') states.push('disabled');
-    else if (effectiveOpacity(el) < 0.5 || ecs.pointerEvents === 'none') states.push('looks disabled');
+    else if (!srOnly && (effectiveOpacity(el) < 0.5 || ecs.pointerEvents === 'none')) states.push('looks disabled');
     if (((t === 'input' || t === 'textarea') && input.readOnly) || attr('aria-readonly') === 'true') states.push('readonly');
     if (role === 'checkbox' || role === 'radio' || role === 'switch' || role === 'menuitemcheckbox' || role === 'menuitemradio') {
       if (t === 'input' && input.indeterminate) states.push('mixed');
@@ -820,7 +850,7 @@ export function walker(): WalkResult {
     nodes.push(stamp({ kind: 'region', role: 'iframe', name: cap(name, 60), frame: id, states: [], parent, depth, inViewport: inView(r), covered: false }, r));
   }
 
-  function visit(el: Element, parent: number, depth: number, box: DOMRect): void {
+  function visit(el: Element, parent: number, depth: number, box: DOMRect, inheritedSr = false): void {
     if (nodes.length >= MAX_NODES) { truncated = true; return; }
     if (el.localName === 'canvas') { canvasMark(el, parent, depth); return; }
     if (SKIP.has(el.localName)) return;
@@ -832,17 +862,29 @@ export function walker(): WalkResult {
     const contents = cs.display === 'contents';
     const r = contents ? box : el.getBoundingClientRect();
     const clips = cs.overflowX !== 'visible' || cs.overflowY !== 'visible';
-    if (!contents && (r.width === 0 || r.height === 0) && clips) return; // e.g. collapsed accordion panel
-    const shown = cs.visibility === 'visible' && (contents || (r.width > 0 && r.height > 0 && inDoc(r)));
+    if (!includeSrOnly && !contents && (r.width === 0 || r.height === 0) && clips) return; // e.g. collapsed accordion panel
+    const srOnly = inheritedSr || screenReaderOnly(el, cs, r);
+    // A zero-size positioned wrapper can hold a normally rendered absolute child.
+    const childSr = inheritedSr || (srOnly && (r.width > 1.5 || r.height > 1.5 ||
+      cs.clip !== 'auto' || cs.clipPath !== 'none' || (parseFloat(cs.opacity) > 0 && parseFloat(cs.opacity) < 0.01)));
+    const shown = cs.visibility === 'visible' &&
+      (contents || (r.width > 0 && r.height > 0 && inDoc(r)));
 
     const explicit = explicitRole(el);
     const role = interactiveRole(el, explicit, cs);
     if (role) {
-      if (shown) emitInteractive(el, role, parent, depth, r);
+      if (shown) emitInteractive(el, role, parent, depth, r, srOnly);
       return;
     }
 
     const tag = el.localName;
+    if (shown && explicit && LABELLED_ROLES.has(explicit)) {
+      const label = collapse(el.getAttribute('aria-label') || '');
+      if (label && !suppressText) {
+        nodes.push(stamp({ kind: 'text', role: 'text', name: cap(label, 120), states: [], parent, depth, inViewport: inView(r), covered: false }, r));
+        if (!el.querySelector(INTERACTIVE_SEL)) return;
+      }
+    }
     if (/^h[1-6]$/.test(tag) || explicit === 'heading') {
       if (shown) {
         const name = cap(deepText(el, 200), 80);
@@ -853,7 +895,7 @@ export function walker(): WalkResult {
       }
       // Links inside headings (article cards) still need to be emitted.
       if (!el.querySelector(INTERACTIVE_SEL)) return;
-      visitChildren(el, parent, depth, r);
+      visitChildren(el, parent, depth, r, false, childSr);
       return;
     }
 
@@ -912,13 +954,13 @@ export function walker(): WalkResult {
     const prevProse = inProse;
     const prevSuppress = suppressText;
     if (proseHere) { inProse = true; suppressText = true; }
-    visitChildren(el, childParent, childDepth, r, shown);
+    visitChildren(el, childParent, childDepth, r, shown, childSr);
     inProse = prevProse;
     suppressText = prevSuppress;
   }
 
   /** Visit child nodes of `el`, tagging repeated sibling rows; text nodes become `text` nodes. */
-  function visitChildren(el: Element, parent: number, depth: number, r: DOMRect, textShown = false): void {
+  function visitChildren(el: Element, parent: number, depth: number, r: DOMRect, textShown = false, inheritedSr = false): void {
     const kids = childrenOf(el);
     const rows = curRow < 0 ? detectRows(kids.filter((c): c is Element => c.nodeType === 1)) : null;
     for (const c of kids) {
@@ -932,10 +974,10 @@ export function walker(): WalkResult {
         if (info) {
           curRow = info.row;
           curGroup = info.group;
-          visit(c as Element, parent, depth, r);
+          visit(c as Element, parent, depth, r, inheritedSr);
           curRow = curGroup = -1;
         } else {
-          visit(c as Element, parent, depth, r);
+          visit(c as Element, parent, depth, r, inheritedSr);
         }
       }
     }

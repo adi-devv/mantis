@@ -1,0 +1,7 @@
+<!doctype html><title>Screen reader control</title>
+<style>
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+</style>
+<input id="radio" class="sr-only" type="radio" name="answer" aria-label="Hidden answer">
+<output id="result"></output>
+<script>document.querySelector('#radio').addEventListener('change', () => { document.querySelector('#result').textContent = 'answer chosen'; });</script>
