@@ -3,6 +3,7 @@ import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import type { Server } from 'node:http';
 import { moreRoute } from './fixtures-more.js';
+import { LONG_PAGES } from './fixtures-long.js';
 
 export interface FixtureObservation {
   path: string;
@@ -263,7 +264,8 @@ export async function startFixtures(options: { checks?: FixtureCheckEntry[] } = 
       path = attemptPrefix[2] || '/';
       if (!attempts.has(token)) attempts.set(token, newAttempt(''));
     }
-    const more = moreRoute(path);
+    const long = LONG_PAGES[path];
+    const more = long === undefined ? moreRoute(path) : { body: long, type: 'text/html; charset=utf-8' };
     if (more) {
       res.writeHead(200, { 'content-type': more.type }).end(more.type.startsWith('text/html') ? instrument(more.body) : more.body);
       return;

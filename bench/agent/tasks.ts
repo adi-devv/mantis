@@ -4,8 +4,9 @@
  * answers); keep a few live sites as a realism check. When an agent fails somewhere new, add a task.
  */
 import type { FixtureCheck, FixtureObservation } from '../fixtures.js';
+import { LONG_EXPECT } from '../fixtures-long.js';
 
-export type Category = 'forms' | 'reading' | 'lists' | 'overlays' | 'navigation' | 'dynamic' | 'visual';
+export type Category = 'forms' | 'reading' | 'lists' | 'overlays' | 'navigation' | 'dynamic' | 'visual' | 'long';
 
 export interface AgentTask {
   id: string;
@@ -38,6 +39,7 @@ const control = (event: FixtureObservation, id: string, value: string, checked?:
   return !!c && c.value === value && (checked === undefined || c.checked === checked);
 };
 const target = (event: FixtureObservation, id: string): boolean => event.target.id === id;
+const esc = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 export const TASKS: AgentTask[] = [
   {
@@ -242,6 +244,39 @@ export const TASKS: AgentTask[] = [
     prompt: (b) => `Open ${b}/chart. How many units were sold in March according to the chart?`,
     expect: /\b42\b/,
     check: check((e) => has(e, (x) => x.path === '/chart' && x.kind === 'load')),
+  },
+  // ---- long: 15-40 actions each ----
+  {
+    id: 'long-shop',
+    category: 'long',
+    site: 'local',
+    prompt: (b) => `Open ${b}/shop. Add to the cart: 2 Trail Mug, 1 Canvas Tote, 3 Beeswax Wrap and 1 Linen Apron (only those products, nothing else). Apply the coupon SPRING10. Check out shipping to Grace Hopper, 12 Navy Way, Arlington, ZIP 22201, with Standard delivery, and pay with the test card 4242 4242 4242 4242, expiry 12/30, CVC 123. What is the order number and the total charged?`,
+    expect: new RegExp(`${esc(LONG_EXPECT.shop.order)}[^]*${esc(LONG_EXPECT.shop.total)}|${esc(LONG_EXPECT.shop.total)}[^]*${esc(LONG_EXPECT.shop.order)}`),
+    check: check((e) => has(e, (x) => x.path === '/shop' && x.kind === 'settled' && x.text.includes(`Order #${LONG_EXPECT.shop.order} confirmed. Total charged: $${LONG_EXPECT.shop.total}.`))),
+  },
+  {
+    id: 'long-admin',
+    category: 'long',
+    site: 'local',
+    prompt: (b) => `Open ${b}/admin. Make Ivy Chen and Lena Novak Editors, make Raj Patel an Admin, change Omar Haddad to Viewer, and deactivate Tom Becker and Sara Lind. Change nobody else. Then save. What does the confirmation say?`,
+    expect: new RegExp(esc(LONG_EXPECT.admin.set)),
+    check: check((e) => has(e, (x) => x.path === '/admin' && x.kind === 'settled' && x.text.includes(`Saved ${LONG_EXPECT.admin.changes} changes. Change set ${LONG_EXPECT.admin.set}.`))),
+  },
+  {
+    id: 'long-onboard',
+    category: 'long',
+    site: 'local',
+    prompt: (b) => `Open ${b}/onboard and set up a workspace. Company: Northwind Labs, 51-200 employees, based in Germany, VAT ID DE123456789. Admin contact: Ada Byron, ada@northwind.test, phone +49 30 1234567. Choose the Growth plan billed yearly, and send invoices to billing@northwind.test instead of the admin email. Invite lin@northwind.test as an Admin, and sam@northwind.test and kai@northwind.test as Members. Accept the terms and create the workspace. What is the workspace ID?`,
+    expect: new RegExp(esc(LONG_EXPECT.onboard.workspace)),
+    check: check((e) => has(e, (x) => x.path === '/onboard' && x.kind === 'settled' && x.text.includes(`Workspace ${LONG_EXPECT.onboard.workspace} created for Northwind Labs (Growth, yearly, 3 invites).`))),
+  },
+  {
+    id: 'long-laptops',
+    category: 'long',
+    site: 'local',
+    prompt: (b) => `Open ${b}/laptops. Among the laptops that cost under $1,000, which one has the longest battery life (video playback)? Tell me its name and its weight in kg.`,
+    expect: new RegExp(`${esc(LONG_EXPECT.laptops.name)}[^]*${esc(LONG_EXPECT.laptops.weight)}|${esc(LONG_EXPECT.laptops.weight)}[^]*${esc(LONG_EXPECT.laptops.name)}`),
+    check: check((e) => LONG_EXPECT.laptops.paths.every((path) => has(e, (x) => x.path === path && x.kind === 'load'))),
   },
 ];
 /** The small set used for a quick pilot (default when AGENT_TASKS is not set). */

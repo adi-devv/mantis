@@ -42,9 +42,9 @@ AGENT_OUT=codex-verified-subset AGENT_APPROACHES=mantis,tree npm run bench:agent
 |---|---|---|
 | `AGENT_PROVIDER` | `codex` | `codex` or `claude` |
 | `AGENT_TASKS` | pilot | `all`, task ids, or `cat:<category>`, comma-separated |
-| `AGENT_APPROACHES` | all five approaches | `mantis,tree,devtools,browseruse,screenshot` |
+| `AGENT_APPROACHES` | `mantis,tree,screenshot` | also `devtools`, `browseruse` |
 | `AGENT_RUNS` | 1 | runs per task and approach |
-| `AGENT_MODEL` | `gpt-6.1-sol` for Codex; `claude-sonnet-4-6` for Claude | selected provider's model |
+| `AGENT_MODEL` | `gpt-6.1-sol` for Codex; `claude-haiku-5-5` for Claude | selected provider's model |
 | `AGENT_REASONING` | `medium` | Codex reasoning effort (`low`, `medium`, `high`, `xhigh`, `max`) |
 | `CODEX_BIN` | installed Codex CLI | optional path override for `codex.exe` / `codex` |
 | `AGENT_CONCURRENCY` | 3 | runs in parallel; raise it as far as RAM allows (each run is an agent CLI, an MCP server and a browser); times then include more contention |

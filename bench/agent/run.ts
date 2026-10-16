@@ -33,7 +33,7 @@ type Provider = 'codex' | 'claude';
 const PROVIDER_VALUE = process.env.AGENT_PROVIDER ?? 'codex';
 if (PROVIDER_VALUE !== 'codex' && PROVIDER_VALUE !== 'claude') throw new Error(`AGENT_PROVIDER must be codex or claude; received ${JSON.stringify(PROVIDER_VALUE)}.`);
 const PROVIDER: Provider = PROVIDER_VALUE;
-const MODEL = process.env.AGENT_MODEL ?? (PROVIDER === 'codex' ? 'gpt-6.1-sol' : 'claude-sonnet-4-6');
+const MODEL = process.env.AGENT_MODEL ?? (PROVIDER === 'codex' ? 'gpt-6.1-sol' : 'claude-haiku-5-5');
 const REASONING = process.env.AGENT_REASONING ?? 'medium';
 if (PROVIDER === 'codex' && !['low', 'medium', 'high', 'xhigh', 'max'].includes(REASONING)) throw new Error(`AGENT_REASONING must be low, medium, high, xhigh, or max; received ${JSON.stringify(REASONING)}.`);
 const RUNS = validatePositiveInt('AGENT_RUNS', process.env.AGENT_RUNS, 1, 1000);
@@ -512,7 +512,7 @@ for (const pick of picks) {
 }
 const tasks = want === 'all' ? TASKS : TASKS.filter((t) => picks.includes(t.id) || picks.includes(`cat:${t.category}`) || picks.includes(t.category));
 if (!tasks.length) throw new Error(`no tasks match AGENT_TASKS=${want}; ids: ${TASKS.map((t) => t.id).join(', ')}`);
-const approaches = (process.env.AGENT_APPROACHES ?? 'mantis,tree,devtools,browseruse,screenshot').split(',') as Approach[];
+const approaches = (process.env.AGENT_APPROACHES ?? 'mantis,tree,screenshot').split(',') as Approach[];
 const validApproaches: Approach[] = ['mantis', 'tree', 'devtools', 'browseruse', 'screenshot'];
 if (!approaches.length || approaches.some((a) => !validApproaches.includes(a)) || new Set(approaches).size !== approaches.length) {
   throw new Error(`AGENT_APPROACHES must be a comma-separated unique list from: ${validApproaches.join(', ')}`);

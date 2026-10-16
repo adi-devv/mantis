@@ -3,6 +3,7 @@ import { chromium } from 'playwright';
 import type { Browser, Page } from 'playwright';
 import { startFixtures } from '../bench/fixtures.js';
 import { TASKS } from '../bench/agent/tasks.js';
+import { LONG_EXPECT } from '../bench/fixtures-long.js';
 
 const task = TASKS.find((entry) => entry.id === 'form-subscribe')!;
 let browser: Browser;
@@ -202,4 +203,99 @@ it('requires navigation, iframe payment, menu selection, and plan selection acti
   await openAttempt(plans.id, 'plan-basic', '/plans');
   await page.locator('[data-plan="basic"]').click();
   await verify(plans.id, 'plan-basic', false);
+});
+
+it('long tasks: accepts the full requested flows and rejects a single wrong step', async () => {
+  const addToCart = async (name: string, times: number) => {
+    await page.fill('#q', name);
+    for (let i = 0; i < times; i++) await page.locator(`article[aria-label="${name}"] button`).click();
+  };
+  const shop = async (attempt: string, coupon: string) => {
+    await openAttempt('long-shop', attempt, '/shop');
+    await addToCart('Trail Mug', 2);
+    await addToCart('Canvas Tote', 1);
+    await addToCart('Beeswax Wrap', 3);
+    await addToCart('Linen Apron', 1);
+    await page.click('#cartbtn');
+    await page.fill('#coupon', coupon);
+    await page.click('#apply');
+    await page.click('#tocheckout');
+    await page.fill('#fn', 'Grace Hopper');
+    await page.fill('#st', '12 Navy Way');
+    await page.fill('#ci', 'Arlington');
+    await page.fill('#zip', '22201');
+    await page.click('#topay');
+    await page.fill('#cn', '4242 4242 4242 4242');
+    await page.fill('#ex', '12/30');
+    await page.fill('#cvc', '123');
+    await page.click('#pay');
+  };
+  await shop('shop-ok', 'SPRING10');
+  expect((await page.locator('#v-done').innerText()).replace(/\s+/g, ' ')).toContain(`Order #${LONG_EXPECT.shop.order} confirmed. Total charged: $${LONG_EXPECT.shop.total}.`);
+  await verify('long-shop', 'shop-ok', true);
+  await shop('shop-no-coupon', 'NOPE');
+  await verify('long-shop', 'shop-no-coupon', false);
+
+  const admin = async (attempt: string, extra: boolean) => {
+    await openAttempt('long-admin', attempt, '/admin');
+    for (const [name, role] of [['Ivy Chen', 'Editor'], ['Lena Novak', 'Editor'], ['Raj Patel', 'Admin'], ['Omar Haddad', 'Viewer']]) {
+      await page.fill('#uq', name);
+      await page.getByLabel(`Role for ${name}`, { exact: true }).selectOption(role);
+    }
+    await page.fill('#uq', '');
+    for (const name of ['Tom Becker', 'Sara Lind', ...(extra ? ['Ivy Cheng'] : [])]) {
+      while (!(await page.getByLabel(`Active: ${name}`, { exact: true }).count())) await page.click('#unext');
+      const box = page.getByLabel(`Active: ${name}`, { exact: true });
+      if (await box.isChecked()) await box.uncheck(); else await box.check();
+      while (await page.locator('#uprev').isEnabled()) await page.click('#uprev');
+    }
+    await page.click('#save');
+  };
+  await admin('admin-ok', false);
+  await verify('long-admin', 'admin-ok', true);
+  await admin('admin-extra', true);
+  await verify('long-admin', 'admin-extra', false);
+
+  const onboard = async (attempt: string, billing: boolean) => {
+    await openAttempt('long-onboard', attempt, '/onboard');
+    await page.fill('#co', 'Northwind Labs');
+    await page.selectOption('#size', '51-200');
+    await page.selectOption('#country', { label: 'Germany' });
+    await page.fill('#vat', 'DE123456789');
+    await page.click('#next1');
+    await page.fill('#fn', 'Ada');
+    await page.fill('#ln', 'Byron');
+    await page.fill('#em', 'ada@northwind.test');
+    await page.fill('#ph', '+49 30 1234567');
+    await page.click('#next2');
+    await page.check('input[name="plan"][value="growth"]');
+    await page.check('input[name="cycle"][value="yearly"]');
+    if (billing) { await page.uncheck('#sameinv'); await page.fill('#bin', 'billing@northwind.test'); }
+    await page.click('#next3');
+    for (const [mail, role] of [['lin@northwind.test', 'admin'], ['sam@northwind.test', 'member'], ['kai@northwind.test', 'member']]) {
+      await page.fill('#ie', mail);
+      await page.selectOption('#ir', role);
+      await page.click('#add');
+    }
+    await page.click('#next4');
+    await page.check('#terms');
+    await page.click('#create');
+  };
+  await onboard('onboard-ok', true);
+  expect(await page.locator('main').innerText()).toContain(`Workspace ${LONG_EXPECT.onboard.workspace} created for Northwind Labs (Growth, yearly, 3 invites).`);
+  await verify('long-onboard', 'onboard-ok', true);
+  await onboard('onboard-no-billing', false);
+  await verify('long-onboard', 'onboard-no-billing', false);
+
+  await openAttempt('long-laptops', 'laptops-ok', '/laptops');
+  for (const path of LONG_EXPECT.laptops.paths) {
+    await page.locator(`a[href="${path}"]`).first().click();
+    await page.goBack();
+  }
+  await page.locator(`a[href="${LONG_EXPECT.laptops.paths.at(-1)}"]`).first().click();
+  expect(await page.locator('main').innerText()).toContain('Battery life (video playback)');
+  await verify('long-laptops', 'laptops-ok', true);
+  await openAttempt('long-laptops', 'laptops-partial', '/laptops');
+  await page.locator(`a[href="${LONG_EXPECT.laptops.paths[0]}"]`).first().click();
+  await verify('long-laptops', 'laptops-partial', false);
 });

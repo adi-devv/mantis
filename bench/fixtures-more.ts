@@ -5,7 +5,7 @@
  */
 import { readFileSync } from 'node:fs';
 
-const page = (title: string, body: string, script = ''): string =>
+export const page = (title: string, body: string, script = ''): string =>
   `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${title}</title>` +
   `<style>body{font:16px/1.5 system-ui,sans-serif;max-width:900px;margin:24px auto;padding:0 16px}` +
   `.hidden{display:none}.err{color:#c00}.toast{position:fixed;bottom:16px;right:16px;background:#222;color:#fff;padding:8px 12px}` +

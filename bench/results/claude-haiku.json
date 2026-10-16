@@ -1,0 +1,5124 @@
+{
+  "metadata": {
+    "schemaVersion": 3,
+    "configFingerprint": "3b7cfa830708e13a507a4c896697ca20fd1b8f82b872f290e15a140775aab2e5",
+    "settings": {
+      "provider": "claude",
+      "tasks": [
+        "form-subscribe",
+        "wikipedia-birthdate",
+        "login",
+        "cookie-cart",
+        "longlist-item",
+        "pricing-team",
+        "dashboard-refresh",
+        "signup-validation",
+        "checkout-steps",
+        "booking-date",
+        "article-deep-fact",
+        "inventory-lookup",
+        "churned-max",
+        "search-pagination",
+        "feed-scroll",
+        "modal-delete",
+        "menu-settings",
+        "spa-team",
+        "plans-pick",
+        "faq-refund",
+        "iframe-pay",
+        "chart-march"
+      ],
+      "approaches": [
+        "mantis",
+        "tree",
+        "screenshot"
+      ],
+      "runs": 1,
+      "model": "claude-haiku-5-5",
+      "reasoning": "not-applicable",
+      "timeoutMs": 420000,
+      "concurrency": 5,
+      "toolRestrictions": {
+        "builtins": [
+          "Claude built-ins disabled by --tools \"\""
+        ],
+        "approaches": {
+          "mantis": {
+            "allow": [
+              "mcp__mantis"
+            ],
+            "deny": []
+          },
+          "tree": {
+            "allow": [
+              "mcp__playwright__browser_navigate",
+              "mcp__playwright__browser_navigate_back",
+              "mcp__playwright__browser_snapshot",
+              "mcp__playwright__browser_click",
+              "mcp__playwright__browser_type",
+              "mcp__playwright__browser_fill_form",
+              "mcp__playwright__browser_select_option",
+              "mcp__playwright__browser_press_key",
+              "mcp__playwright__browser_hover",
+              "mcp__playwright__browser_wait_for",
+              "mcp__playwright__browser_find",
+              "mcp__playwright__browser_tabs",
+              "mcp__playwright__browser_handle_dialog",
+              "mcp__playwright__browser_take_screenshot"
+            ],
+            "deny": [
+              "mcp__playwright__browser_evaluate",
+              "mcp__playwright__browser_run_code_unsafe"
+            ]
+          },
+          "screenshot": {
+            "allow": [
+              "mcp__screenshot"
+            ],
+            "deny": []
+          }
+        }
+      },
+      "runtime": {
+        "nodeVersion": "v20.14.0",
+        "platform": "win32",
+        "arch": "x64"
+      },
+      "environment": {
+        "MANTIS_MEMORY": null,
+        "MANTIS_HEADLESS": null,
+        "BENCH_CHROMIUM": null,
+        "PLAYWRIGHT_BROWSERS_PATH": null,
+        "CODEX_BIN": null,
+        "CLAUDE_BIN": null,
+        "resolvedCliCommand": "C:\\Users\\aadit\\AppData\\Roaming\\npm\\node_modules\\@anthropic-ai\\claude-code\\bin\\claude.exe"
+      },
+      "browserPaths": {
+        "chromiumForMcp": "C:\\Users\\aadit\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1248\\chrome-headless-shell-win64\\chrome-headless-shell.exe",
+        "browserUsePlaywrightBrowsersPath": null
+      }
+    },
+    "sourceHashes": {
+      "bench/agent/run.ts": "229959a71beda746e2c2fa067ae3a1718c98a72d42f85d193f8531564d9d417b",
+      "bench/agent/integrity.ts": "ccc5ee1468353d17f4f4ff2d9488997abd997eda30563921fe54d80943a70803",
+      "bench/agent/tasks.ts": "3811843d6921696fe3f699cfbf510aea9d1c580662f9e02ff7de6778ce00fc86",
+      "bench/agent/bridge.mjs": "3c57e0130636687a80e0ecc9e2191680d4483e8e001c29ffa619d5d5069682f3",
+      "bench/agent/codex.ts": "8f9917013ccf495aa1fd0a085d37a7e94540ff04908a3e81a4a2e10c62649baa",
+      "bench/agent/codex-config.ts": "a9436b14f70bcd503a9c63e81bf40927a438863d2dd3f4a814fa55e642e2764a",
+      "bench/agent/screenshot-mcp.ts": "0f4801f389b43e880262398a12f042576cb467ae0c91d03eeb8dcb491275ec8e",
+      "bench/fixtures.ts": "35d274924f1b3112f1ae221fd18b089085cafcb42efc16e37da33a9500683a14",
+      "bench/fixtures-more.ts": "62617966ae14a518e41ec4fbe2d3b84863ac0fe6868bbff08a27612d719cc631",
+      "bench/adapters.ts": "40fe43a06dc6a730879c2f381e1154de4b603c7ed01cfe2a3d52b11540a7c259",
+      "src/browser.ts": "157ef11b698b185b773f726df9e7e316b950d7e9fd6d9a271f0196180a730c8a",
+      "src/capture/index.ts": "e67095ae89f41684595ad97a988a1a8b2bac4b691efc6af61d931869e6bc7ca2",
+      "src/capture/walker.ts": "a2ba2063c5e86c088645a61a9f159ac5f315f2d648d84fbbdb78c4d7ebb64b74",
+      "src/cli.ts": "ed184995d3442c646ad297d0a38edf0f5766d4df613a61bbe06f6f7f103bf64b",
+      "src/diff.ts": "e07b305bae7c22d50d6b45f58ebfde5a166ae2601e957785a088be07c1faaab7",
+      "src/fallback/askHuman.ts": "b38e1ba18216dfbffc0a837980139c82186da8b6ce86aed5ae8d96a4d267522d",
+      "src/fallback/captcha.ts": "a404f4aa81b57ad8b9a5d8aca2a402864643725ce7ade918db39966faf8929b0",
+      "src/fallback/look.ts": "0827a0b888544343999b2acc74b5faae22d4b6c0cdd63250687e0f5d6c9f808e",
+      "src/fallback/media.ts": "c37632d85bd0d96a3222f300ca63d5a22e73ca047771b6c8102669c767a0a6ca",
+      "src/fallback/ocr.ts": "b39d18753f6286877f9f283dadb8723e2fbb52a9d72b7c5acb79cf6a4545e54e",
+      "src/fallback/probe.ts": "aa57b2f89883ba44ec3fd69e8f2c4c0e45004246cea056c3fce232ac42c8ebfd",
+      "src/index.ts": "45e1184ffc8836ef803ccb7482b65a93c5bddfc86c20c2faa6c0a723004043a5",
+      "src/memory.ts": "e2cefbbe80ec33dee5149a238f49e8d57a4a60dcd012a6b47d36e0d09eea0368",
+      "src/server.ts": "b255df894fe7f3d79af96dd3b12d819d0a47332384bfbb9253596466b7cb74b5",
+      "src/translate.ts": "2d2472852c2665c7d366d05823ffa7f8aff2f0bf416cce14ec3ac408304a3378",
+      "dist/browser.d.ts": "cd8af3ae2fb5c05d2e7f419810e43116bc8d4effa30bad4e97a3772c816bd7f8",
+      "dist/browser.js": "9aac0792f0d0f2039fdb30d25228d22bd7ecc7eab86f88073b8b18dfeddb34ce",
+      "dist/browser.js.map": "54be8085b0c76048581905263fcf1cc748ccfc36cf99daaff6d68dd42578fb5e",
+      "dist/capture/index.d.ts": "bc2d046a0485ecd3eda82fb8b371dea7ff3f1a103905fe83ad97e876ecde9dd5",
+      "dist/capture/index.js": "216426c9a65831b845253e852bc36fb7c36d6a1c28abc57ae85fb3acc12447c9",
+      "dist/capture/index.js.map": "762ab971df1301bf5bfd1210ef40e8f8731cb2abc63e082baa7a0c83463e8317",
+      "dist/capture/walker.d.ts": "e9fbbd8a3427640a687311fc134e313aaa12caea43b06f0ffe668395333aa0c3",
+      "dist/capture/walker.js": "be9eb262ff799264141014f43c5c14dddf28ceb0b28cc3dcff2ad199cc0170d6",
+      "dist/capture/walker.js.map": "3f11def43c01fedfe7ba1317e0d12093261fa441666d8fb42eeb0655625bb9cc",
+      "dist/cli.d.ts": "43e818adf60173644896298637f47b01d5819b17eda46eaa32d0c7d64724d012",
+      "dist/cli.js": "36e9fec642fcd7d90930ad09516177874d681c627c964c5dc4fa5d205cc70a57",
+      "dist/cli.js.map": "29fc6fc6b9714a98392362f9582c81dcf5d1a3218353b3acd51978a9036f61f9",
+      "dist/diff.d.ts": "92d7bc8793be432eec0b597444f7ee5c0f9a24b0671e6a1776ab0ad2e0f21183",
+      "dist/diff.js": "ccefcd455191d271c56edc0a1dc0284a38ccf6f0073ee1612341f381e0d46360",
+      "dist/diff.js.map": "c61426f0187fe121e1691000a9c255259658ea7fa4563c8707741a03d15e86c7",
+      "dist/fallback/askHuman.d.ts": "cce5053ca7a8ad7fd21ec8d4cf3e69c11cb8fe817d34fa746eba144f1420acfd",
+      "dist/fallback/askHuman.js": "f479ea63e519fd3ce76d2059f6f1740c4fd86d0d74d1efe7b7e371b8f07caa6f",
+      "dist/fallback/askHuman.js.map": "f791903345c7ab1e479e9b76859c9fbda207a5a04baef33a606fa76b306533fc",
+      "dist/fallback/captcha.d.ts": "955f78313568c5b87874348e6b8b9a27047a9b299635518ea0ffbb324039eac5",
+      "dist/fallback/captcha.js": "bb4706ae97c4dc937e80135e568eb5fb97a3edb029483baad47de9ed3286a05c",
+      "dist/fallback/captcha.js.map": "83bba825f4800d6517c70454063756942cb8f1d274eaf9475a44fdbc61977e29",
+      "dist/fallback/look.d.ts": "955e64af5f409d668fdf46d9fdd877ae012f8d246caedeadfb313e0247ecd6af",
+      "dist/fallback/look.js": "8c33ec0526efad8885fad941d332472cd58115e417cb4f3ca9fb8e1f27329a30",
+      "dist/fallback/look.js.map": "9bcc391e5c964b1920fe5101c3fadcc40e053b5447b5e45ff4dff83e9692e805",
+      "dist/fallback/media.d.ts": "2b0f628dba91f7d9da7cb4ee08b102037cb165448c18fa8e0c7cabf05918a749",
+      "dist/fallback/media.js": "939fece5d160b210e6e1f751fa2db765d55c88ddea01bcdb534941858361287c",
+      "dist/fallback/media.js.map": "b56cee770e060ed1b76b9a0ea14d380d59d492cf68e9af3b2e6dc98fd82fdfb2",
+      "dist/fallback/ocr.d.ts": "5f5cb0e04091187d8989520626a8266349b9c1c5c1f934f66c6583f26db5267f",
+      "dist/fallback/ocr.js": "ffe361929c3cd290645f89f70f5dff46828b14136cc54297501478171fcb5b2c",
+      "dist/fallback/ocr.js.map": "a74d12f44c709a8313382da19857b5cb2c7c30162f9ce11b8bae27cd632a3b12",
+      "dist/fallback/probe.d.ts": "d171fbde232b1d41fe67faf83168d57023a66068c69c0aed976d5e0f068cd597",
+      "dist/fallback/probe.js": "2453d56f097a5cb087cbd62b3f82b5c9474128463a73d3a586cf99579f73e876",
+      "dist/fallback/probe.js.map": "8d2441a4855ff20a6b31761476d2a437798e4441ea4ecb5092882fd44b2b6176",
+      "dist/index.d.ts": "45e1184ffc8836ef803ccb7482b65a93c5bddfc86c20c2faa6c0a723004043a5",
+      "dist/index.js": "75c6d8e8dd07075fb8b2508dc8d17bff5066e674fa905f917cbbde5dfac1bb70",
+      "dist/index.js.map": "71adea566fdddd7ed1f13bc48a50948cbc3c968cdbefbc2c85a364efd8b363c2",
+      "dist/memory.d.ts": "15258ea9433619fed0f2c921a8b4a584a79d7603acd26e4954cc535232668e46",
+      "dist/memory.js": "d886daad0a558521e4f0952ddb3a8e4fa0cc5a0b5830379d06d474014e44e65e",
+      "dist/memory.js.map": "092966360dd28b5acccbc1b2a5992d3fa8c4e7c6217e73219829e62535390481",
+      "dist/server.d.ts": "1933eeb4ddcdfff3b415d8bec8a674c31447a294cfdc77d1e5046bdbddae2bc0",
+      "dist/server.js": "2860f39903b6fed4301e1d1571b0a6eadb0f4c2b3704242655299709aacbe310",
+      "dist/server.js.map": "23eadb2d455c61f6d67093074c9d8110bc0e09e7c457bc6aa598366c469bc7df",
+      "dist/translate.d.ts": "62b37d24579c352c4c1db1eef67bec92cb153121c89b0e5ba914f5dbffb84ecb",
+      "dist/translate.js": "4ad00cb45f1216762c87d1c73c882d554340e0bccbf72a93dd913e8c399ace48",
+      "dist/translate.js.map": "f2c63f5bbfad2866dfc4cd30b5625b964d2a9918c77832fad4ed5e90d648cc79",
+      "package-lock.json": "1c77fb2f84b18bb357bbd29500a1cc87214d8d4bb733c4c61d83305c964b2749"
+    },
+    "cliVersion": "2.1.161 (Claude Code)"
+  },
+  "model": "claude-haiku-5-5",
+  "runs": 1,
+  "results": [
+    {
+      "task": "form-subscribe",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Subscribed from Canada (weekly: yes).",
+      "turns": 5,
+      "toolCalls": 4,
+      "toolErrors": 0,
+      "observationChars": 611,
+      "observationImages": 0,
+      "inputTokens": 10,
+      "cacheWriteTokens": 12184,
+      "cacheReadTokens": 35343,
+      "totalInputTokens": 47537,
+      "outputTokens": 389,
+      "costUsd": 0.062157899999999995,
+      "timings": {
+        "mcpStartupMs": 2063,
+        "cliStartupMs": 3359,
+        "cliExecutionMs": 9377,
+        "cliWallMs": 12736,
+        "verificationMs": 1,
+        "cleanupMs": 176
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Subscribed from Canada (weekly: yes).",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 5,
+          "toolCalls": 4,
+          "toolErrors": 0,
+          "observationChars": 611,
+          "observationImages": 0,
+          "totalInputTokens": 47537,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 10,
+            "cacheWriteTokens": 12184,
+            "cacheReadTokens": 35343,
+            "outputTokens": 389,
+            "costUsd": 0.062157899999999995
+          },
+          "timings": {
+            "mcpStartupMs": 2063,
+            "cliStartupMs": 3359,
+            "cliExecutionMs": 9377,
+            "cliWallMs": 12736,
+            "verificationMs": 1,
+            "cleanupMs": 176
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "form-subscribe",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Subscribed from Canada (weekly: yes).",
+      "turns": 8,
+      "toolCalls": 7,
+      "toolErrors": 0,
+      "observationChars": 3135,
+      "observationImages": 0,
+      "inputTokens": 12,
+      "cacheWriteTokens": 17164,
+      "cacheReadTokens": 62899,
+      "totalInputTokens": 80075,
+      "outputTokens": 682,
+      "costUsd": 0.09350070000000002,
+      "timings": {
+        "mcpStartupMs": 2066,
+        "cliStartupMs": 3328,
+        "cliExecutionMs": 13374,
+        "cliWallMs": 16702,
+        "verificationMs": 0,
+        "cleanupMs": 245
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Subscribed from Canada (weekly: yes).",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 8,
+          "toolCalls": 7,
+          "toolErrors": 0,
+          "observationChars": 3135,
+          "observationImages": 0,
+          "totalInputTokens": 80075,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 12,
+            "cacheWriteTokens": 17164,
+            "cacheReadTokens": 62899,
+            "outputTokens": 682,
+            "costUsd": 0.09350070000000002
+          },
+          "timings": {
+            "mcpStartupMs": 2066,
+            "cliStartupMs": 3328,
+            "cliExecutionMs": 13374,
+            "cliWallMs": 16702,
+            "verificationMs": 0,
+            "cleanupMs": 245
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "form-subscribe",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Subscribed from Canada (weekly: yes).",
+      "turns": 16,
+      "toolCalls": 15,
+      "toolErrors": 0,
+      "observationChars": 241,
+      "observationImages": 6,
+      "inputTokens": 16,
+      "cacheWriteTokens": 19382,
+      "cacheReadTokens": 81480,
+      "totalInputTokens": 100878,
+      "outputTokens": 1317,
+      "costUsd": 0.1169295,
+      "timings": {
+        "mcpStartupMs": 2070,
+        "cliStartupMs": 3309,
+        "cliExecutionMs": 19729,
+        "cliWallMs": 23038,
+        "verificationMs": 0,
+        "cleanupMs": 162
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Subscribed from Canada (weekly: yes).",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 16,
+          "toolCalls": 15,
+          "toolErrors": 0,
+          "observationChars": 241,
+          "observationImages": 6,
+          "totalInputTokens": 100878,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 16,
+            "cacheWriteTokens": 19382,
+            "cacheReadTokens": 81480,
+            "outputTokens": 1317,
+            "costUsd": 0.1169295
+          },
+          "timings": {
+            "mcpStartupMs": 2070,
+            "cliStartupMs": 3309,
+            "cliExecutionMs": 19729,
+            "cliWallMs": 23038,
+            "verificationMs": 0,
+            "cleanupMs": 162
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "wikipedia-birthdate",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "23 June 1912",
+      "turns": 2,
+      "toolCalls": 1,
+      "toolErrors": 0,
+      "observationChars": 2750,
+      "observationImages": 0,
+      "inputTokens": 6,
+      "cacheWriteTokens": 12913,
+      "cacheReadTokens": 11469,
+      "totalInputTokens": 24388,
+      "outputTokens": 209,
+      "costUsd": 0.055017449999999996,
+      "timings": {
+        "mcpStartupMs": 2070,
+        "cliStartupMs": 3296,
+        "cliExecutionMs": 14635,
+        "cliWallMs": 17931,
+        "verificationMs": 0,
+        "cleanupMs": 228
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "23 June 1912",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 2,
+          "toolCalls": 1,
+          "toolErrors": 0,
+          "observationChars": 2750,
+          "observationImages": 0,
+          "totalInputTokens": 24388,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 6,
+            "cacheWriteTokens": 12913,
+            "cacheReadTokens": 11469,
+            "outputTokens": 209,
+            "costUsd": 0.055017449999999996
+          },
+          "timings": {
+            "mcpStartupMs": 2070,
+            "cliStartupMs": 3296,
+            "cliExecutionMs": 14635,
+            "cliWallMs": 17931,
+            "verificationMs": 0,
+            "cleanupMs": 228
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "wikipedia-birthdate",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "23 June 1912",
+      "turns": 3,
+      "toolCalls": 2,
+      "toolErrors": 0,
+      "observationChars": 13284,
+      "observationImages": 0,
+      "inputTokens": 6,
+      "cacheWriteTokens": 20605,
+      "cacheReadTokens": 14776,
+      "totalInputTokens": 35387,
+      "outputTokens": 197,
+      "costUsd": 0.08467454999999999,
+      "timings": {
+        "mcpStartupMs": 2075,
+        "cliStartupMs": 3282,
+        "cliExecutionMs": 15469,
+        "cliWallMs": 18751,
+        "verificationMs": 0,
+        "cleanupMs": 235
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "23 June 1912",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 3,
+          "toolCalls": 2,
+          "toolErrors": 0,
+          "observationChars": 13284,
+          "observationImages": 0,
+          "totalInputTokens": 35387,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 6,
+            "cacheWriteTokens": 20605,
+            "cacheReadTokens": 14776,
+            "outputTokens": 197,
+            "costUsd": 0.08467454999999999
+          },
+          "timings": {
+            "mcpStartupMs": 2075,
+            "cliStartupMs": 3282,
+            "cliExecutionMs": 15469,
+            "cliWallMs": 18751,
+            "verificationMs": 0,
+            "cleanupMs": 235
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "wikipedia-birthdate",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "23 June 1912",
+      "turns": 3,
+      "toolCalls": 2,
+      "toolErrors": 0,
+      "observationChars": 54,
+      "observationImages": 1,
+      "inputTokens": 6,
+      "cacheWriteTokens": 7009,
+      "cacheReadTokens": 13439,
+      "totalInputTokens": 20454,
+      "outputTokens": 235,
+      "costUsd": 0.03385845,
+      "timings": {
+        "mcpStartupMs": 2020,
+        "cliStartupMs": 1363,
+        "cliExecutionMs": 5924,
+        "cliWallMs": 7287,
+        "verificationMs": 0,
+        "cleanupMs": 279
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "23 June 1912",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 3,
+          "toolCalls": 2,
+          "toolErrors": 0,
+          "observationChars": 54,
+          "observationImages": 1,
+          "totalInputTokens": 20454,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 6,
+            "cacheWriteTokens": 7009,
+            "cacheReadTokens": 13439,
+            "outputTokens": 235,
+            "costUsd": 0.03385845
+          },
+          "timings": {
+            "mcpStartupMs": 2020,
+            "cliStartupMs": 1363,
+            "cliExecutionMs": 5924,
+            "cliWallMs": 7287,
+            "verificationMs": 0,
+            "cleanupMs": 279
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "login",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Signed in",
+      "turns": 6,
+      "toolCalls": 5,
+      "toolErrors": 0,
+      "observationChars": 964,
+      "observationImages": 0,
+      "inputTokens": 12,
+      "cacheWriteTokens": 6331,
+      "cacheReadTokens": 53643,
+      "totalInputTokens": 59986,
+      "outputTokens": 542,
+      "costUsd": 0.048000150000000005,
+      "timings": {
+        "mcpStartupMs": 2093,
+        "cliStartupMs": 1443,
+        "cliExecutionMs": 10881,
+        "cliWallMs": 12324,
+        "verificationMs": 1,
+        "cleanupMs": 169
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Signed in",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 6,
+          "toolCalls": 5,
+          "toolErrors": 0,
+          "observationChars": 964,
+          "observationImages": 0,
+          "totalInputTokens": 59986,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 12,
+            "cacheWriteTokens": 6331,
+            "cacheReadTokens": 53643,
+            "outputTokens": 542,
+            "costUsd": 0.048000150000000005
+          },
+          "timings": {
+            "mcpStartupMs": 2093,
+            "cliStartupMs": 1443,
+            "cliExecutionMs": 10881,
+            "cliWallMs": 12324,
+            "verificationMs": 1,
+            "cleanupMs": 169
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "login",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Signed in",
+      "turns": 6,
+      "toolCalls": 5,
+      "toolErrors": 0,
+      "observationChars": 2160,
+      "observationImages": 0,
+      "inputTokens": 10,
+      "cacheWriteTokens": 7129,
+      "cacheReadTokens": 55746,
+      "totalInputTokens": 62885,
+      "outputTokens": 686,
+      "costUsd": 0.05377754999999999,
+      "timings": {
+        "mcpStartupMs": 2024,
+        "cliStartupMs": 1320,
+        "cliExecutionMs": 10614,
+        "cliWallMs": 11934,
+        "verificationMs": 0,
+        "cleanupMs": 194
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Signed in",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 6,
+          "toolCalls": 5,
+          "toolErrors": 0,
+          "observationChars": 2160,
+          "observationImages": 0,
+          "totalInputTokens": 62885,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 10,
+            "cacheWriteTokens": 7129,
+            "cacheReadTokens": 55746,
+            "outputTokens": 686,
+            "costUsd": 0.05377754999999999
+          },
+          "timings": {
+            "mcpStartupMs": 2024,
+            "cliStartupMs": 1320,
+            "cliExecutionMs": 10614,
+            "cliWallMs": 11934,
+            "verificationMs": 0,
+            "cleanupMs": 194
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "login",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Signed in",
+      "turns": 9,
+      "toolCalls": 8,
+      "toolErrors": 0,
+      "observationChars": 202,
+      "observationImages": 2,
+      "inputTokens": 8,
+      "cacheWriteTokens": 8983,
+      "cacheReadTokens": 24501,
+      "totalInputTokens": 33492,
+      "outputTokens": 629,
+      "costUsd": 0.05049554999999999,
+      "timings": {
+        "mcpStartupMs": 2017,
+        "cliStartupMs": 1470,
+        "cliExecutionMs": 9838,
+        "cliWallMs": 11308,
+        "verificationMs": 0,
+        "cleanupMs": 205
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Signed in",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 9,
+          "toolCalls": 8,
+          "toolErrors": 0,
+          "observationChars": 202,
+          "observationImages": 2,
+          "totalInputTokens": 33492,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 8,
+            "cacheWriteTokens": 8983,
+            "cacheReadTokens": 24501,
+            "outputTokens": 629,
+            "costUsd": 0.05049554999999999
+          },
+          "timings": {
+            "mcpStartupMs": 2017,
+            "cliStartupMs": 1470,
+            "cliExecutionMs": 9838,
+            "cliWallMs": 11308,
+            "verificationMs": 0,
+            "cleanupMs": 205
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "cookie-cart",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "\"Added to cart (1 item).\"",
+      "turns": 5,
+      "toolCalls": 4,
+      "toolErrors": 0,
+      "observationChars": 702,
+      "observationImages": 0,
+      "inputTokens": 10,
+      "cacheWriteTokens": 6149,
+      "cacheReadTokens": 41329,
+      "totalInputTokens": 47488,
+      "outputTokens": 402,
+      "costUsd": 0.04151745,
+      "timings": {
+        "mcpStartupMs": 2019,
+        "cliStartupMs": 1472,
+        "cliExecutionMs": 9177,
+        "cliWallMs": 10649,
+        "verificationMs": 0,
+        "cleanupMs": 250
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "\"Added to cart (1 item).\"",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 5,
+          "toolCalls": 4,
+          "toolErrors": 0,
+          "observationChars": 702,
+          "observationImages": 0,
+          "totalInputTokens": 47488,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 10,
+            "cacheWriteTokens": 6149,
+            "cacheReadTokens": 41329,
+            "outputTokens": 402,
+            "costUsd": 0.04151745
+          },
+          "timings": {
+            "mcpStartupMs": 2019,
+            "cliStartupMs": 1472,
+            "cliExecutionMs": 9177,
+            "cliWallMs": 10649,
+            "verificationMs": 0,
+            "cleanupMs": 250
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "cookie-cart",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "\"Added to cart (1 item).\"",
+      "turns": 9,
+      "toolCalls": 8,
+      "toolErrors": 1,
+      "observationChars": 3882,
+      "observationImages": 0,
+      "inputTokens": 12,
+      "cacheWriteTokens": 8643,
+      "cacheReadTokens": 73865,
+      "totalInputTokens": 82520,
+      "outputTokens": 1134,
+      "costUsd": 0.07161674999999999,
+      "timings": {
+        "mcpStartupMs": 2026,
+        "cliStartupMs": 1595,
+        "cliExecutionMs": 19495,
+        "cliWallMs": 21090,
+        "verificationMs": 1,
+        "cleanupMs": 161
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "\"Added to cart (1 item).\"",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 9,
+          "toolCalls": 8,
+          "toolErrors": 1,
+          "observationChars": 3882,
+          "observationImages": 0,
+          "totalInputTokens": 82520,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 12,
+            "cacheWriteTokens": 8643,
+            "cacheReadTokens": 73865,
+            "outputTokens": 1134,
+            "costUsd": 0.07161674999999999
+          },
+          "timings": {
+            "mcpStartupMs": 2026,
+            "cliStartupMs": 1595,
+            "cliExecutionMs": 19495,
+            "cliWallMs": 21090,
+            "verificationMs": 1,
+            "cleanupMs": 161
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "cookie-cart",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "\"Added to cart (1 item).\"",
+      "turns": 7,
+      "toolCalls": 6,
+      "toolErrors": 0,
+      "observationChars": 134,
+      "observationImages": 3,
+      "inputTokens": 10,
+      "cacheWriteTokens": 10371,
+      "cacheReadTokens": 37395,
+      "totalInputTokens": 47776,
+      "outputTokens": 725,
+      "costUsd": 0.06101475,
+      "timings": {
+        "mcpStartupMs": 2017,
+        "cliStartupMs": 1079,
+        "cliExecutionMs": 10153,
+        "cliWallMs": 11232,
+        "verificationMs": 0,
+        "cleanupMs": 178
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "\"Added to cart (1 item).\"",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 7,
+          "toolCalls": 6,
+          "toolErrors": 0,
+          "observationChars": 134,
+          "observationImages": 3,
+          "totalInputTokens": 47776,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 10,
+            "cacheWriteTokens": 10371,
+            "cacheReadTokens": 37395,
+            "outputTokens": 725,
+            "costUsd": 0.06101475
+          },
+          "timings": {
+            "mcpStartupMs": 2017,
+            "cliStartupMs": 1079,
+            "cliExecutionMs": 10153,
+            "cliWallMs": 11232,
+            "verificationMs": 0,
+            "cleanupMs": 178
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "longlist-item",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Detail for item 150",
+      "turns": 5,
+      "toolCalls": 4,
+      "toolErrors": 0,
+      "observationChars": 1351,
+      "observationImages": 0,
+      "inputTokens": 10,
+      "cacheWriteTokens": 6521,
+      "cacheReadTokens": 42025,
+      "totalInputTokens": 48556,
+      "outputTokens": 322,
+      "costUsd": 0.04192125000000001,
+      "timings": {
+        "mcpStartupMs": 2020,
+        "cliStartupMs": 1526,
+        "cliExecutionMs": 8685,
+        "cliWallMs": 10211,
+        "verificationMs": 0,
+        "cleanupMs": 203
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Detail for item 150",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 5,
+          "toolCalls": 4,
+          "toolErrors": 0,
+          "observationChars": 1351,
+          "observationImages": 0,
+          "totalInputTokens": 48556,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 10,
+            "cacheWriteTokens": 6521,
+            "cacheReadTokens": 42025,
+            "outputTokens": 322,
+            "costUsd": 0.04192125000000001
+          },
+          "timings": {
+            "mcpStartupMs": 2020,
+            "cliStartupMs": 1526,
+            "cliExecutionMs": 8685,
+            "cliWallMs": 10211,
+            "verificationMs": 0,
+            "cleanupMs": 203
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "longlist-item",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Detail for item 150",
+      "turns": 5,
+      "toolCalls": 4,
+      "toolErrors": 0,
+      "observationChars": 1258,
+      "observationImages": 0,
+      "inputTokens": 12,
+      "cacheWriteTokens": 6396,
+      "cacheReadTokens": 70342,
+      "totalInputTokens": 76750,
+      "outputTokens": 385,
+      "costUsd": 0.050898599999999995,
+      "timings": {
+        "mcpStartupMs": 2017,
+        "cliStartupMs": 1454,
+        "cliExecutionMs": 10475,
+        "cliWallMs": 11929,
+        "verificationMs": 0,
+        "cleanupMs": 174
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Detail for item 150",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 5,
+          "toolCalls": 4,
+          "toolErrors": 0,
+          "observationChars": 1258,
+          "observationImages": 0,
+          "totalInputTokens": 76750,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 12,
+            "cacheWriteTokens": 6396,
+            "cacheReadTokens": 70342,
+            "outputTokens": 385,
+            "costUsd": 0.050898599999999995
+          },
+          "timings": {
+            "mcpStartupMs": 2017,
+            "cliStartupMs": 1454,
+            "cliExecutionMs": 10475,
+            "cliWallMs": 11929,
+            "verificationMs": 0,
+            "cleanupMs": 174
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "longlist-item",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Detail for item 150",
+      "turns": 8,
+      "toolCalls": 7,
+      "toolErrors": 0,
+      "observationChars": 154,
+      "observationImages": 3,
+      "inputTokens": 10,
+      "cacheWriteTokens": 10284,
+      "cacheReadTokens": 37301,
+      "totalInputTokens": 47595,
+      "outputTokens": 573,
+      "costUsd": 0.058380299999999996,
+      "timings": {
+        "mcpStartupMs": 2012,
+        "cliStartupMs": 1461,
+        "cliExecutionMs": 10384,
+        "cliWallMs": 11845,
+        "verificationMs": 0,
+        "cleanupMs": 239
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Detail for item 150",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 8,
+          "toolCalls": 7,
+          "toolErrors": 0,
+          "observationChars": 154,
+          "observationImages": 3,
+          "totalInputTokens": 47595,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 10,
+            "cacheWriteTokens": 10284,
+            "cacheReadTokens": 37301,
+            "outputTokens": 573,
+            "costUsd": 0.058380299999999996
+          },
+          "timings": {
+            "mcpStartupMs": 2012,
+            "cliStartupMs": 1461,
+            "cliExecutionMs": 10384,
+            "cliWallMs": 11845,
+            "verificationMs": 0,
+            "cleanupMs": 239
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "pricing-team",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "$29 per month",
+      "turns": 3,
+      "toolCalls": 2,
+      "toolErrors": 0,
+      "observationChars": 794,
+      "observationImages": 0,
+      "inputTokens": 8,
+      "cacheWriteTokens": 6003,
+      "cacheReadTokens": 29389,
+      "totalInputTokens": 35400,
+      "outputTokens": 283,
+      "costUsd": 0.03559695,
+      "timings": {
+        "mcpStartupMs": 2020,
+        "cliStartupMs": 1430,
+        "cliExecutionMs": 8490,
+        "cliWallMs": 9920,
+        "verificationMs": 0,
+        "cleanupMs": 157
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "$29 per month",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 3,
+          "toolCalls": 2,
+          "toolErrors": 0,
+          "observationChars": 794,
+          "observationImages": 0,
+          "totalInputTokens": 35400,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 8,
+            "cacheWriteTokens": 6003,
+            "cacheReadTokens": 29389,
+            "outputTokens": 283,
+            "costUsd": 0.03559695
+          },
+          "timings": {
+            "mcpStartupMs": 2020,
+            "cliStartupMs": 1430,
+            "cliExecutionMs": 8490,
+            "cliWallMs": 9920,
+            "verificationMs": 0,
+            "cleanupMs": 157
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "pricing-team",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "$29 per month",
+      "turns": 5,
+      "toolCalls": 4,
+      "toolErrors": 0,
+      "observationChars": 2089,
+      "observationImages": 0,
+      "inputTokens": 12,
+      "cacheWriteTokens": 6862,
+      "cacheReadTokens": 70627,
+      "totalInputTokens": 77501,
+      "outputTokens": 423,
+      "costUsd": 0.053301600000000005,
+      "timings": {
+        "mcpStartupMs": 2025,
+        "cliStartupMs": 1455,
+        "cliExecutionMs": 10831,
+        "cliWallMs": 12286,
+        "verificationMs": 0,
+        "cleanupMs": 220
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "$29 per month",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 5,
+          "toolCalls": 4,
+          "toolErrors": 0,
+          "observationChars": 2089,
+          "observationImages": 0,
+          "totalInputTokens": 77501,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 12,
+            "cacheWriteTokens": 6862,
+            "cacheReadTokens": 70627,
+            "outputTokens": 423,
+            "costUsd": 0.053301600000000005
+          },
+          "timings": {
+            "mcpStartupMs": 2025,
+            "cliStartupMs": 1455,
+            "cliExecutionMs": 10831,
+            "cliWallMs": 12286,
+            "verificationMs": 0,
+            "cleanupMs": 220
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "pricing-team",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "$29 per month",
+      "turns": 5,
+      "toolCalls": 4,
+      "toolErrors": 0,
+      "observationChars": 116,
+      "observationImages": 2,
+      "inputTokens": 8,
+      "cacheWriteTokens": 8567,
+      "cacheReadTokens": 24500,
+      "totalInputTokens": 33075,
+      "outputTokens": 310,
+      "costUsd": 0.04415025,
+      "timings": {
+        "mcpStartupMs": 2020,
+        "cliStartupMs": 1481,
+        "cliExecutionMs": 8889,
+        "cliWallMs": 10370,
+        "verificationMs": 0,
+        "cleanupMs": 143
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "$29 per month",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 5,
+          "toolCalls": 4,
+          "toolErrors": 0,
+          "observationChars": 116,
+          "observationImages": 2,
+          "totalInputTokens": 33075,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 8,
+            "cacheWriteTokens": 8567,
+            "cacheReadTokens": 24500,
+            "outputTokens": 310,
+            "costUsd": 0.04415025
+          },
+          "timings": {
+            "mcpStartupMs": 2020,
+            "cliStartupMs": 1481,
+            "cliExecutionMs": 8889,
+            "cliWallMs": 10370,
+            "verificationMs": 0,
+            "cleanupMs": 143
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "dashboard-refresh",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Last updated: just now; Initech 3 amount: $4,218",
+      "turns": 5,
+      "toolCalls": 4,
+      "toolErrors": 0,
+      "observationChars": 11134,
+      "observationImages": 0,
+      "inputTokens": 12,
+      "cacheWriteTokens": 12450,
+      "cacheReadTokens": 62931,
+      "totalInputTokens": 75393,
+      "outputTokens": 617,
+      "costUsd": 0.07485779999999999,
+      "timings": {
+        "mcpStartupMs": 2013,
+        "cliStartupMs": 1331,
+        "cliExecutionMs": 12146,
+        "cliWallMs": 13477,
+        "verificationMs": 0,
+        "cleanupMs": 197
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Last updated: just now; Initech 3 amount: $4,218",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 5,
+          "toolCalls": 4,
+          "toolErrors": 0,
+          "observationChars": 11134,
+          "observationImages": 0,
+          "totalInputTokens": 75393,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 12,
+            "cacheWriteTokens": 12450,
+            "cacheReadTokens": 62931,
+            "outputTokens": 617,
+            "costUsd": 0.07485779999999999
+          },
+          "timings": {
+            "mcpStartupMs": 2013,
+            "cliStartupMs": 1331,
+            "cliExecutionMs": 12146,
+            "cliWallMs": 13477,
+            "verificationMs": 0,
+            "cleanupMs": 197
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "dashboard-refresh",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Last updated: just now; Initech 3 amount: $4,218",
+      "turns": 6,
+      "toolCalls": 5,
+      "toolErrors": 0,
+      "observationChars": 20062,
+      "observationImages": 0,
+      "inputTokens": 10,
+      "cacheWriteTokens": 15520,
+      "cacheReadTokens": 72260,
+      "totalInputTokens": 87790,
+      "outputTokens": 639,
+      "costUsd": 0.089493,
+      "timings": {
+        "mcpStartupMs": 2016,
+        "cliStartupMs": 1163,
+        "cliExecutionMs": 10545,
+        "cliWallMs": 11708,
+        "verificationMs": 0,
+        "cleanupMs": 187
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Last updated: just now; Initech 3 amount: $4,218",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 6,
+          "toolCalls": 5,
+          "toolErrors": 0,
+          "observationChars": 20062,
+          "observationImages": 0,
+          "totalInputTokens": 87790,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 10,
+            "cacheWriteTokens": 15520,
+            "cacheReadTokens": 72260,
+            "outputTokens": 639,
+            "costUsd": 0.089493
+          },
+          "timings": {
+            "mcpStartupMs": 2016,
+            "cliStartupMs": 1163,
+            "cliExecutionMs": 10545,
+            "cliWallMs": 11708,
+            "verificationMs": 0,
+            "cleanupMs": 187
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "dashboard-refresh",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Last updated: just now; Initech 3 amount: $4,218",
+      "turns": 9,
+      "toolCalls": 8,
+      "toolErrors": 0,
+      "observationChars": 148,
+      "observationImages": 4,
+      "inputTokens": 12,
+      "cacheWriteTokens": 11895,
+      "cacheReadTokens": 51525,
+      "totalInputTokens": 63432,
+      "outputTokens": 874,
+      "costUsd": 0.07320975,
+      "timings": {
+        "mcpStartupMs": 2162,
+        "cliStartupMs": 1298,
+        "cliExecutionMs": 12566,
+        "cliWallMs": 13864,
+        "verificationMs": 0,
+        "cleanupMs": 164
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Last updated: just now; Initech 3 amount: $4,218",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 9,
+          "toolCalls": 8,
+          "toolErrors": 0,
+          "observationChars": 148,
+          "observationImages": 4,
+          "totalInputTokens": 63432,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 12,
+            "cacheWriteTokens": 11895,
+            "cacheReadTokens": 51525,
+            "outputTokens": 874,
+            "costUsd": 0.07320975
+          },
+          "timings": {
+            "mcpStartupMs": 2162,
+            "cliStartupMs": 1298,
+            "cliExecutionMs": 12566,
+            "cliWallMs": 13864,
+            "verificationMs": 0,
+            "cleanupMs": 164
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "signup-validation",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Your account is ready.",
+      "turns": 10,
+      "toolCalls": 9,
+      "toolErrors": 0,
+      "observationChars": 1116,
+      "observationImages": 0,
+      "inputTokens": 16,
+      "cacheWriteTokens": 6944,
+      "cacheReadTokens": 79856,
+      "totalInputTokens": 86816,
+      "outputTokens": 948,
+      "costUsd": 0.0642648,
+      "timings": {
+        "mcpStartupMs": 2012,
+        "cliStartupMs": 1339,
+        "cliExecutionMs": 14182,
+        "cliWallMs": 15521,
+        "verificationMs": 0,
+        "cleanupMs": 187
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Your account is ready.",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 10,
+          "toolCalls": 9,
+          "toolErrors": 0,
+          "observationChars": 1116,
+          "observationImages": 0,
+          "totalInputTokens": 86816,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 16,
+            "cacheWriteTokens": 6944,
+            "cacheReadTokens": 79856,
+            "outputTokens": 948,
+            "costUsd": 0.0642648
+          },
+          "timings": {
+            "mcpStartupMs": 2012,
+            "cliStartupMs": 1339,
+            "cliExecutionMs": 14182,
+            "cliWallMs": 15521,
+            "verificationMs": 0,
+            "cleanupMs": 187
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "signup-validation",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Welcome, new@example.com. Your account is ready.",
+      "turns": 9,
+      "toolCalls": 8,
+      "toolErrors": 0,
+      "observationChars": 2759,
+      "observationImages": 0,
+      "inputTokens": 10,
+      "cacheWriteTokens": 7834,
+      "cacheReadTokens": 56173,
+      "totalInputTokens": 64017,
+      "outputTokens": 933,
+      "costUsd": 0.0602544,
+      "timings": {
+        "mcpStartupMs": 2011,
+        "cliStartupMs": 1360,
+        "cliExecutionMs": 12234,
+        "cliWallMs": 13594,
+        "verificationMs": 1,
+        "cleanupMs": 191
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Welcome, new@example.com. Your account is ready.",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 9,
+          "toolCalls": 8,
+          "toolErrors": 0,
+          "observationChars": 2759,
+          "observationImages": 0,
+          "totalInputTokens": 64017,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 10,
+            "cacheWriteTokens": 7834,
+            "cacheReadTokens": 56173,
+            "outputTokens": 933,
+            "costUsd": 0.0602544
+          },
+          "timings": {
+            "mcpStartupMs": 2011,
+            "cliStartupMs": 1360,
+            "cliExecutionMs": 12234,
+            "cliWallMs": 13594,
+            "verificationMs": 1,
+            "cleanupMs": 191
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "signup-validation",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Welcome, new@example.com — Your account is ready.",
+      "turns": 20,
+      "toolCalls": 19,
+      "toolErrors": 0,
+      "observationChars": 373,
+      "observationImages": 4,
+      "inputTokens": 12,
+      "cacheWriteTokens": 12974,
+      "cacheReadTokens": 53222,
+      "totalInputTokens": 66208,
+      "outputTokens": 1457,
+      "costUsd": 0.08651009999999999,
+      "timings": {
+        "mcpStartupMs": 2010,
+        "cliStartupMs": 1152,
+        "cliExecutionMs": 17393,
+        "cliWallMs": 18545,
+        "verificationMs": 0,
+        "cleanupMs": 178
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Welcome, new@example.com — Your account is ready.",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 20,
+          "toolCalls": 19,
+          "toolErrors": 0,
+          "observationChars": 373,
+          "observationImages": 4,
+          "totalInputTokens": 66208,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 12,
+            "cacheWriteTokens": 12974,
+            "cacheReadTokens": 53222,
+            "outputTokens": 1457,
+            "costUsd": 0.08651009999999999
+          },
+          "timings": {
+            "mcpStartupMs": 2010,
+            "cliStartupMs": 1152,
+            "cliExecutionMs": 17393,
+            "cliWallMs": 18545,
+            "verificationMs": 0,
+            "cleanupMs": 178
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "checkout-steps",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Order #A1042; total charged $27.50",
+      "turns": 11,
+      "toolCalls": 10,
+      "toolErrors": 0,
+      "observationChars": 1828,
+      "observationImages": 0,
+      "inputTokens": 20,
+      "cacheWriteTokens": 7250,
+      "cacheReadTokens": 105492,
+      "totalInputTokens": 112762,
+      "outputTokens": 789,
+      "costUsd": 0.0707301,
+      "timings": {
+        "mcpStartupMs": 2014,
+        "cliStartupMs": 1431,
+        "cliExecutionMs": 20360,
+        "cliWallMs": 21791,
+        "verificationMs": 1,
+        "cleanupMs": 269
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Order #A1042; total charged $27.50",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 11,
+          "toolCalls": 10,
+          "toolErrors": 0,
+          "observationChars": 1828,
+          "observationImages": 0,
+          "totalInputTokens": 112762,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 20,
+            "cacheWriteTokens": 7250,
+            "cacheReadTokens": 105492,
+            "outputTokens": 789,
+            "costUsd": 0.0707301
+          },
+          "timings": {
+            "mcpStartupMs": 2014,
+            "cliStartupMs": 1431,
+            "cliExecutionMs": 20360,
+            "cliWallMs": 21791,
+            "verificationMs": 1,
+            "cleanupMs": 269
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "checkout-steps",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Order #A1042, total charged $27.50",
+      "turns": 11,
+      "toolCalls": 10,
+      "toolErrors": 0,
+      "observationChars": 3482,
+      "observationImages": 0,
+      "inputTokens": 12,
+      "cacheWriteTokens": 8450,
+      "cacheReadTokens": 73495,
+      "totalInputTokens": 81957,
+      "outputTokens": 965,
+      "costUsd": 0.068247,
+      "timings": {
+        "mcpStartupMs": 2010,
+        "cliStartupMs": 1238,
+        "cliExecutionMs": 15775,
+        "cliWallMs": 17013,
+        "verificationMs": 1,
+        "cleanupMs": 186
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Order #A1042, total charged $27.50",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 11,
+          "toolCalls": 10,
+          "toolErrors": 0,
+          "observationChars": 3482,
+          "observationImages": 0,
+          "totalInputTokens": 81957,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 12,
+            "cacheWriteTokens": 8450,
+            "cacheReadTokens": 73495,
+            "outputTokens": 965,
+            "costUsd": 0.068247
+          },
+          "timings": {
+            "mcpStartupMs": 2010,
+            "cliStartupMs": 1238,
+            "cliExecutionMs": 15775,
+            "cliWallMs": 17013,
+            "verificationMs": 1,
+            "cleanupMs": 186
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "checkout-steps",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Order #A1042; total charged $27.50",
+      "turns": 22,
+      "toolCalls": 21,
+      "toolErrors": 0,
+      "observationChars": 354,
+      "observationImages": 7,
+      "inputTokens": 18,
+      "cacheWriteTokens": 17224,
+      "cacheReadTokens": 106050,
+      "totalInputTokens": 123292,
+      "outputTokens": 1577,
+      "costUsd": 0.12011400000000001,
+      "timings": {
+        "mcpStartupMs": 2034,
+        "cliStartupMs": 1172,
+        "cliExecutionMs": 18099,
+        "cliWallMs": 19271,
+        "verificationMs": 0,
+        "cleanupMs": 182
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Order #A1042; total charged $27.50",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 22,
+          "toolCalls": 21,
+          "toolErrors": 0,
+          "observationChars": 354,
+          "observationImages": 7,
+          "totalInputTokens": 123292,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 18,
+            "cacheWriteTokens": 17224,
+            "cacheReadTokens": 106050,
+            "outputTokens": 1577,
+            "costUsd": 0.12011400000000001
+          },
+          "timings": {
+            "mcpStartupMs": 2034,
+            "cliStartupMs": 1172,
+            "cliExecutionMs": 18099,
+            "cliWallMs": 19271,
+            "verificationMs": 0,
+            "cleanupMs": 182
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "booking-date",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Booked for 2026-12-24 at 19:00, 3 guests.",
+      "turns": 7,
+      "toolCalls": 6,
+      "toolErrors": 0,
+      "observationChars": 974,
+      "observationImages": 0,
+      "inputTokens": 12,
+      "cacheWriteTokens": 6518,
+      "cacheReadTokens": 54128,
+      "totalInputTokens": 60658,
+      "outputTokens": 587,
+      "costUsd": 0.0495219,
+      "timings": {
+        "mcpStartupMs": 2021,
+        "cliStartupMs": 1162,
+        "cliExecutionMs": 11134,
+        "cliWallMs": 12296,
+        "verificationMs": 0,
+        "cleanupMs": 171
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Booked for 2026-12-24 at 19:00, 3 guests.",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 7,
+          "toolCalls": 6,
+          "toolErrors": 0,
+          "observationChars": 974,
+          "observationImages": 0,
+          "totalInputTokens": 60658,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 12,
+            "cacheWriteTokens": 6518,
+            "cacheReadTokens": 54128,
+            "outputTokens": 587,
+            "costUsd": 0.0495219
+          },
+          "timings": {
+            "mcpStartupMs": 2021,
+            "cliStartupMs": 1162,
+            "cliExecutionMs": 11134,
+            "cliWallMs": 12296,
+            "verificationMs": 0,
+            "cleanupMs": 171
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "booking-date",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Booked for 2026-12-24 at 19:00, 3 guests.",
+      "turns": 7,
+      "toolCalls": 6,
+      "toolErrors": 0,
+      "observationChars": 2489,
+      "observationImages": 0,
+      "inputTokens": 12,
+      "cacheWriteTokens": 7368,
+      "cacheReadTokens": 71608,
+      "totalInputTokens": 78988,
+      "outputTokens": 609,
+      "costUsd": 0.0582834,
+      "timings": {
+        "mcpStartupMs": 2017,
+        "cliStartupMs": 1202,
+        "cliExecutionMs": 11338,
+        "cliWallMs": 12540,
+        "verificationMs": 0,
+        "cleanupMs": 183
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Booked for 2026-12-24 at 19:00, 3 guests.",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 7,
+          "toolCalls": 6,
+          "toolErrors": 0,
+          "observationChars": 2489,
+          "observationImages": 0,
+          "totalInputTokens": 78988,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 12,
+            "cacheWriteTokens": 7368,
+            "cacheReadTokens": 71608,
+            "outputTokens": 609,
+            "costUsd": 0.0582834
+          },
+          "timings": {
+            "mcpStartupMs": 2017,
+            "cliStartupMs": 1202,
+            "cliExecutionMs": 11338,
+            "cliWallMs": 12540,
+            "verificationMs": 0,
+            "cleanupMs": 183
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "booking-date",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Booked for 2026-12-24 at 19:00, 3 guests.",
+      "turns": 23,
+      "toolCalls": 22,
+      "toolErrors": 0,
+      "observationChars": 341,
+      "observationImages": 7,
+      "inputTokens": 18,
+      "cacheWriteTokens": 17578,
+      "cacheReadTokens": 106319,
+      "totalInputTokens": 123915,
+      "outputTokens": 1920,
+      "costUsd": 0.12666719999999998,
+      "timings": {
+        "mcpStartupMs": 2015,
+        "cliStartupMs": 1180,
+        "cliExecutionMs": 23994,
+        "cliWallMs": 25174,
+        "verificationMs": 0,
+        "cleanupMs": 190
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Booked for 2026-12-24 at 19:00, 3 guests.",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 23,
+          "toolCalls": 22,
+          "toolErrors": 0,
+          "observationChars": 341,
+          "observationImages": 7,
+          "totalInputTokens": 123915,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 18,
+            "cacheWriteTokens": 17578,
+            "cacheReadTokens": 106319,
+            "outputTokens": 1920,
+            "costUsd": 0.12666719999999998
+          },
+          "timings": {
+            "mcpStartupMs": 2015,
+            "cliStartupMs": 1180,
+            "cliExecutionMs": 23994,
+            "cliWallMs": 25174,
+            "verificationMs": 0,
+            "cleanupMs": 190
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "article-deep-fact",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "1874",
+      "turns": 5,
+      "toolCalls": 4,
+      "toolErrors": 0,
+      "observationChars": 6150,
+      "observationImages": 0,
+      "inputTokens": 10,
+      "cacheWriteTokens": 8148,
+      "cacheReadTokens": 43556,
+      "totalInputTokens": 51714,
+      "outputTokens": 593,
+      "costUsd": 0.052546800000000005,
+      "timings": {
+        "mcpStartupMs": 2009,
+        "cliStartupMs": 1300,
+        "cliExecutionMs": 8504,
+        "cliWallMs": 9804,
+        "verificationMs": 0,
+        "cleanupMs": 245
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "1874",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 5,
+          "toolCalls": 4,
+          "toolErrors": 0,
+          "observationChars": 6150,
+          "observationImages": 0,
+          "totalInputTokens": 51714,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 10,
+            "cacheWriteTokens": 8148,
+            "cacheReadTokens": 43556,
+            "outputTokens": 593,
+            "costUsd": 0.052546800000000005
+          },
+          "timings": {
+            "mcpStartupMs": 2009,
+            "cliStartupMs": 1300,
+            "cliExecutionMs": 8504,
+            "cliWallMs": 9804,
+            "verificationMs": 0,
+            "cleanupMs": 245
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "article-deep-fact",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "1874",
+      "turns": 3,
+      "toolCalls": 2,
+      "toolErrors": 0,
+      "observationChars": 6099,
+      "observationImages": 0,
+      "inputTokens": 8,
+      "cacheWriteTokens": 7864,
+      "cacheReadTokens": 39291,
+      "totalInputTokens": 47163,
+      "outputTokens": 375,
+      "costUsd": 0.046926300000000004,
+      "timings": {
+        "mcpStartupMs": 2011,
+        "cliStartupMs": 1285,
+        "cliExecutionMs": 6667,
+        "cliWallMs": 7952,
+        "verificationMs": 0,
+        "cleanupMs": 171
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "1874",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 3,
+          "toolCalls": 2,
+          "toolErrors": 0,
+          "observationChars": 6099,
+          "observationImages": 0,
+          "totalInputTokens": 47163,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 8,
+            "cacheWriteTokens": 7864,
+            "cacheReadTokens": 39291,
+            "outputTokens": 375,
+            "costUsd": 0.046926300000000004
+          },
+          "timings": {
+            "mcpStartupMs": 2011,
+            "cliStartupMs": 1285,
+            "cliExecutionMs": 6667,
+            "cliWallMs": 7952,
+            "verificationMs": 0,
+            "cleanupMs": 171
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "article-deep-fact",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "1874",
+      "turns": 7,
+      "toolCalls": 6,
+      "toolErrors": 0,
+      "observationChars": 126,
+      "observationImages": 3,
+      "inputTokens": 10,
+      "cacheWriteTokens": 10214,
+      "cacheReadTokens": 37070,
+      "totalInputTokens": 47294,
+      "outputTokens": 617,
+      "costUsd": 0.0587085,
+      "timings": {
+        "mcpStartupMs": 2015,
+        "cliStartupMs": 1155,
+        "cliExecutionMs": 10666,
+        "cliWallMs": 11821,
+        "verificationMs": 0,
+        "cleanupMs": 162
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "1874",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 7,
+          "toolCalls": 6,
+          "toolErrors": 0,
+          "observationChars": 126,
+          "observationImages": 3,
+          "totalInputTokens": 47294,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 10,
+            "cacheWriteTokens": 10214,
+            "cacheReadTokens": 37070,
+            "outputTokens": 617,
+            "costUsd": 0.0587085
+          },
+          "timings": {
+            "mcpStartupMs": 2015,
+            "cliStartupMs": 1155,
+            "cliExecutionMs": 10666,
+            "cliWallMs": 11821,
+            "verificationMs": 0,
+            "cleanupMs": 162
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "inventory-lookup",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "SKU W-1203, 113 in stock",
+      "turns": 3,
+      "toolCalls": 2,
+      "toolErrors": 0,
+      "observationChars": 1511,
+      "observationImages": 0,
+      "inputTokens": 8,
+      "cacheWriteTokens": 6747,
+      "cacheReadTokens": 30176,
+      "totalInputTokens": 36931,
+      "outputTokens": 364,
+      "costUsd": 0.03983805,
+      "timings": {
+        "mcpStartupMs": 2020,
+        "cliStartupMs": 1313,
+        "cliExecutionMs": 7829,
+        "cliWallMs": 9142,
+        "verificationMs": 0,
+        "cleanupMs": 164
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "SKU W-1203, 113 in stock",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 3,
+          "toolCalls": 2,
+          "toolErrors": 0,
+          "observationChars": 1511,
+          "observationImages": 0,
+          "totalInputTokens": 36931,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 8,
+            "cacheWriteTokens": 6747,
+            "cacheReadTokens": 30176,
+            "outputTokens": 364,
+            "costUsd": 0.03983805
+          },
+          "timings": {
+            "mcpStartupMs": 2020,
+            "cliStartupMs": 1313,
+            "cliExecutionMs": 7829,
+            "cliWallMs": 9142,
+            "verificationMs": 0,
+            "cleanupMs": 164
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "inventory-lookup",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "SKU W-1203, 113 in stock",
+      "turns": 3,
+      "toolCalls": 2,
+      "toolErrors": 0,
+      "observationChars": 5832,
+      "observationImages": 0,
+      "inputTokens": 8,
+      "cacheWriteTokens": 8597,
+      "cacheReadTokens": 39343,
+      "totalInputTokens": 47948,
+      "outputTokens": 359,
+      "costUsd": 0.04945065,
+      "timings": {
+        "mcpStartupMs": 2009,
+        "cliStartupMs": 1141,
+        "cliExecutionMs": 6632,
+        "cliWallMs": 7773,
+        "verificationMs": 0,
+        "cleanupMs": 200
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "SKU W-1203, 113 in stock",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 3,
+          "toolCalls": 2,
+          "toolErrors": 0,
+          "observationChars": 5832,
+          "observationImages": 0,
+          "totalInputTokens": 47948,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 8,
+            "cacheWriteTokens": 8597,
+            "cacheReadTokens": 39343,
+            "outputTokens": 359,
+            "costUsd": 0.04945065
+          },
+          "timings": {
+            "mcpStartupMs": 2009,
+            "cliStartupMs": 1141,
+            "cliExecutionMs": 6632,
+            "cliWallMs": 7773,
+            "verificationMs": 0,
+            "cleanupMs": 200
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "inventory-lookup",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "SKU W-1203, 113 in stock",
+      "turns": 5,
+      "toolCalls": 4,
+      "toolErrors": 0,
+      "observationChars": 114,
+      "observationImages": 2,
+      "inputTokens": 10,
+      "cacheWriteTokens": 8489,
+      "cacheReadTokens": 35631,
+      "totalInputTokens": 44130,
+      "outputTokens": 376,
+      "costUsd": 0.04819305,
+      "timings": {
+        "mcpStartupMs": 2014,
+        "cliStartupMs": 1225,
+        "cliExecutionMs": 9025,
+        "cliWallMs": 10250,
+        "verificationMs": 0,
+        "cleanupMs": 236
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "SKU W-1203, 113 in stock",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 5,
+          "toolCalls": 4,
+          "toolErrors": 0,
+          "observationChars": 114,
+          "observationImages": 2,
+          "totalInputTokens": 44130,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 10,
+            "cacheWriteTokens": 8489,
+            "cacheReadTokens": 35631,
+            "outputTokens": 376,
+            "costUsd": 0.04819305
+          },
+          "timings": {
+            "mcpStartupMs": 2014,
+            "cliStartupMs": 1225,
+            "cliExecutionMs": 9025,
+            "cliWallMs": 10250,
+            "verificationMs": 0,
+            "cleanupMs": 236
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "churned-max",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Acme 6 — $9,950",
+      "turns": 3,
+      "toolCalls": 2,
+      "toolErrors": 0,
+      "observationChars": 6140,
+      "observationImages": 0,
+      "inputTokens": 8,
+      "cacheWriteTokens": 9560,
+      "cacheReadTokens": 32451,
+      "totalInputTokens": 42019,
+      "outputTokens": 693,
+      "costUsd": 0.05600430000000001,
+      "timings": {
+        "mcpStartupMs": 2009,
+        "cliStartupMs": 1347,
+        "cliExecutionMs": 12249,
+        "cliWallMs": 13596,
+        "verificationMs": 1,
+        "cleanupMs": 279
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Acme 6 — $9,950",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 3,
+          "toolCalls": 2,
+          "toolErrors": 0,
+          "observationChars": 6140,
+          "observationImages": 0,
+          "totalInputTokens": 42019,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 8,
+            "cacheWriteTokens": 9560,
+            "cacheReadTokens": 32451,
+            "outputTokens": 693,
+            "costUsd": 0.05600430000000001
+          },
+          "timings": {
+            "mcpStartupMs": 2009,
+            "cliStartupMs": 1347,
+            "cliExecutionMs": 12249,
+            "cliWallMs": 13596,
+            "verificationMs": 1,
+            "cleanupMs": 279
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "churned-max",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Acme 6, $9,950",
+      "turns": 8,
+      "toolCalls": 7,
+      "toolErrors": 0,
+      "observationChars": 18818,
+      "observationImages": 0,
+      "inputTokens": 12,
+      "cacheWriteTokens": 15566,
+      "cacheReadTokens": 87567,
+      "totalInputTokens": 103145,
+      "outputTokens": 1293,
+      "costUsd": 0.1040736,
+      "timings": {
+        "mcpStartupMs": 2014,
+        "cliStartupMs": 1240,
+        "cliExecutionMs": 13309,
+        "cliWallMs": 14549,
+        "verificationMs": 0,
+        "cleanupMs": 332
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Acme 6, $9,950",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 8,
+          "toolCalls": 7,
+          "toolErrors": 0,
+          "observationChars": 18818,
+          "observationImages": 0,
+          "totalInputTokens": 103145,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 12,
+            "cacheWriteTokens": 15566,
+            "cacheReadTokens": 87567,
+            "outputTokens": 1293,
+            "costUsd": 0.1040736
+          },
+          "timings": {
+            "mcpStartupMs": 2014,
+            "cliStartupMs": 1240,
+            "cliExecutionMs": 13309,
+            "cliWallMs": 14549,
+            "verificationMs": 0,
+            "cleanupMs": 332
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "churned-max",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Acme 6, $9,950",
+      "turns": 9,
+      "toolCalls": 8,
+      "toolErrors": 0,
+      "observationChars": 135,
+      "observationImages": 4,
+      "inputTokens": 12,
+      "cacheWriteTokens": 12035,
+      "cacheReadTokens": 51783,
+      "totalInputTokens": 63830,
+      "outputTokens": 1637,
+      "costUsd": 0.08525714999999999,
+      "timings": {
+        "mcpStartupMs": 2010,
+        "cliStartupMs": 1407,
+        "cliExecutionMs": 14740,
+        "cliWallMs": 16147,
+        "verificationMs": 0,
+        "cleanupMs": 243
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Acme 6, $9,950",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 9,
+          "toolCalls": 8,
+          "toolErrors": 0,
+          "observationChars": 135,
+          "observationImages": 4,
+          "totalInputTokens": 63830,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 12,
+            "cacheWriteTokens": 12035,
+            "cacheReadTokens": 51783,
+            "outputTokens": 1637,
+            "costUsd": 0.08525714999999999
+          },
+          "timings": {
+            "mcpStartupMs": 2010,
+            "cliStartupMs": 1407,
+            "cliExecutionMs": 14740,
+            "cliWallMs": 16147,
+            "verificationMs": 0,
+            "cleanupMs": 243
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "search-pagination",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "dana.r.",
+      "turns": 8,
+      "toolCalls": 7,
+      "toolErrors": 0,
+      "observationChars": 1914,
+      "observationImages": 0,
+      "inputTokens": 14,
+      "cacheWriteTokens": 7120,
+      "cacheReadTokens": 67363,
+      "totalInputTokens": 74497,
+      "outputTokens": 573,
+      "costUsd": 0.055545899999999995,
+      "timings": {
+        "mcpStartupMs": 2014,
+        "cliStartupMs": 1182,
+        "cliExecutionMs": 12137,
+        "cliWallMs": 13319,
+        "verificationMs": 0,
+        "cleanupMs": 326
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "dana.r.",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 8,
+          "toolCalls": 7,
+          "toolErrors": 0,
+          "observationChars": 1914,
+          "observationImages": 0,
+          "totalInputTokens": 74497,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 14,
+            "cacheWriteTokens": 7120,
+            "cacheReadTokens": 67363,
+            "outputTokens": 573,
+            "costUsd": 0.055545899999999995
+          },
+          "timings": {
+            "mcpStartupMs": 2014,
+            "cliStartupMs": 1182,
+            "cliExecutionMs": 12137,
+            "cliWallMs": 13319,
+            "verificationMs": 0,
+            "cleanupMs": 326
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "search-pagination",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "dana.r",
+      "turns": 12,
+      "toolCalls": 11,
+      "toolErrors": 0,
+      "observationChars": 8676,
+      "observationImages": 0,
+      "inputTokens": 24,
+      "cacheWriteTokens": 10816,
+      "cacheReadTokens": 180259,
+      "totalInputTokens": 191099,
+      "outputTokens": 946,
+      "costUsd": 0.1088997,
+      "timings": {
+        "mcpStartupMs": 2015,
+        "cliStartupMs": 1406,
+        "cliExecutionMs": 23683,
+        "cliWallMs": 25089,
+        "verificationMs": 0,
+        "cleanupMs": 185
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "dana.r",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 12,
+          "toolCalls": 11,
+          "toolErrors": 0,
+          "observationChars": 8676,
+          "observationImages": 0,
+          "totalInputTokens": 191099,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 24,
+            "cacheWriteTokens": 10816,
+            "cacheReadTokens": 180259,
+            "outputTokens": 946,
+            "costUsd": 0.1088997
+          },
+          "timings": {
+            "mcpStartupMs": 2015,
+            "cliStartupMs": 1406,
+            "cliExecutionMs": 23683,
+            "cliWallMs": 25089,
+            "verificationMs": 0,
+            "cleanupMs": 185
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "search-pagination",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "dana.r.",
+      "turns": 11,
+      "toolCalls": 10,
+      "toolErrors": 0,
+      "observationChars": 183,
+      "observationImages": 5,
+      "inputTokens": 12,
+      "cacheWriteTokens": 13236,
+      "cacheReadTokens": 52945,
+      "totalInputTokens": 66193,
+      "outputTokens": 715,
+      "costUsd": 0.0762795,
+      "timings": {
+        "mcpStartupMs": 2025,
+        "cliStartupMs": 1526,
+        "cliExecutionMs": 14501,
+        "cliWallMs": 16027,
+        "verificationMs": 0,
+        "cleanupMs": 190
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "dana.r.",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 11,
+          "toolCalls": 10,
+          "toolErrors": 0,
+          "observationChars": 183,
+          "observationImages": 5,
+          "totalInputTokens": 66193,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 12,
+            "cacheWriteTokens": 13236,
+            "cacheReadTokens": 52945,
+            "outputTokens": 715,
+            "costUsd": 0.0762795
+          },
+          "timings": {
+            "mcpStartupMs": 2025,
+            "cliStartupMs": 1526,
+            "cliExecutionMs": 14501,
+            "cliWallMs": 16027,
+            "verificationMs": 0,
+            "cleanupMs": 190
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "feed-scroll",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "The meeting moved to Thursday at noon.",
+      "turns": 14,
+      "toolCalls": 13,
+      "toolErrors": 0,
+      "observationChars": 9003,
+      "observationImages": 0,
+      "inputTokens": 20,
+      "cacheWriteTokens": 11023,
+      "cacheReadTokens": 115997,
+      "totalInputTokens": 127040,
+      "outputTokens": 1184,
+      "costUsd": 0.09395535,
+      "timings": {
+        "mcpStartupMs": 2011,
+        "cliStartupMs": 1607,
+        "cliExecutionMs": 17278,
+        "cliWallMs": 18885,
+        "verificationMs": 0,
+        "cleanupMs": 193
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "The meeting moved to Thursday at noon.",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 14,
+          "toolCalls": 13,
+          "toolErrors": 0,
+          "observationChars": 9003,
+          "observationImages": 0,
+          "totalInputTokens": 127040,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 20,
+            "cacheWriteTokens": 11023,
+            "cacheReadTokens": 115997,
+            "outputTokens": 1184,
+            "costUsd": 0.09395535
+          },
+          "timings": {
+            "mcpStartupMs": 2011,
+            "cliStartupMs": 1607,
+            "cliExecutionMs": 17278,
+            "cliWallMs": 18885,
+            "verificationMs": 0,
+            "cleanupMs": 193
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "feed-scroll",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "The meeting moved to Thursday at noon.",
+      "turns": 15,
+      "toolCalls": 14,
+      "toolErrors": 0,
+      "observationChars": 6787,
+      "observationImages": 0,
+      "inputTokens": 16,
+      "cacheWriteTokens": 10298,
+      "cacheReadTokens": 108248,
+      "totalInputTokens": 118562,
+      "outputTokens": 1209,
+      "costUsd": 0.08927489999999999,
+      "timings": {
+        "mcpStartupMs": 2012,
+        "cliStartupMs": 1588,
+        "cliExecutionMs": 23215,
+        "cliWallMs": 24803,
+        "verificationMs": 0,
+        "cleanupMs": 216
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "The meeting moved to Thursday at noon.",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 15,
+          "toolCalls": 14,
+          "toolErrors": 0,
+          "observationChars": 6787,
+          "observationImages": 0,
+          "totalInputTokens": 118562,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 16,
+            "cacheWriteTokens": 10298,
+            "cacheReadTokens": 108248,
+            "outputTokens": 1209,
+            "costUsd": 0.08927489999999999
+          },
+          "timings": {
+            "mcpStartupMs": 2012,
+            "cliStartupMs": 1588,
+            "cliExecutionMs": 23215,
+            "cliWallMs": 24803,
+            "verificationMs": 0,
+            "cleanupMs": 216
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "feed-scroll",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "The meeting moved to Thursday at noon.",
+      "turns": 11,
+      "toolCalls": 10,
+      "toolErrors": 0,
+      "observationChars": 169,
+      "observationImages": 3,
+      "inputTokens": 10,
+      "cacheWriteTokens": 10490,
+      "cacheReadTokens": 37504,
+      "totalInputTokens": 48004,
+      "outputTokens": 683,
+      "costUsd": 0.06086370000000001,
+      "timings": {
+        "mcpStartupMs": 2025,
+        "cliStartupMs": 1738,
+        "cliExecutionMs": 10509,
+        "cliWallMs": 12247,
+        "verificationMs": 0,
+        "cleanupMs": 162
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "The meeting moved to Thursday at noon.",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 11,
+          "toolCalls": 10,
+          "toolErrors": 0,
+          "observationChars": 169,
+          "observationImages": 3,
+          "totalInputTokens": 48004,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 10,
+            "cacheWriteTokens": 10490,
+            "cacheReadTokens": 37504,
+            "outputTokens": 683,
+            "costUsd": 0.06086370000000001
+          },
+          "timings": {
+            "mcpStartupMs": 2025,
+            "cliStartupMs": 1738,
+            "cliExecutionMs": 10509,
+            "cliWallMs": 12247,
+            "verificationMs": 0,
+            "cleanupMs": 162
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "modal-delete",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "\"Old report was moved to trash.\"",
+      "turns": 4,
+      "toolCalls": 3,
+      "toolErrors": 0,
+      "observationChars": 618,
+      "observationImages": 0,
+      "inputTokens": 10,
+      "cacheWriteTokens": 6023,
+      "cacheReadTokens": 41316,
+      "totalInputTokens": 47349,
+      "outputTokens": 422,
+      "costUsd": 0.04134105,
+      "timings": {
+        "mcpStartupMs": 2162,
+        "cliStartupMs": 1775,
+        "cliExecutionMs": 12295,
+        "cliWallMs": 14070,
+        "verificationMs": 0,
+        "cleanupMs": 190
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "\"Old report was moved to trash.\"",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 4,
+          "toolCalls": 3,
+          "toolErrors": 0,
+          "observationChars": 618,
+          "observationImages": 0,
+          "totalInputTokens": 47349,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 10,
+            "cacheWriteTokens": 6023,
+            "cacheReadTokens": 41316,
+            "outputTokens": 422,
+            "costUsd": 0.04134105
+          },
+          "timings": {
+            "mcpStartupMs": 2162,
+            "cliStartupMs": 1775,
+            "cliExecutionMs": 12295,
+            "cliWallMs": 14070,
+            "verificationMs": 0,
+            "cleanupMs": 190
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "modal-delete",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "\"Old report was moved to trash.\"",
+      "turns": 7,
+      "toolCalls": 6,
+      "toolErrors": 0,
+      "observationChars": 3007,
+      "observationImages": 0,
+      "inputTokens": 14,
+      "cacheWriteTokens": 7527,
+      "cacheReadTokens": 88445,
+      "totalInputTokens": 95986,
+      "outputTokens": 646,
+      "costUsd": 0.06449175,
+      "timings": {
+        "mcpStartupMs": 2012,
+        "cliStartupMs": 1794,
+        "cliExecutionMs": 14568,
+        "cliWallMs": 16362,
+        "verificationMs": 0,
+        "cleanupMs": 229
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "\"Old report was moved to trash.\"",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 7,
+          "toolCalls": 6,
+          "toolErrors": 0,
+          "observationChars": 3007,
+          "observationImages": 0,
+          "totalInputTokens": 95986,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 14,
+            "cacheWriteTokens": 7527,
+            "cacheReadTokens": 88445,
+            "outputTokens": 646,
+            "costUsd": 0.06449175
+          },
+          "timings": {
+            "mcpStartupMs": 2012,
+            "cliStartupMs": 1794,
+            "cliExecutionMs": 14568,
+            "cliWallMs": 16362,
+            "verificationMs": 0,
+            "cleanupMs": 229
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "modal-delete",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Old report was moved to trash.",
+      "turns": 7,
+      "toolCalls": 6,
+      "toolErrors": 0,
+      "observationChars": 135,
+      "observationImages": 3,
+      "inputTokens": 10,
+      "cacheWriteTokens": 10188,
+      "cacheReadTokens": 37207,
+      "totalInputTokens": 47405,
+      "outputTokens": 535,
+      "costUsd": 0.057422100000000004,
+      "timings": {
+        "mcpStartupMs": 2018,
+        "cliStartupMs": 1260,
+        "cliExecutionMs": 10008,
+        "cliWallMs": 11268,
+        "verificationMs": 0,
+        "cleanupMs": 205
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Old report was moved to trash.",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 7,
+          "toolCalls": 6,
+          "toolErrors": 0,
+          "observationChars": 135,
+          "observationImages": 3,
+          "totalInputTokens": 47405,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 10,
+            "cacheWriteTokens": 10188,
+            "cacheReadTokens": 37207,
+            "outputTokens": 535,
+            "costUsd": 0.057422100000000004
+          },
+          "timings": {
+            "mcpStartupMs": 2018,
+            "cliStartupMs": 1260,
+            "cliExecutionMs": 10008,
+            "cliWallMs": 11268,
+            "verificationMs": 0,
+            "cleanupMs": 205
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "menu-settings",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "\"Theme saved: Dark\"",
+      "turns": 6,
+      "toolCalls": 5,
+      "toolErrors": 0,
+      "observationChars": 734,
+      "observationImages": 0,
+      "inputTokens": 12,
+      "cacheWriteTokens": 6242,
+      "cacheReadTokens": 53316,
+      "totalInputTokens": 59570,
+      "outputTokens": 473,
+      "costUsd": 0.0465333,
+      "timings": {
+        "mcpStartupMs": 2024,
+        "cliStartupMs": 1484,
+        "cliExecutionMs": 10804,
+        "cliWallMs": 12288,
+        "verificationMs": 1,
+        "cleanupMs": 284
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "\"Theme saved: Dark\"",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 6,
+          "toolCalls": 5,
+          "toolErrors": 0,
+          "observationChars": 734,
+          "observationImages": 0,
+          "totalInputTokens": 59570,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 12,
+            "cacheWriteTokens": 6242,
+            "cacheReadTokens": 53316,
+            "outputTokens": 473,
+            "costUsd": 0.0465333
+          },
+          "timings": {
+            "mcpStartupMs": 2024,
+            "cliStartupMs": 1484,
+            "cliExecutionMs": 10804,
+            "cliWallMs": 12288,
+            "verificationMs": 1,
+            "cleanupMs": 284
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "menu-settings",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "\"Theme saved: Dark\" (status message)",
+      "turns": 11,
+      "toolCalls": 10,
+      "toolErrors": 0,
+      "observationChars": 3995,
+      "observationImages": 0,
+      "inputTokens": 14,
+      "cacheWriteTokens": 8545,
+      "cacheReadTokens": 89606,
+      "totalInputTokens": 98165,
+      "outputTokens": 805,
+      "costUsd": 0.07104255,
+      "timings": {
+        "mcpStartupMs": 2010,
+        "cliStartupMs": 1362,
+        "cliExecutionMs": 19563,
+        "cliWallMs": 20925,
+        "verificationMs": 0,
+        "cleanupMs": 233
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "\"Theme saved: Dark\" (status message)",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 11,
+          "toolCalls": 10,
+          "toolErrors": 0,
+          "observationChars": 3995,
+          "observationImages": 0,
+          "totalInputTokens": 98165,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 14,
+            "cacheWriteTokens": 8545,
+            "cacheReadTokens": 89606,
+            "outputTokens": 805,
+            "costUsd": 0.07104255
+          },
+          "timings": {
+            "mcpStartupMs": 2010,
+            "cliStartupMs": 1362,
+            "cliExecutionMs": 19563,
+            "cliWallMs": 20925,
+            "verificationMs": 0,
+            "cleanupMs": 233
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "menu-settings",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Theme saved: Dark",
+      "turns": 11,
+      "toolCalls": 10,
+      "toolErrors": 0,
+      "observationChars": 178,
+      "observationImages": 5,
+      "inputTokens": 16,
+      "cacheWriteTokens": 13184,
+      "cacheReadTokens": 77984,
+      "totalInputTokens": 91184,
+      "outputTokens": 726,
+      "costUsd": 0.08377319999999999,
+      "timings": {
+        "mcpStartupMs": 2020,
+        "cliStartupMs": 1601,
+        "cliExecutionMs": 14134,
+        "cliWallMs": 15735,
+        "verificationMs": 0,
+        "cleanupMs": 207
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Theme saved: Dark",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 11,
+          "toolCalls": 10,
+          "toolErrors": 0,
+          "observationChars": 178,
+          "observationImages": 5,
+          "totalInputTokens": 91184,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 16,
+            "cacheWriteTokens": 13184,
+            "cacheReadTokens": 77984,
+            "outputTokens": 726,
+            "costUsd": 0.08377319999999999
+          },
+          "timings": {
+            "mcpStartupMs": 2020,
+            "cliStartupMs": 1601,
+            "cliExecutionMs": 14134,
+            "cliWallMs": 15735,
+            "verificationMs": 0,
+            "cleanupMs": 207
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "spa-team",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "mia@example.com",
+      "turns": 4,
+      "toolCalls": 3,
+      "toolErrors": 0,
+      "observationChars": 643,
+      "observationImages": 0,
+      "inputTokens": 10,
+      "cacheWriteTokens": 6042,
+      "cacheReadTokens": 41245,
+      "totalInputTokens": 47297,
+      "outputTokens": 335,
+      "costUsd": 0.040086000000000004,
+      "timings": {
+        "mcpStartupMs": 2014,
+        "cliStartupMs": 1400,
+        "cliExecutionMs": 9758,
+        "cliWallMs": 11158,
+        "verificationMs": 1,
+        "cleanupMs": 260
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "mia@example.com",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 4,
+          "toolCalls": 3,
+          "toolErrors": 0,
+          "observationChars": 643,
+          "observationImages": 0,
+          "totalInputTokens": 47297,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 10,
+            "cacheWriteTokens": 6042,
+            "cacheReadTokens": 41245,
+            "outputTokens": 335,
+            "costUsd": 0.040086000000000004
+          },
+          "timings": {
+            "mcpStartupMs": 2014,
+            "cliStartupMs": 1400,
+            "cliExecutionMs": 9758,
+            "cliWallMs": 11158,
+            "verificationMs": 1,
+            "cleanupMs": 260
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "spa-team",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "mia@example.com",
+      "turns": 7,
+      "toolCalls": 6,
+      "toolErrors": 0,
+      "observationChars": 2928,
+      "observationImages": 0,
+      "inputTokens": 12,
+      "cacheWriteTokens": 7453,
+      "cacheReadTokens": 70698,
+      "totalInputTokens": 78163,
+      "outputTokens": 489,
+      "costUsd": 0.05652915,
+      "timings": {
+        "mcpStartupMs": 2019,
+        "cliStartupMs": 1351,
+        "cliExecutionMs": 12050,
+        "cliWallMs": 13401,
+        "verificationMs": 0,
+        "cleanupMs": 184
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "mia@example.com",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 7,
+          "toolCalls": 6,
+          "toolErrors": 0,
+          "observationChars": 2928,
+          "observationImages": 0,
+          "totalInputTokens": 78163,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 12,
+            "cacheWriteTokens": 7453,
+            "cacheReadTokens": 70698,
+            "outputTokens": 489,
+            "costUsd": 0.05652915
+          },
+          "timings": {
+            "mcpStartupMs": 2019,
+            "cliStartupMs": 1351,
+            "cliExecutionMs": 12050,
+            "cliWallMs": 13401,
+            "verificationMs": 0,
+            "cleanupMs": 184
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "spa-team",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "mia@example.com",
+      "turns": 7,
+      "toolCalls": 6,
+      "toolErrors": 0,
+      "observationChars": 133,
+      "observationImages": 3,
+      "inputTokens": 10,
+      "cacheWriteTokens": 10104,
+      "cacheReadTokens": 37043,
+      "totalInputTokens": 47157,
+      "outputTokens": 439,
+      "costUsd": 0.0556179,
+      "timings": {
+        "mcpStartupMs": 2023,
+        "cliStartupMs": 1429,
+        "cliExecutionMs": 9200,
+        "cliWallMs": 10629,
+        "verificationMs": 0,
+        "cleanupMs": 197
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "mia@example.com",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 7,
+          "toolCalls": 6,
+          "toolErrors": 0,
+          "observationChars": 133,
+          "observationImages": 3,
+          "totalInputTokens": 47157,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 10,
+            "cacheWriteTokens": 10104,
+            "cacheReadTokens": 37043,
+            "outputTokens": 439,
+            "costUsd": 0.0556179
+          },
+          "timings": {
+            "mcpStartupMs": 2023,
+            "cliStartupMs": 1429,
+            "cliExecutionMs": 9200,
+            "cliWallMs": 10629,
+            "verificationMs": 0,
+            "cleanupMs": 197
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "plans-pick",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "PRO-77",
+      "turns": 4,
+      "toolCalls": 3,
+      "toolErrors": 0,
+      "observationChars": 542,
+      "observationImages": 0,
+      "inputTokens": 10,
+      "cacheWriteTokens": 5961,
+      "cacheReadTokens": 41237,
+      "totalInputTokens": 47208,
+      "outputTokens": 360,
+      "costUsd": 0.04015485,
+      "timings": {
+        "mcpStartupMs": 2010,
+        "cliStartupMs": 1746,
+        "cliExecutionMs": 8934,
+        "cliWallMs": 10680,
+        "verificationMs": 0,
+        "cleanupMs": 307
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "PRO-77",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 4,
+          "toolCalls": 3,
+          "toolErrors": 0,
+          "observationChars": 542,
+          "observationImages": 0,
+          "totalInputTokens": 47208,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 10,
+            "cacheWriteTokens": 5961,
+            "cacheReadTokens": 41237,
+            "outputTokens": 360,
+            "costUsd": 0.04015485
+          },
+          "timings": {
+            "mcpStartupMs": 2010,
+            "cliStartupMs": 1746,
+            "cliExecutionMs": 8934,
+            "cliWallMs": 10680,
+            "verificationMs": 0,
+            "cleanupMs": 307
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "plans-pick",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "PRO-77",
+      "turns": 5,
+      "toolCalls": 4,
+      "toolErrors": 0,
+      "observationChars": 1627,
+      "observationImages": 0,
+      "inputTokens": 12,
+      "cacheWriteTokens": 6628,
+      "cacheReadTokens": 70486,
+      "totalInputTokens": 77126,
+      "outputTokens": 471,
+      "costUsd": 0.053101800000000005,
+      "timings": {
+        "mcpStartupMs": 2018,
+        "cliStartupMs": 1437,
+        "cliExecutionMs": 12443,
+        "cliWallMs": 13880,
+        "verificationMs": 0,
+        "cleanupMs": 241
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "PRO-77",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 5,
+          "toolCalls": 4,
+          "toolErrors": 0,
+          "observationChars": 1627,
+          "observationImages": 0,
+          "totalInputTokens": 77126,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 12,
+            "cacheWriteTokens": 6628,
+            "cacheReadTokens": 70486,
+            "outputTokens": 471,
+            "costUsd": 0.053101800000000005
+          },
+          "timings": {
+            "mcpStartupMs": 2018,
+            "cliStartupMs": 1437,
+            "cliExecutionMs": 12443,
+            "cliWallMs": 13880,
+            "verificationMs": 0,
+            "cleanupMs": 241
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "plans-pick",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "PRO-77",
+      "turns": 5,
+      "toolCalls": 4,
+      "toolErrors": 0,
+      "observationChars": 112,
+      "observationImages": 2,
+      "inputTokens": 8,
+      "cacheWriteTokens": 8647,
+      "cacheReadTokens": 24570,
+      "totalInputTokens": 33225,
+      "outputTokens": 405,
+      "costUsd": 0.04589625,
+      "timings": {
+        "mcpStartupMs": 2018,
+        "cliStartupMs": 1707,
+        "cliExecutionMs": 8070,
+        "cliWallMs": 9777,
+        "verificationMs": 0,
+        "cleanupMs": 271
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "PRO-77",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 5,
+          "toolCalls": 4,
+          "toolErrors": 0,
+          "observationChars": 112,
+          "observationImages": 2,
+          "totalInputTokens": 33225,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 8,
+            "cacheWriteTokens": 8647,
+            "cacheReadTokens": 24570,
+            "outputTokens": 405,
+            "costUsd": 0.04589625
+          },
+          "timings": {
+            "mcpStartupMs": 2018,
+            "cliStartupMs": 1707,
+            "cliExecutionMs": 8070,
+            "cliWallMs": 9777,
+            "verificationMs": 0,
+            "cleanupMs": 271
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "faq-refund",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "30",
+      "turns": 4,
+      "toolCalls": 3,
+      "toolErrors": 0,
+      "observationChars": 862,
+      "observationImages": 0,
+      "inputTokens": 10,
+      "cacheWriteTokens": 6067,
+      "cacheReadTokens": 41220,
+      "totalInputTokens": 47297,
+      "outputTokens": 359,
+      "costUsd": 0.04053224999999999,
+      "timings": {
+        "mcpStartupMs": 2017,
+        "cliStartupMs": 1835,
+        "cliExecutionMs": 9139,
+        "cliWallMs": 10974,
+        "verificationMs": 0,
+        "cleanupMs": 158
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "30",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 4,
+          "toolCalls": 3,
+          "toolErrors": 0,
+          "observationChars": 862,
+          "observationImages": 0,
+          "totalInputTokens": 47297,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 10,
+            "cacheWriteTokens": 6067,
+            "cacheReadTokens": 41220,
+            "outputTokens": 359,
+            "costUsd": 0.04053224999999999
+          },
+          "timings": {
+            "mcpStartupMs": 2017,
+            "cliStartupMs": 1835,
+            "cliExecutionMs": 9139,
+            "cliWallMs": 10974,
+            "verificationMs": 0,
+            "cleanupMs": 158
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "faq-refund",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "30",
+      "turns": 5,
+      "toolCalls": 4,
+      "toolErrors": 0,
+      "observationChars": 1772,
+      "observationImages": 0,
+      "inputTokens": 8,
+      "cacheWriteTokens": 6732,
+      "cacheReadTokens": 39630,
+      "totalInputTokens": 46370,
+      "outputTokens": 413,
+      "costUsd": 0.043352999999999996,
+      "timings": {
+        "mcpStartupMs": 2011,
+        "cliStartupMs": 1684,
+        "cliExecutionMs": 10317,
+        "cliWallMs": 12001,
+        "verificationMs": 0,
+        "cleanupMs": 331
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "30",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 5,
+          "toolCalls": 4,
+          "toolErrors": 0,
+          "observationChars": 1772,
+          "observationImages": 0,
+          "totalInputTokens": 46370,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 8,
+            "cacheWriteTokens": 6732,
+            "cacheReadTokens": 39630,
+            "outputTokens": 413,
+            "costUsd": 0.043352999999999996
+          },
+          "timings": {
+            "mcpStartupMs": 2011,
+            "cliStartupMs": 1684,
+            "cliExecutionMs": 10317,
+            "cliWallMs": 12001,
+            "verificationMs": 0,
+            "cleanupMs": 331
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "faq-refund",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "30",
+      "turns": 5,
+      "toolCalls": 4,
+      "toolErrors": 0,
+      "observationChars": 111,
+      "observationImages": 2,
+      "inputTokens": 8,
+      "cacheWriteTokens": 8563,
+      "cacheReadTokens": 24491,
+      "totalInputTokens": 33062,
+      "outputTokens": 319,
+      "costUsd": 0.044267549999999996,
+      "timings": {
+        "mcpStartupMs": 2010,
+        "cliStartupMs": 1417,
+        "cliExecutionMs": 7520,
+        "cliWallMs": 8937,
+        "verificationMs": 0,
+        "cleanupMs": 286
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "30",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 5,
+          "toolCalls": 4,
+          "toolErrors": 0,
+          "observationChars": 111,
+          "observationImages": 2,
+          "totalInputTokens": 33062,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 8,
+            "cacheWriteTokens": 8563,
+            "cacheReadTokens": 24491,
+            "outputTokens": 319,
+            "costUsd": 0.044267549999999996
+          },
+          "timings": {
+            "mcpStartupMs": 2010,
+            "cliStartupMs": 1417,
+            "cliExecutionMs": 7520,
+            "cliWallMs": 8937,
+            "verificationMs": 0,
+            "cleanupMs": 286
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "iframe-pay",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "R-5531",
+      "turns": 7,
+      "toolCalls": 6,
+      "toolErrors": 0,
+      "observationChars": 1174,
+      "observationImages": 0,
+      "inputTokens": 12,
+      "cacheWriteTokens": 6641,
+      "cacheReadTokens": 54260,
+      "totalInputTokens": 60913,
+      "outputTokens": 532,
+      "costUsd": 0.049197750000000005,
+      "timings": {
+        "mcpStartupMs": 2025,
+        "cliStartupMs": 1579,
+        "cliExecutionMs": 10626,
+        "cliWallMs": 12205,
+        "verificationMs": 0,
+        "cleanupMs": 226
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "R-5531",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 7,
+          "toolCalls": 6,
+          "toolErrors": 0,
+          "observationChars": 1174,
+          "observationImages": 0,
+          "totalInputTokens": 60913,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 12,
+            "cacheWriteTokens": 6641,
+            "cacheReadTokens": 54260,
+            "outputTokens": 532,
+            "costUsd": 0.049197750000000005
+          },
+          "timings": {
+            "mcpStartupMs": 2025,
+            "cliStartupMs": 1579,
+            "cliExecutionMs": 10626,
+            "cliWallMs": 12205,
+            "verificationMs": 0,
+            "cleanupMs": 226
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "iframe-pay",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "R-5531",
+      "turns": 6,
+      "toolCalls": 5,
+      "toolErrors": 0,
+      "observationChars": 2379,
+      "observationImages": 0,
+      "inputTokens": 12,
+      "cacheWriteTokens": 7284,
+      "cacheReadTokens": 72078,
+      "totalInputTokens": 79374,
+      "outputTokens": 616,
+      "costUsd": 0.05821439999999999,
+      "timings": {
+        "mcpStartupMs": 2009,
+        "cliStartupMs": 1308,
+        "cliExecutionMs": 13157,
+        "cliWallMs": 14465,
+        "verificationMs": 0,
+        "cleanupMs": 291
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "R-5531",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 6,
+          "toolCalls": 5,
+          "toolErrors": 0,
+          "observationChars": 2379,
+          "observationImages": 0,
+          "totalInputTokens": 79374,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 12,
+            "cacheWriteTokens": 7284,
+            "cacheReadTokens": 72078,
+            "outputTokens": 616,
+            "costUsd": 0.05821439999999999
+          },
+          "timings": {
+            "mcpStartupMs": 2009,
+            "cliStartupMs": 1308,
+            "cliExecutionMs": 13157,
+            "cliWallMs": 14465,
+            "verificationMs": 0,
+            "cleanupMs": 291
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "iframe-pay",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "R-5531",
+      "turns": 12,
+      "toolCalls": 11,
+      "toolErrors": 0,
+      "observationChars": 224,
+      "observationImages": 3,
+      "inputTokens": 10,
+      "cacheWriteTokens": 10731,
+      "cacheReadTokens": 37832,
+      "totalInputTokens": 48573,
+      "outputTokens": 816,
+      "costUsd": 0.06386085,
+      "timings": {
+        "mcpStartupMs": 2023,
+        "cliStartupMs": 1700,
+        "cliExecutionMs": 10647,
+        "cliWallMs": 12347,
+        "verificationMs": 0,
+        "cleanupMs": 293
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "R-5531",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 12,
+          "toolCalls": 11,
+          "toolErrors": 0,
+          "observationChars": 224,
+          "observationImages": 3,
+          "totalInputTokens": 48573,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 10,
+            "cacheWriteTokens": 10731,
+            "cacheReadTokens": 37832,
+            "outputTokens": 816,
+            "costUsd": 0.06386085
+          },
+          "timings": {
+            "mcpStartupMs": 2023,
+            "cliStartupMs": 1700,
+            "cliExecutionMs": 10647,
+            "cliWallMs": 12347,
+            "verificationMs": 0,
+            "cleanupMs": 293
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "chart-march",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "42",
+      "turns": 4,
+      "toolCalls": 3,
+      "toolErrors": 0,
+      "observationChars": 460,
+      "observationImages": 0,
+      "inputTokens": 10,
+      "cacheWriteTokens": 5897,
+      "cacheReadTokens": 41175,
+      "totalInputTokens": 47082,
+      "outputTokens": 354,
+      "costUsd": 0.03980625000000001,
+      "timings": {
+        "mcpStartupMs": 2119,
+        "cliStartupMs": 1375,
+        "cliExecutionMs": 9716,
+        "cliWallMs": 11091,
+        "verificationMs": 0,
+        "cleanupMs": 309
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "42",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 4,
+          "toolCalls": 3,
+          "toolErrors": 0,
+          "observationChars": 460,
+          "observationImages": 0,
+          "totalInputTokens": 47082,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 10,
+            "cacheWriteTokens": 5897,
+            "cacheReadTokens": 41175,
+            "outputTokens": 354,
+            "costUsd": 0.03980625000000001
+          },
+          "timings": {
+            "mcpStartupMs": 2119,
+            "cliStartupMs": 1375,
+            "cliExecutionMs": 9716,
+            "cliWallMs": 11091,
+            "verificationMs": 0,
+            "cleanupMs": 309
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "chart-march",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "42",
+      "turns": 4,
+      "toolCalls": 3,
+      "toolErrors": 0,
+      "observationChars": 948,
+      "observationImages": 1,
+      "inputTokens": 10,
+      "cacheWriteTokens": 7596,
+      "cacheReadTokens": 54606,
+      "totalInputTokens": 62212,
+      "outputTokens": 633,
+      "costUsd": 0.054391800000000004,
+      "timings": {
+        "mcpStartupMs": 2020,
+        "cliStartupMs": 1193,
+        "cliExecutionMs": 10080,
+        "cliWallMs": 11273,
+        "verificationMs": 0,
+        "cleanupMs": 196
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "42",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 4,
+          "toolCalls": 3,
+          "toolErrors": 0,
+          "observationChars": 948,
+          "observationImages": 1,
+          "totalInputTokens": 62212,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 10,
+            "cacheWriteTokens": 7596,
+            "cacheReadTokens": 54606,
+            "outputTokens": 633,
+            "costUsd": 0.054391800000000004
+          },
+          "timings": {
+            "mcpStartupMs": 2020,
+            "cliStartupMs": 1193,
+            "cliExecutionMs": 10080,
+            "cliWallMs": 11273,
+            "verificationMs": 0,
+            "cleanupMs": 196
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "chart-march",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "42",
+      "turns": 3,
+      "toolCalls": 2,
+      "toolErrors": 0,
+      "observationChars": 92,
+      "observationImages": 1,
+      "inputTokens": 6,
+      "cacheWriteTokens": 7026,
+      "cacheReadTokens": 13456,
+      "totalInputTokens": 20488,
+      "outputTokens": 427,
+      "costUsd": 0.0368073,
+      "timings": {
+        "mcpStartupMs": 2020,
+        "cliStartupMs": 1224,
+        "cliExecutionMs": 8041,
+        "cliWallMs": 9265,
+        "verificationMs": 1,
+        "cleanupMs": 221
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "42",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 3,
+          "toolCalls": 2,
+          "toolErrors": 0,
+          "observationChars": 92,
+          "observationImages": 1,
+          "totalInputTokens": 20488,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 6,
+            "cacheWriteTokens": 7026,
+            "cacheReadTokens": 13456,
+            "outputTokens": 427,
+            "costUsd": 0.0368073
+          },
+          "timings": {
+            "mcpStartupMs": 2020,
+            "cliStartupMs": 1224,
+            "cliExecutionMs": 8041,
+            "cliWallMs": 9265,
+            "verificationMs": 1,
+            "cleanupMs": 221
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    }
+  ]
+}
