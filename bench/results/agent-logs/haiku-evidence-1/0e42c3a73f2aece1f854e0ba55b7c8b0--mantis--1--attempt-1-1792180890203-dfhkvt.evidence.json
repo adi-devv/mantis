@@ -1,0 +1,37 @@
+{
+  "frames": [
+    {
+      "id": "F1",
+      "step": 1,
+      "url": "https://www.google.com/maps/",
+      "file": "0e42c3a73f2aece1f854e0ba55b7c8b0--mantis--1--attempt-1-1792180890203-dfhkvt.step-01.png",
+      "text": "\n\nCollapse side panel\n\t"
+    },
+    {
+      "id": "F2",
+      "step": 2,
+      "url": "https://www.google.com/maps/",
+      "file": "0e42c3a73f2aece1f854e0ba55b7c8b0--mantis--1--attempt-1-1792180890203-dfhkvt.step-02.png",
+      "text": "Loading...\n\n\nCollapse side panel\n\t\nLoading..."
+    },
+    {
+      "id": "F3",
+      "step": 7,
+      "url": "https://www.google.com/maps/search/gas+station+Manhattan+NY",
+      "file": "0e42c3a73f2aece1f854e0ba55b7c8b0--mantis--1--attempt-1-1792180890203-dfhkvt.step-07.png",
+      "text": "Hours\n\n\nAll filters\nResults\n\n\nShare\nMobil\nMobil\n3.5(600)\nGas station · 51-63 8th Ave\nOpen 24 hours · +1 212-989-3555\n\nWebsite\n\nDirections\nbp\nbp\n2.8(685)\nGas station · 2430 FDR Dr Service Rd East\nOpen 24 hours · +1 212-213-3541\n\nWebsite\n\nDirections\nShell\nShell\n3.7(353)\nGas station ·  · 1855 1st Ave\nOpen 24 hours · +1 212-426-8351\n\nWebsite\n\nDirections\nMobil\nMobil\n3.2(666)\nGas station · 718 11th Ave\nOpen 24 hours · +1 212-974-0243\n\nWebsite\n\nDirections\nMobil\nMobil\n3.5(179)\nGas station ·  · 466 10th Ave\nOpen 24 hours · +1 347-252-1236\n\nWebsite\n\nDirections\nConoco\nConoco\n3.6(14)\nGas station ·  · 4275 Broadway\nOpen · Closes 6 PM · +1 212-543-0010\n\nWebsite\n\nDirections\nShell\nShell\n3.9(124)\nGas station ·  · 3260 Broadway\nOpen 24 hours · +1 212-234-3204\n\nWebsite\n\nDirections\nbp\nbp\n3.5(55)\nGas station · 2326 1st Ave\nOpen 24 hours · +1 212-860-1100\n\nWebsite\n\nDirections\n\nYou've reached the end of the list.\n\n\nYou're seeing a limited view of Google Maps. See more\n\nUpdate results when map moves\n\n\t"
+    },
+    {
+      "id": "F4",
+      "step": 25,
+      "url": "https://www.google.com/maps/search/gas+stations+Manhattan+New+York+NY/@40.7831,-73.9712,13z",
+      "file": "0e42c3a73f2aece1f854e0ba55b7c8b0--mantis--1--attempt-1-1792180890203-dfhkvt.final.png",
+      "text": "Hours\n\n\nAll filters\nResults\n\n\nShare\nMobil\nMobil\n3.2(666)\nGas station · 718 11th Ave\nOpen 24 hours · +1 212-974-0243\n\nWebsite\n\nDirections\nShell\nShell\n3.7(353)\nGas station ·  · 1855 1st Ave\nOpen 24 hours · +1 212-426-8351\n\nWebsite\n\nDirections\nMobil\nMobil\n3.5(600)\nGas station · 51-63 8th Ave\nOpen 24 hours · +1 212-989-3555\n\nWebsite\n\nDirections\nUnique News and Smoke\nUnique News and Smoke\n3.1(18)\nConvenience store · 2218 Broadway\nOpen · Closes 1 AM · +1 212-875-9616\n\nDirections\nMobil\nMobil\n3.5(303)\nGas station · 303 W 96th St\nOpen · Closes 10:30 PM · +1 212-865-3311\n\nWebsite\n\nDirections\nbp\nbp\n2.8(685)\nGas station · 2430 FDR Dr Service Rd East\nOpen 24 hours · +1 212-213-3541\n\nWebsite\n\nDirections\nbp\nbp\n4.0(438)\nGas station · 255 E 125th St\nOpen 24 hours · +1 212-831-4038\n\nWebsite\n\nDirections\nShell\nShell\n3.6(85)\nGas station ·  · 1599 Lexington Ave\nOpen 24 hours · +1 212-289-7399\n\nWebsite\n\nDirections\nMobil\nMobil\n3.5(179)\nGas station ·  · 466 10th Ave\nOpen 24 hours · +1 347-252-1236\n\nWebsite\n\nDirections\nMobil\nMobil\n3.8(202)\nGas station · 348 E 106th St\nOpen 24 hours · +1 212-289-4663\n\nWebsite\n\nDirections\nExxon\nExxon\n4.3(364)\nGas station · 165 60th St\nOpen 24 hours · +1 201-662-7797\n\nWebsite\n\nDirections\nShell\nShell\n3.9(124)\nGas station ·  · 3260 Broadway\nOpen 24 hours · +1 212-234-3204\n\nWebsite\n\nDirections\nbp\nbp\n4.0(256)\nGas station · 800 St Nicholas Ave\nOpen 24 hours · +1 212-234-3406\n\nWebsite\n\nDirections\nShell\nShell\n3.9(98)\nGas station ·  · 2276 1st Ave\nOpen 24 hours · +1 212-289-4668\n\nWebsite\n\nDirections\nbp\nbp\n3.9(244)\nGas station · 1890 Park Ave\nOpen 24 hours · +1 212-369-5409\n\nWebsite\n\nDirections\nMADHAV CONVENIENCE AND GROCERY\nMADHAV CONVENIENCE AND GROCERY\n5.0(5)\nConvenience store · 49 W 72nd St\nOpen · Closes 11 PM · +1 212-362-3460\n\nDirections\nShell\nShell\n3.8(327)\nGas station ·  · 117 Morningside Ave\nOpen 24 hours · +1 212-222-1907\n\nWebsite\n\nDirections\nSP+ Parking\nSP+ Parking\n3.7(68)\nParking garage ·  · 81st St between Central Park West and Columbus Ave, 54 W 81st St\nOpen · Closes 11 PM · +1 212-313-7275\n\nWebsite\n\nDirections\n \n\nBook online\n\nYou're seeing a limited view of Google Maps. See more\n\nUpdate results when map moves\n\n\t",
+      "final": true,
+      "forms": []
+    }
+  ],
+  "captured": 26,
+  "kept": 4,
+  "captureMs": 11164
+}

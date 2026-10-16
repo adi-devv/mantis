@@ -1,0 +1,44 @@
+{
+  "frames": [
+    {
+      "id": "F1",
+      "step": 1,
+      "url": "https://www.google.com/maps/",
+      "file": "0e42c3a73f2aece1f854e0ba55b7c8b0--tree--2--attempt-1-1792180940488-5w2yyx.step-01.png",
+      "text": "\n\nCollapse side panel\n\t"
+    },
+    {
+      "id": "F2",
+      "step": 5,
+      "url": "https://www.google.com/maps/",
+      "file": "0e42c3a73f2aece1f854e0ba55b7c8b0--tree--2--attempt-1-1792180940488-5w2yyx.step-05.png",
+      "text": "Loading...\n\n\nCollapse side panel\n\t\nLoading..."
+    },
+    {
+      "id": "F3",
+      "step": 14,
+      "url": "https://www.google.com/maps/search/gas+station+Manhattan+NY",
+      "file": "0e42c3a73f2aece1f854e0ba55b7c8b0--tree--2--attempt-1-1792180940488-5w2yyx.step-14.png",
+      "text": "Hours\n\n\nAll filters\nResults\n\n\nShare\nMobil\nMobil\n3.5(600)\nGas station · 51-63 8th Ave\nOpen 24 hours · +1 212-989-3555\n\nWebsite\n\nDirections\nbp\nbp\n2.8(685)\nGas station · 2430 FDR Dr Service Rd East\nOpen 24 hours · +1 212-213-3541\n\nWebsite\n\nDirections\nShell\nShell\n3.7(353)\nGas station ·  · 1855 1st Ave\nOpen 24 hours · +1 212-426-8351\n\nWebsite\n\nDirections\nMobil\nMobil\n3.2(666)\nGas station · 718 11th Ave\nOpen 24 hours · +1 212-974-0243\n\nWebsite\n\nDirections\nMobil\nMobil\n3.5(179)\nGas station ·  · 466 10th Ave\nOpen 24 hours · +1 347-252-1236\n\nWebsite\n\nDirections\nConoco\nConoco\n3.6(14)\nGas station ·  · 4275 Broadway\nOpen · Closes 6 PM · +1 212-543-0010\n\nWebsite\n\nDirections\nShell\nShell\n3.9(124)\nGas station ·  · 3260 Broadway\nOpen 24 hours · +1 212-234-3204\n\nWebsite\n\nDirections\nbp\nbp\n3.5(55)\nGas station · 2326 1st Ave\nOpen 24 hours · +1 212-860-1100\n\nWebsite\n\nDirections\n\nYou've reached the end of the list.\n\n\nYou're seeing a limited view of Google Maps. See more\n\nUpdate results when map moves\n\n\t"
+    },
+    {
+      "id": "F4",
+      "step": 19,
+      "url": "https://www.google.com/maps/search/gas+station+near+Manhattan,+New+York,+NY",
+      "file": "0e42c3a73f2aece1f854e0ba55b7c8b0--tree--2--attempt-1-1792180940488-5w2yyx.step-19.png",
+      "text": "\t"
+    },
+    {
+      "id": "F5",
+      "step": 22,
+      "url": "https://www.google.com/maps/search/gas+station+near+Manhattan,+New+York,+NY",
+      "file": "0e42c3a73f2aece1f854e0ba55b7c8b0--tree--2--attempt-1-1792180940488-5w2yyx.final.png",
+      "text": "Hours\n\n\nAll filters\nResults\n\n\nShare\nMobil\nMobil\n3.2(666)\nGas station · 718 11th Ave\nOpen 24 hours · +1 212-974-0243\n\nWebsite\n\nDirections\nMobil\nMobil\n3.5(600)\nGas station · 51-63 8th Ave\nOpen 24 hours · +1 212-989-3555\n\nWebsite\n\nDirections\nbp\nbp\n2.8(685)\nGas station · 2430 FDR Dr Service Rd East\nOpen 24 hours · +1 212-213-3541\n\nWebsite\n\nDirections\nShell\nShell\n3.7(353)\nGas station ·  · 1855 1st Ave\nOpen 24 hours · +1 212-426-8351\n\nWebsite\n\nDirections\nbp\nbp\n4.0(438)\nGas station · 255 E 125th St\nOpen 24 hours · +1 212-831-4038\n\nWebsite\n\nDirections\nMobil\nMobil\n3.5(303)\nGas station · 303 W 96th St\nOpen · Closes 10:30 PM · +1 212-865-3311\n\nWebsite\n\nDirections\nbp\nbp\n4.0(256)\nGas station · 800 St Nicholas Ave\nOpen 24 hours · +1 212-234-3406\n\nWebsite\n\nDirections\nMobil\nMobil\n3.5(179)\nGas station ·  · 466 10th Ave\nOpen 24 hours · +1 347-252-1236\n\nWebsite\n\nDirections\nShell\nShell\n3.6(85)\nGas station ·  · 1599 Lexington Ave\nOpen 24 hours · +1 212-289-7399\n\nWebsite\n\nDirections\n\nYou're seeing a limited view of Google Maps. See more\n\nUpdate results when map moves\n\n\t",
+      "final": true,
+      "forms": []
+    }
+  ],
+  "captured": 22,
+  "kept": 5,
+  "captureMs": 22186
+}
