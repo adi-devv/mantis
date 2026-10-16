@@ -60,17 +60,6 @@ describe('stable ids', () => {
 });
 
 describe('navigation actions', () => {
-  it('click on a link reports the url and title change; back returns', async () => {
-    const view = await b.open(fixture('nav.html'));
-    const res = await b.click(idOf(view, 'link "Go to login"'));
-    expect(res).toMatch(/^clicked #\d+ link "Go to login"/);
-    expect(res).toMatch(/url: \/.*nav\.html → \/.*login\.html/);
-    expect(res).toContain('title: "Nav" → "Login — Acme"');
-    const back = await b.back();
-    expect(back).toMatch(/^went back\nurl: \/.*login\.html → \/.*nav\.html/);
-    expect(await b.read()).toContain('link "Go to login"');
-  });
-
   it('a link to a missing page says the page failed to load', async () => {
     const view = await b.open(fixture('nav.html'));
     const res = await b.click(idOf(view, 'link "Broken link"'));

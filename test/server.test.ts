@@ -35,6 +35,18 @@ it('open then click by number over MCP', async () => {
   expect(clicked.text).toContain('title: "Shadow" → "Shadow clicked"');
 });
 
+it('read accepts optional region and full over MCP', async () => {
+  await call('open', { url: fixture('login.html') });
+  const plain = await call('read');
+  expect(plain.text).toContain('link "Home"');
+  const part = await call('read', { region: 'form' });
+  expect(part.text).toContain('textbox "Email"');
+  expect(part.text).not.toContain('link "Home"');
+  const bad = await call('read', { region: 'nope' });
+  expect(bad.isError).toBe(true);
+  expect((await call('read', { full: true })).isError).toBe(false);
+});
+
 it('flags errors with isError', async () => {
   const res = await call('click', { id: 4242 });
   expect(res.isError).toBe(true);

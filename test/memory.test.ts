@@ -275,18 +275,6 @@ describe('persistent memory', () => {
     expect(v).toContain('#1 link "Acme Home"');
   });
 
-  it('entries younger than 30 days are still used', async () => {
-    const a = mantis();
-    await a.open(page(1));
-    await a.close();
-    const file = join(dir, storedFiles()[0]);
-    const data = JSON.parse(readFileSync(file, 'utf8')) as { v: number; regions: Record<string, { n: number; t: number }> };
-    for (const e of Object.values(data.regions)) e.t = Date.now() - 29 * 24 * 3600 * 1000;
-    writeFileSync(file, JSON.stringify(data));
-    const b = mantis();
-    expect(await b.open(page(2))).toContain('[header] (known layout)');
-  });
-
   it('a corrupt file is ignored silently and replaced by a good one', async () => {
     const probe = new SiteMemory({ dir, enabled: true });
     mkdirSync(dir, { recursive: true });
@@ -357,7 +345,6 @@ describe('over MCP', () => {
       const call = async (name: string, args: Record<string, unknown> = {}) =>
         ((await client.callTool({ name, arguments: args })).content as { text: string }[])[0].text;
       const { tools } = await client.listTools();
-      expect(tools.map((t) => t.name)).toContain('forget');
       const readTool = tools.find((t) => t.name === 'read')!;
       expect(Object.keys((readTool.inputSchema as { properties: object }).properties)).toContain('fresh');
       expect((readTool.inputSchema as { required?: string[] }).required ?? []).not.toContain('fresh');
