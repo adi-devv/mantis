@@ -1,21 +1,13 @@
 # Mantis skill for Claude Code
 
 `SKILL.md` teaches Claude to browse with the Mantis MCP tools (numbered text, act by `#number`)
-instead of screenshots, and how to use the fallback ladder (`data` -> `ocr` -> `look` -> `ask_human`).
+instead of screenshots, and how to use the fallback tools (`data`, `ocr`, `look`, `ask_human`).
+The skill only gives instructions; the MCP server does the browsing, and the skill does nothing
+without it.
 
 ## Install
 
-1. Add the Mantis MCP server (from npm):
-
-   ```bash
-   npx playwright install chromium
-   claude mcp add mantis -- npx -y -p mantis-browser mantis-mcp
-   ```
-
-   Or from a local checkout (after `npm run build`):
-   `claude mcp add mantis -- node /abs/path/to/mantis/dist/server.js`
-
-   Set `MANTIS_HEADLESS=0` in the server's environment to watch the browser.
+1. Add the Mantis MCP server: see the [quick start](../README.md#quick-start).
 
 2. Copy the skill into your skills folder:
 
@@ -32,15 +24,9 @@ instead of screenshots, and how to use the fallback ladder (`data` -> `ocr` -> `
    Invoke-WebRequest https://raw.githubusercontent.com/adi-devv/mantis/main/skill/SKILL.md -OutFile "$HOME\.claude\skills\mantis-browser\SKILL.md"
    ```
 
-   From a checkout you can just copy `skill/SKILL.md` there instead.
-
-   For a single project, use `.claude/skills/mantis-browser/` inside that project instead.
+   From a checkout, copy `skill/SKILL.md` there instead. For a single project, use
+   `.claude/skills/mantis-browser/` inside that project.
 
 3. Restart Claude Code. The skill triggers when you ask Claude to browse or operate a website.
 
-## Notes
-
-- The skill only gives instructions; the browsing itself is done by the MCP server.
-- If the MCP server is not connected, the skill does not apply.
-- Tool names and arguments must match the server (`open`, `read`, `click`, `type`, `select`,
-  `press`, `scroll`, `back`, `forget`, `media`, `data`, `ocr`, `look`, `ask_human`). If you change the tools, update `SKILL.md`.
+If you change the server's tools (`src/server.ts`), update `SKILL.md` to match.

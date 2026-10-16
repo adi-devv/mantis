@@ -2,13 +2,11 @@
 
 **A lean browser interface for AI agents: web pages as short numbered text.**
 
-AI agents browse either by screenshots (~1,400 tokens per look, clicks are pixel guesses)
-or by dumping the page's accessibility tree (the whole page, every time). Mantis gives the
-agent what a person would notice on the page, as compact text, and lets it act by number.
-
-- **No LLM inside.** Same page in, same text out.
-- **Text first.** Images only as an explicit last resort.
-- **Any agent.** An MCP server for Claude Code, Cursor, or your own.
+Agents browse with screenshots (about 1,400 tokens per look, clicks are pixel guesses) or by
+dumping the page's accessibility tree (the whole page, every time). Mantis gives the agent
+what a person would notice on the page, as compact text, and lets it act by number. It is an
+MCP server for Claude Code, Cursor or your own agent. There is no LLM inside: the same page
+gives the same text.
 
 ## Quick start
 
@@ -26,7 +24,7 @@ Try it without an agent:
 npx -y -p mantis-browser mantis read https://example.com
 ```
 
-Optional: the [Claude skill](skill/SKILL.md) teaches Claude how to read Mantis output.
+Optional: the [Claude skill](skill/README.md) teaches Claude how to read Mantis output.
 
 ## What the agent sees
 
@@ -52,13 +50,15 @@ clicked #3 button "Accept"
 - [dialog "Accept cookies?"] closed (3 items)
 ```
 
-What it reports that a person would notice:
+Beyond the accessibility tree, the text also reports:
 
 - `(covered)`: a popup or overlay is on top of it
 - `(primary)`, `error: "Invalid email"`, `looks disabled`: visual meaning, as words
 - `~"trash"`: a name guessed from an icon, marked as a guess
 - `[iframe "Payment"]`, `clickable`: frames and script-only buttons, read inline
 - `…and 158 more links (#45–#202); find("text") locates one`: long lists shortened, never hidden
+
+How this works, with diagrams: [docs/APPROACH.md](docs/APPROACH.md).
 
 ## Tools
 
@@ -79,45 +79,35 @@ Mantis never solves CAPTCHAs; `read()` flags them and suggests `ask_human`.
 
 ## Benchmark
 
-14 tasks replayed through Mantis, Playwright MCP (accessibility tree) and screenshots
-([full results](bench/results/latest.md)):
+Everything here is re-runnable ([how](bench/README.md)). Mantis is compared with the
+accessibility tree (Playwright MCP 0.0.83) and with screenshots (our own minimal tool).
 
-| | Mantis | Accessibility tree | Screenshots |
+**Token replay** (14 scripted tasks, no LLM; [results](bench/results/latest.md)). Per step,
+Mantis returns a median of 28 tokens, the tree 131, screenshots about 1,366. All three finish
+all 14 tasks.
+
+**Real agents** (an agent CLI does each task with each tool; 22 short tasks, 1 run each):
+
+| Agent | Mantis | Accessibility tree | Screenshots |
 |---|---:|---:|---:|
-| Tasks completed | 14 / 14 | 14 / 14 | 14 / 14 |
-| Median tokens per step | 28 | 131 | ~1,366 |
-| Median time per step (local pages) | 247 ms | 315 ms | 1,066 ms |
+| Codex `gpt-6.1-sol` ([results](bench/results/codex-sol.md)) | 22/22 · 1.58M tokens | 22/22 · 1.50M | 20/22 · 1.86M |
+| Codex `gpt-6-luna` ([results](bench/results/codex-luna.md)) | 21/22 · 1.74M | 22/22 · 1.97M | 17/22 · 2.65M |
+| Claude `claude-haiku-5-5` ([results](bench/results/claude-haiku.md)) | 22/22 · 1.29M | 22/22 · 1.77M | 22/22 · 1.25M |
 
-That is a scripted replay with no LLM in the loop. With a real agent (Claude Sonnet via
-`claude -p`, 22 tasks across forms, reading, lists, overlays, navigation, dynamic widgets,
-iframes and a chart; [results](bench/results/agent.md), [how to run](bench/README.md)):
+On short tasks Mantis and the tree are about even. On the 4 long tasks (15–27 actions each:
+shop checkout, admin edits, a 5-step wizard, comparing 7 products; 3 runs each):
 
-| | Mantis | Chrome DevTools MCP | Playwright MCP | browser-use | Screenshots |
-|---|---:|---:|---:|---:|---:|
-| Correct | 22 / 22 | 22 / 22 | 22 / 22 | 22 / 22 | 22 / 22 |
-| Tool calls | **91** | 103 | 123 | 161 | 230 |
-| Tokens read | **1.07M** | 1.31M | 1.78M | 2.07M | 3.02M |
-| Time | **360 s** | 469 s | 406 s | 569 s | 677 s |
+| Agent | Mantis | Accessibility tree | Screenshots |
+|---|---:|---:|---:|
+| Codex `gpt-6-luna` ([results](bench/results/codex-luna-long.md)) | 12/12 · 2.59M tokens | 10/12 · 4.84M | 9/12 · 4.64M |
+| Claude `claude-haiku-5-5` ([results](bench/results/claude-haiku-long.md)) | 12/12 · 3.15M | 12/12 · 4.96M | 12/12 · 5.01M |
 
-Mantis was cheapest on 17 of 22 tasks; screenshots won the chart task and Chrome DevTools
-MCP was level on forms. Against screenshots the gap grows with task length: about the same
-on one-page lookups, 4–6x fewer tokens on multi-step forms and checkout, 15x on the date-picker
-booking (5 tool calls vs 41). Every run also pays a fixed ~18k-token floor (the agent's own
-prompt and tool list), which caps the ratio on short tasks.
+On long tasks the tree uses 1.6–1.9x Mantis's tokens, because every step re-reads more page.
+Time and cost are in the results files.
 
-This first run is historical: one run per task, graded on the final reply only. The harness
-now also checks what the agent actually did on each local page; fresh runs (Codex by default,
-several runs per task) are next.
-
-## How it works
-
-A script inside the page walks the live DOM (shadow DOM and iframes included) and records
-each element's role, name, state, visibility and whether something covers it. Mantis drops
-noise, numbers every useful element (numbers stay stable while the element lives), groups
-it into regions, and writes it within a token budget. Actions resolve `#N` back to the real
-element and click through Playwright.
-
-Diagrams and the comparison with accessibility-tree agents: [docs/APPROACH.md](docs/APPROACH.md).
+Caveat: 25 of the 26 agent tasks are local pages written by the Mantis authors, and the
+screenshot baseline is our own minimal tool. An unbiased eval on real sites is next
+([PROGRESS.md](PROGRESS.md)).
 
 ## Configuration
 
@@ -132,7 +122,6 @@ Diagrams and the comparison with accessibility-tree agents: [docs/APPROACH.md](d
 
 Closed shadow roots can't be read. The image tools (`media`, `data`, `ocr`, `look`) don't
 look inside iframes yet. Guessed names (`~`) come from a small icon vocabulary.
-More in [PROGRESS.md](PROGRESS.md).
 
 ## Development
 
@@ -140,13 +129,16 @@ More in [PROGRESS.md](PROGRESS.md).
 npm install
 npx playwright install chromium
 npm run build
-npm test          # includes a check that nothing in Chrome's accessibility tree is lost
-npm run bench     # token/time benchmark (see bench/README.md)
-npm run bench:agent  # real-agent eval with Claude (uses your plan)
+npm test             # includes a check that nothing in Chrome's accessibility tree is lost
+npm run bench        # token replay
+npm run bench:agent  # real-agent eval (needs an agent CLI; see bench/README.md)
 npx tsx src/cli.ts read https://example.com
 ```
 
-Issues and PRs welcome; run `npm run build && npm test` first.
+To use a local build instead of npm: `claude mcp add mantis -- node /abs/path/to/mantis/dist/server.js`.
+
+Where work stands: [PROGRESS.md](PROGRESS.md). Design: [PLAN.md](PLAN.md). Issues and PRs
+welcome; run `npm run build && npm test` first.
 
 ## License
 

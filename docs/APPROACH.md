@@ -140,86 +140,31 @@ and never of the full page. Mantis never solves CAPTCHAs.
 | Iframes (payment, login widgets) | per frame | inline under `[iframe "Payment"]`, own numbers |
 | Size | whole page | budgeted, compacted |
 
-**Measured so far** (deterministic replay, no LLM in the loop; Playwright MCP 0.0.83
-stands in for the accessibility tree; full method in
-[`bench/results/latest.md`](../bench/results/latest.md)):
+**Measured:** the numbers are in the [README](../README.md#benchmark). How to read them:
 
-| | Mantis | Accessibility tree (Playwright MCP) | Screenshots (est.) |
-|---|---:|---:|---:|
-| Median tokens per step | 28 | 131 | 1,366 |
-| Median time per step, local pages | 247 ms | 315 ms | 1,066 ms |
-| Tokens, all 14 tasks | 11,824 | 342,767 | 40,980 |
-| Tasks completed | 14 / 14 | 14 / 14 | 14 / 14 |
+- The replay's total-token gap is driven by a few huge pages, and on some of them Mantis shows a
+  trimmed view while the tree sends everything. "Orients on the page cheaply" is fair; "reads the
+  whole article cheaply" is not.
+- Mantis used to fail 4 replay tasks because trimming hid what the agent needed. Now short text is
+  kept, long lists name their items, and `find` reaches the rest. `test/coverage.test.ts` checks
+  that every name in Chrome's accessibility tree is reachable through Mantis on 29 pages.
+- With real agents, Mantis matches the tree on short tasks and uses fewer tokens on long ones,
+  where every step re-reads more of the page.
 
-Read this honestly:
+## 4. Decisions along the way
 
-- The **typical step is ~4.7× smaller** and a little **faster** (247 vs 315 ms on local pages;
-  live pages add network time to both). The ~30× total is driven by a few huge pages, and on
-  some of them Mantis shows a trimmed view while the tree sends everything.
-- **Same tasks completed.** Mantis used to fail 4 because trimming hid what the agent
-  needed; short text is now kept, long lists name their items, and `find` reaches the rest.
-  A test (`test/coverage.test.ts`) checks that every name in Chrome's accessibility tree is
-  reachable through Mantis on 29 pages.
-- Whether an agent actually *succeeds* more often with Mantis is **not measured yet**.
+- **No information loss.** Short standalone text (list items, status messages, footers) is kept;
+  collapsed lists name their items; `find("text")` reaches anything trimmed. The coverage test runs
+  on every test and benchmark page, and a change that breaks it does not ship, however many tokens it saves.
+- **Speed.** The page scan returns one JSON string instead of Playwright's structured serializer
+  (3x faster on big pages). When an in-page counter says nothing changed (DOM, scroll, input, focus,
+  hover), the last scan is reused as the diff's "before". After an action Mantis waits 150 ms of DOM
+  quiet; short timers and requests are tracked separately, so delayed effects are still caught.
+- **Beyond the tree.** Elements made clickable only by script (a click listener, or where a pointer
+  cursor starts) show as `clickable`, containers excluded. Visible iframes, cross-origin included,
+  are read inline under `[iframe "title"]` with their own number range (`#10001…`).
+- **Names from Chrome: tried, not shipped.** Chrome can give its computed name per element, but
+  reading it made the scan ~25x slower (15 → 378 ms on a 200-link page). Mantis keeps its own name
+  logic and the coverage test checks it against Chrome's names.
 
-## 4. Where we're going
-
-```mermaid
-flowchart LR
-    A["✅ Never lose what<br/>the tree has (14/14)"] --> B["Faster<br/>(latency per step)"] --> C["Better<br/>(beat the tree)"] --> D["Real-agent eval:<br/>Codex × five browser approaches"] --> E["Publish the<br/>proven claim"]
-```
-
-Token cost is solved. Two things are not proven yet: **is it fast**, and **does an agent
-actually succeed more often**. Work, in order:
-
-**Done**
-
-1. ✅ **No information loss.** Short standalone text (list items, status messages, footers)
-   is kept; collapsed lists name their items compactly; `find("text")` reaches anything
-   that was trimmed.
-2. ✅ **A permanent check.** On every test and benchmark page, every name in Chrome's
-   accessibility tree must be reachable through Mantis (`test/coverage.test.ts`). A change
-   that breaks this does not ship, however many tokens it saves.
-
-**Faster** (median per step on local pages: 360 → 208–247 ms; Playwright MCP 286–315 ms)
-
-3. ✅ **Time every step in the benchmark**, next to tokens, for all three approaches.
-4. ✅ **Cheaper page scan.** The scan result comes back as one JSON string instead of
-   Playwright's structured serializer: 3× faster on big pages (Wikipedia 597 → 199 ms).
-5. ✅ **One page scan per action, not two.** When nothing changed on the page since the last
-   reply (an in-page counter of DOM changes, scroll, input, focus, hover), that scan is reused
-   as the diff's "before" state.
-6. ✅ **Shorter wait after actions.** 150 ms of DOM quiet instead of 300 ms; short timers and
-   requests are tracked separately, so delayed effects are still caught.
-
-**Better** (things the accessibility tree can't do, or does more correctly)
-
-7. ✅ **Clickables made only by JavaScript.** Elements given a click listener in script, or
-   where a pointer cursor starts (frameworks that listen once at the root), show as
-   `clickable`. Containers are excluded. The tree doesn't show these at all.
-8. ✅ **Iframes.** Visible frames, cross-origin included, are read inline under
-   `[iframe "title"]`, with their own number range (`#10001…`).
-9. ✗ **Names from Chrome — tried, not shipped.** Chrome can expose its own computed name
-   per element (`computedName`), but reading it made the scan ~25× slower (15 → 378 ms on a
-   200-link page). Mantis keeps its own name logic; `test/coverage.test.ts` checks it
-   against Chrome's names on every test page instead.
-
-**Then**
-
-10. ✅ **Real-agent eval harness and first full run.** The historical result in
-    [`bench/results/agent.md`](../bench/results/agent.md) compares Claude Sonnet across 22 tasks
-    and five approaches. All five solved all 22; Mantis used the fewest tool calls (91 vs 103–230),
-    tokens (1.07M vs 1.31M–3.02M) and time, and was cheapest on 17 of 22 tasks. The chart task
-    favored screenshots and forms were level with Chrome DevTools MCP. Those published numbers
-    predate the integrity fixes to retry accounting, independent fixture grading, usage reporting,
-    and resumable-result validation. Treat them as historical; rerun before relying on a fresh
-    comparison. The harness now defaults to Codex (`gpt-6.1-sol`, medium reasoning), isolates
-    only the selected browser MCP server, captures Codex stream usage, and leaves USD cost unknown.
-    The published Claude run remains historical; no Codex results have been published yet.
-11. **Next:** several Codex runs per task (variance), then Claude again with the stricter grading;
-    longer multi-step tasks, where the gap to screenshots compounds (15x on the date-picker
-    booking vs about 1x on one-page lookups), and harder tasks that separate tools on success,
-    not only cost.
-
-The test for every change: **lose nothing the tree has · use fewer tokens · add meaning ·
-don't get slower.**
+The test for every change: lose nothing the tree has, use fewer tokens, add meaning, don't get slower.

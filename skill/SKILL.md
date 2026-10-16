@@ -33,6 +33,7 @@ Mantis turns a web page into short numbered text. You act on elements by their
 - `[nav] same as before — 8 links (#5-#12)` (or `(known layout)`) means site memory shortened
   a header/menu you've already seen on this site. `find("text")` reaches a link in it, or expand it
   with `read({region: "nav"})`; `read({fresh: true})` shows everything once, `forget()` clears the memory.
+- `clickable "Pro plan"` is a script-only button. `[iframe "Payment"]` content is read inline, with its own numbers (`#10001` and up).
 - `⚠ CAPTCHA detected` means stop and call `ask_human` (see below).
 
 ## Keep token use low
