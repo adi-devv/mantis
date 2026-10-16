@@ -1,4 +1,4 @@
-# Mantis
+<p align="center"><img src="docs/img/banner.svg" alt="mantis" width="100%"></p>
 
 **Lets AI agents browse the web as short, numbered text instead of screenshots.**
 
@@ -7,17 +7,7 @@ It plugs into Claude Code, Codex, Cursor or your own agent as an MCP server.
 
 ## How it works
 
-```mermaid
-flowchart LR
-  A["AI agent<br/>(Claude Code, Codex, Cursor)"] -->|"open / click #3 / type"| M
-  subgraph M["Mantis"]
-    direction TB
-    R["Reads the page like a person<br/>visible, covered, errors"] --> N["Numbers each control<br/>#1 #2 #3"] --> D["After each action,<br/>sends only what changed"]
-  end
-  M <-->|drives| B["Chromium"]
-  M -->|"a few lines of text"| A
-  M -.->|"CAPTCHA, 2FA, payment"| U["You take over"]
-```
+<p align="center"><img src="docs/img/flow.svg" alt="Agent sends open/click to Mantis; Mantis reads the page in Chromium, numbers each control and returns only what changed; CAPTCHA, 2FA and payment go to you" width="100%"></p>
 
 ## Quick start
 
