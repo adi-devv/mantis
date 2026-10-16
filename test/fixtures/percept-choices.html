@@ -1,0 +1,24 @@
+<!doctype html><title>Choices</title>
+<style>
+  body { font: 16px sans-serif; }
+  li, [role=listbox] > div, button { display: block; padding: 8px; margin: 4px; cursor: pointer; }
+</style>
+<main>
+  <h1>Choose a period</h1>
+  <ul role="menu" id="period-menu">
+    <li>Last week</li><li>Last month</li><li>All time</li>
+  </ul>
+  <div role="listbox" id="range-list">
+    <div>Short range</div><div>Long range</div>
+  </div>
+  <div id="row"><button>Day</button><button>Week</button><button>Month</button></div>
+  <p id="chosen">No choice</p>
+</main>
+<script>
+  for (const id of ['period-menu', 'range-list', 'row']) {
+    document.getElementById(id).addEventListener('click', event => {
+      const item = event.target.closest('li,button,[role=listbox] > div');
+      if (item) document.getElementById('chosen').textContent = 'Chosen: ' + item.textContent;
+    });
+  }
+</script>

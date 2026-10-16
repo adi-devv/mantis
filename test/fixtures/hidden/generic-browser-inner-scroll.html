@@ -1,0 +1,32 @@
+<!doctype html><title>Inner scroll</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  #wrap { display: flex; height: 100vh; }
+  #results { width: 300px; height: 300px; overflow-y: auto; border: 1px solid #888; }
+  #results li { height: 40px; list-style: none; }
+  #notes { width: 500px; height: 560px; overflow-y: auto; border: 1px solid #888; }
+  #notes p { height: 100px; margin: 0; }
+  #short { width: 200px; height: 100px; overflow-y: auto; border: 1px solid #888; }
+  #short li { height: 40px; list-style: none; }
+</style>
+<div id="wrap">
+  <ul id="results" aria-label="Results"></ul>
+  <div id="notes"><p>Note 1</p><p>Note 2</p><p>Note 3</p><p>Note 4</p><p>Note 5</p><p>Note 6</p><p>Note 7</p><p>Note 8</p><p>Note 9</p><p>Note 10</p><p>Note 11</p><p>Note 12</p></div>
+  <ul id="short"><li><a href="#a">Short A</a></li><li><a href="#b">Short B</a></li></ul>
+</div>
+<script>
+  const list = document.querySelector('#results');
+  let n = 0;
+  const more = () => {
+    for (let i = 0; i < 6 && n < 30; i++) {
+      n++;
+      const li = document.createElement('li');
+      li.innerHTML = '<a href="#r' + n + '">Result ' + n + '</a>';
+      list.appendChild(li);
+    }
+  };
+  more(); more();
+  list.addEventListener('scroll', () => {
+    if (list.scrollTop + list.clientHeight >= list.scrollHeight - 60) more();
+  });
+</script>

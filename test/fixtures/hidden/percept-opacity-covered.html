@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Opacity near-misses</title>
+<style>
+  body { font: 16px sans-serif; margin: 0; }
+  .row { position: relative; padding: 12px; }
+  /* A fading menu: closed state is opacity 0 but the inputs are still in the DOM. */
+  .menu { position: absolute; top: 120px; left: 12px; width: 260px; opacity: 0; }
+  .menu input { display: block; width: 200px; height: 30px; margin: 4px; }
+  #cover { position: absolute; top: 110px; left: 0; width: 320px; height: 140px; background: #eee; }
+  #pe .menu2 { opacity: 0; pointer-events: none; margin: 12px; }
+  #vh .menu3 { opacity: 0; visibility: hidden; margin: 12px; }
+  #ah .menu4 { opacity: 0; margin: 12px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Shop</h1>
+  <!-- Near-misses: fading menus whose inputs cannot really be used. -->
+  <div class="row" style="height: 340px">
+    <div class="menu" id="covered-menu">
+      <label>Covered email <input type="text" name="covered-email"></label>
+    </div>
+    <div id="cover">Visible overlay</div>
+  </div>
+  <div id="pe"><div class="menu2"><label>Inert wrapper <input type="text" name="pe-field"></label></div></div>
+  <div id="vh"><div class="menu3"><label>Invisible wrapper <input type="text" name="vh-field"></label></div></div>
+  <div id="ah"><div class="menu4" aria-hidden="true"><label>Hidden by aria <input type="text" name="ah-field"></label></div></div>
+  <p>Opacity zero text must stay hidden.</p>
+  <div style="opacity: 0">Secret fading words <button>Fading button</button></div>
+</main>
+</body>
+</html>

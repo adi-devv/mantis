@@ -60,6 +60,12 @@ server.registerTool(
 server.registerTool('back', { description: 'Go back one page.', inputSchema: {} }, () =>
   act(async (p) => { await p.goBack(); return `back to ${p.url()}`; }));
 
+server.registerTool('bench_capture', { description: 'Harness-only final viewport capture.', inputSchema: {} }, async () => {
+  if (!page || page.isClosed()) return { ...text('No live page to capture.'), isError: true };
+  const png = await page.screenshot({ type: 'png', fullPage: false, scale: 'css' });
+  return { content: [{ type: 'image' as const, data: png.toString('base64'), mimeType: 'image/png' }] };
+});
+
 const close = (): void => { void browser?.close().finally(() => process.exit(0)); };
 process.stdin.on('close', close);
 process.on('SIGTERM', close);

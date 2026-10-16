@@ -297,5 +297,8 @@ describe('over MCP', () => {
     const names = tools.map((t) => t.name);
     expect(names.slice(-5)).toEqual(['media', 'data', 'ocr', 'look', 'ask_human']);
     expect(tools.find((t) => t.name === 'look')!.description).toMatch(/LAST RESORT/);
+    const readDescription = tools.find((t) => t.name === 'read')!.description;
+    expect(readDescription).toMatch(/Before finishing, re-read and visibly verify every task constraint \(filters, sort, size, quantity, date range\)/);
+    expect(readDescription).toMatch(/If #number is stale, read\(\) and retry; if on the wrong page, back\(\) and keep searching/);
   });
 });

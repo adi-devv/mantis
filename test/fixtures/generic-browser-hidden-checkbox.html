@@ -1,0 +1,25 @@
+<!doctype html><title>Hidden checkboxes</title>
+<style>
+  .chip { position: relative; display: inline-block; margin: 6px; padding: 4px 10px; border: 1px solid #888; }
+  .chip input { position: absolute; left: 0; top: 0; width: 20px; height: 20px; opacity: 0.001; }
+  .chip::after { content: ''; position: absolute; inset: 0; }
+  .cover { position: relative; display: inline-block; margin: 6px; width: 120px; height: 24px; border: 1px solid #888; }
+  .cover input { position: absolute; left: 0; top: 0; width: 20px; height: 20px; }
+  .cover div { position: absolute; inset: 0; background: #eee; }
+</style>
+<h1>Refine by colour</h1>
+<label class="chip"><input type="checkbox" id="braun" aria-label="Refine by Farbe: Braun"><span>Braun</span></label>
+<label class="chip"><input type="checkbox" id="rot" aria-label="Refine by Farbe: Rot" checked><span>Rot</span></label>
+<label class="chip"><input type="checkbox" id="grau" aria-label="Refine by Farbe: Grau" disabled><span>Grau</span></label>
+<label class="chip"><input type="radio" name="size" id="small" aria-label="Size small"><span>Small</span></label>
+<label class="chip"><input type="radio" name="size" id="large" aria-label="Size large" checked><span>Large</span></label>
+<div class="cover"><input type="checkbox" id="blau" aria-label="Refine by Farbe: Blau"><div>covered, no label</div></div>
+<p id="state">none</p>
+<script>
+  const show = () => {
+    document.querySelector('#state').textContent = 'state: ' + Array.from(document.querySelectorAll('input'))
+      .map((i) => i.id + '=' + (i.checked ? 1 : 0)).join(' ');
+  };
+  document.addEventListener('change', show);
+  show();
+</script>

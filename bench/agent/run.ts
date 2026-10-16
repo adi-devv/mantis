@@ -55,6 +55,52 @@ const VENV_PY = path.join(REPO, 'bench', 'agent', '.venv', process.platform === 
 const TSX = import.meta.resolve('tsx');
 interface ServerSpec { command: string; args: string[]; env?: Record<string, string> }
 
+/** Capture through the still-running approach server, after the CLI has closed its bridge. */
+async function captureFinalPage(port: number, approach: Approach, file: string): Promise<void> {
+  const socket = net.connect(port, '127.0.0.1');
+  const pending = new Map<number, { resolve: (value: any) => void; reject: (error: Error) => void }>();
+  let buffer = '';
+  const timer = setTimeout(() => socket.destroy(new Error('capture timed out')), 15_000);
+  socket.setEncoding('utf8');
+  socket.on('data', (chunk: string) => {
+    buffer += chunk;
+    for (let end = buffer.indexOf('\n'); end >= 0; end = buffer.indexOf('\n')) {
+      const line = buffer.slice(0, end).trim();
+      buffer = buffer.slice(end + 1);
+      if (!line) continue;
+      try {
+        const message = JSON.parse(line);
+        if (typeof message.id !== 'number') continue;
+        const request = pending.get(message.id);
+        if (!request) continue;
+        pending.delete(message.id);
+        if (message.error) request.reject(new Error(message.error.message ?? 'MCP error'));
+        else request.resolve(message.result);
+      } catch { /* ignore malformed server output */ }
+    }
+  });
+  socket.on('error', (error) => { for (const p of pending.values()) p.reject(error); pending.clear(); });
+  socket.on('close', () => { for (const p of pending.values()) p.reject(new Error('capture connection closed')); pending.clear(); });
+  let id = 0;
+  const call = (method: string, params: object): Promise<any> => new Promise((resolve, reject) => {
+    const next = ++id;
+    pending.set(next, { resolve, reject });
+    socket.write(JSON.stringify({ jsonrpc: '2.0', id: next, method, params }) + '\n');
+  });
+  try {
+    await new Promise<void>((resolve, reject) => { socket.once('connect', resolve); socket.once('error', reject); });
+    await call('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'bench-capture', version: '1.0' } });
+    socket.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n');
+    const tool = approach === 'tree' ? 'browser_take_screenshot' : 'bench_capture';
+    const args = approach === 'tree' ? { type: 'png', fullPage: false, scale: 'css' } : {};
+    const result = await call('tools/call', { name: tool, arguments: args });
+    if (result.isError) throw new Error('capture tool failed');
+    const data = result.content?.find((item: { type: string; mimeType?: string }) => item.type === 'image' && item.mimeType === 'image/png')?.data;
+    if (typeof data !== 'string') throw new Error('capture returned no PNG');
+    writeFileSync(file, Buffer.from(data, 'base64'));
+  } finally { clearTimeout(timer); socket.destroy(); }
+}
+
 function sourceFilesUnder(folder: string): string[] {
   return readdirSync(path.join(REPO, folder), { withFileTypes: true }).flatMap((entry) => {
     const relative = path.posix.join(folder.replaceAll('\\', '/'), entry.name);
@@ -136,17 +182,18 @@ async function startServer(spec: ServerSpec, warmMs: number, log: string): Promi
 const APPROACHES: Record<Approach, { label: string; server: (dir: string) => Record<string, ServerSpec>; warmMs?: number; allow: string[]; deny?: string[] }> = {
   mantis: {
     label: 'Mantis',
-    server: (dir) => ({ mantis: { command: node, args: [path.join(REPO, 'dist', 'server.js')], env: { MANTIS_MEMORY_DIR: path.join(dir, 'mem') } } }),
+    server: (dir) => ({ mantis: { command: node, args: [path.join(REPO, 'bench', 'agent', 'bridge.mjs'), '--mantis-server'], env: { MANTIS_MEMORY_DIR: path.join(dir, 'mem') } } }),
     allow: ['mcp__mantis'],
+    deny: ['mcp__mantis__bench_capture'],
   },
   tree: {
     label: 'Accessibility tree (Playwright MCP)',
-    server: () => ({
+    server: (dir) => ({
       playwright: {
         command: node,
         // Same browser binary as the token benchmark (Playwright MCP otherwise looks for an installed Chrome).
         args: [
-          path.join(REPO, 'node_modules', '@playwright', 'mcp', 'cli.js'), '--headless', '--isolated', '--viewport-size', '1280x800',
+          path.join(REPO, 'node_modules', '@playwright', 'mcp', 'cli.js'), '--headless', '--isolated', '--viewport-size', '1280x800', '--output-dir', path.join(dir, 'tree-output'),
           ...(MCP_CHROMIUM ? ['--executable-path', MCP_CHROMIUM] : []),
         ],
       },
@@ -211,6 +258,7 @@ const APPROACHES: Record<Approach, { label: string; server: (dir: string) => Rec
     // tsx by absolute URL: runs start in an empty temp folder where a bare 'tsx' does not resolve.
     server: () => ({ screenshot: { command: node, args: ['--import', TSX, path.join(REPO, 'bench', 'agent', 'screenshot-mcp.ts')] } }),
     allow: ['mcp__screenshot'],
+    deny: ['mcp__screenshot__bench_capture'],
   },
 };
 
@@ -236,6 +284,7 @@ function claudeBin(): string {
 
 interface AttemptResult {
   attempt: number;
+  finalScreenshotPath: string | null;
   status: AttemptStatus;
   connected: boolean;
   connectionState: 'connected' | 'failed' | 'unknown';
@@ -261,6 +310,7 @@ interface AttemptResult {
 
 interface RunResult {
   task: string; approach: Approach; run: number;
+  finalScreenshotPath?: string | null;
   status: AttemptStatus; ok: boolean; error: string; answer: string;
   /** A connection failure is excluded from correctness; a timeout after launch remains attempted. */
   valid: boolean;
@@ -292,6 +342,7 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
   let verificationMs = 0;
   let cleanupMs = 0;
   let parsed: ReturnType<typeof parseClaudeStream> | ReturnType<typeof parseCodexStream> = parseClaudeStream('');
+  let finalScreenshotPath: string | null = null;
   try {
     const cfg = path.join(dir, 'mcp.json');
     const [name, spec] = Object.entries(APPROACHES[approach].server(dir))[0]!;
@@ -376,6 +427,15 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
       });
     });
     parsed = PROVIDER === 'codex' ? parseCodexStream(processResult.out, name) : parseClaudeStream(processResult.out);
+    if (task.judged && (approach === 'mantis' || approach === 'tree' || approach === 'screenshot')) {
+      const shot = path.join(logDir, `${unique}.final.png`);
+      try {
+        await captureFinalPage(server.port, approach, shot);
+        finalScreenshotPath = shot;
+      } catch (error) {
+        console.warn(`[agent] final capture failed for ${unique}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
     if (task.site === 'local' && task.check) {
       const verifyStart = Date.now();
       fixtureCheck = await fixtures.verify(task.id, attemptId);
@@ -419,7 +479,7 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
   const cliExitAt = processResult.exitAt;
   const cliWallMs = cliStart === null || cliExitAt === null ? null : cliExitAt - cliStart;
   return {
-    attempt, status, connected, connectionState, error, answer, initModel: parsed.initModel, resolvedModels: parsed.resolvedModels,
+    attempt, finalScreenshotPath, status, connected, connectionState, error, answer, initModel: parsed.initModel, resolvedModels: parsed.resolvedModels,
     turns: parsed.turns, toolCalls: parsed.toolCalls, toolErrors: parsed.toolErrors,
     observationChars: parsed.observationChars, observationImages: parsed.observationImages,
     totalInputTokens: PROVIDER === 'codex' ? (parsed as ReturnType<typeof parseCodexStream>).totalInputTokens :
@@ -613,7 +673,7 @@ try {
       const nullableSum = (key: keyof StreamUsage): number | null => usage[key];
       const allTurnsKnown = attempts.every((x) => x.turns !== null);
       const r: RunResult = {
-        task: t.id, approach: a, run, status: finalAttempt.status,
+        task: t.id, approach: a, run, status: finalAttempt.status, finalScreenshotPath: finalAttempt.finalScreenshotPath,
         valid: finalAttempt.status !== 'connection_failure', ok: finalAttempt.status === 'success',
         error: finalAttempt.error, answer: finalAttempt.answer,
         turns: allTurnsKnown ? attempts.reduce((s, x) => s + (x.turns ?? 0), 0) : null,

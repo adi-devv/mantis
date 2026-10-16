@@ -26,7 +26,9 @@ export function createServer(browser: MantisBrowser = new MantisBrowser()): McpS
     {
       description:
         'Page as numbered text; act by #number. Re-read after changes. ~"x" names are guesses. ' +
-        '"Same as before" regions keep working numbers; region, full or fresh expand them.',
+        '"Same as before" regions keep working numbers; region, full or fresh expand them. ' +
+        'Before finishing, re-read and visibly verify every task constraint (filters, sort, size, quantity, date range). ' +
+        'If #number is stale, read() and retry; if on the wrong page, back() and keep searching.',
       inputSchema: {
         region: z.string().optional().describe('Label substring, e.g. "nav"'),
         full: z.boolean().optional().describe('No trimming'),
@@ -86,10 +88,11 @@ export function createServer(browser: MantisBrowser = new MantisBrowser()): McpS
   server.registerTool(
     'scroll',
     {
-      description: 'Scroll up/down (default down), or pass id to bring #id into view.',
+      description: 'Scroll up/down (default down). id alone brings #id into view; id with direction scrolls the list/panel containing #id.',
       inputSchema: { direction: z.enum(['up', 'down']).optional(), id: id.optional() },
     },
-    async ({ direction, id }) => reply(await browser.scroll(id ?? direction ?? 'down')),
+    async ({ direction, id }) =>
+      reply(await (id !== undefined && direction ? browser.scroll(direction, id) : browser.scroll(id ?? direction ?? 'down'))),
   );
   server.registerTool(
     'back',

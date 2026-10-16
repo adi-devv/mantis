@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Live menu</title>
+<style>
+  body { font: 16px sans-serif; }
+  ul { list-style: none; padding: 0; }
+  li { padding: 6px 10px; cursor: pointer; }
+  li span + span { margin-left: 8px; color: #666; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Statistics</h1>
+  <ul class="select-kit-collection" role="menu" aria-live="polite">
+    <li role="menuitemradio" aria-checked="false" tabindex="0"><span>All time</span></li>
+    <li role="menuitemradio" aria-checked="true" tabindex="0"><span>Year</span><span>Oct 16, 2025 – Oct 16, 2026</span></li>
+    <li role="menuitemradio" aria-checked="false" tabindex="0"><span>Month</span><span>Sep 16, 2026 – Oct 16, 2026</span></li>
+    <li role="menuitemradio" aria-checked="false" tabindex="0"><span>Week</span></li>
+  </ul>
+
+  <!-- Near-misses: a genuine status toast, and a live region that holds a button. -->
+  <div role="status" aria-live="polite">Saved 3 items</div>
+  <div aria-live="polite">Upload finished <button>Undo upload</button></div>
+</main>
+</body>
+</html>

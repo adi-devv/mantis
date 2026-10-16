@@ -12,7 +12,7 @@ Mantis turns a web page into short numbered text. You act on elements by their
 
 1. `open(url)` returns the page as text. Elements look like `#14 button "Sign in"`.
 2. Act by number: `click(14)`, `type(12, "text", submit?)`, `select(9, "Canada")`,
-   `press("Enter")`, `scroll("down")` or `scroll(id)`, `back()`.
+   `press("Enter")`, `scroll("down")`, `scroll(id)` (bring into view), `scroll("down", id)` (scroll the list containing #id), `back()`.
 3. Read the reply. Actions return only what changed: `+` appeared, `-` removed,
    `~` changed. If the action landed on a new page you get that page's full view.
    `(no visible change)` means nothing visible happened; check before repeating.
@@ -41,8 +41,8 @@ Mantis turns a web page into short numbered text. You act on elements by their
 - Looking for one thing? `find("text")` is cheaper than reading more of the page.
 - Big page? `read({region: "nav"})` (or "main", "sidebar", "top bar") reads one part.
   Use `read({full: true})` only when the trimmed view hides what you need.
-- Prefer one targeted `read` over repeated full reads. Do not re-read after an action
-  unless the reply says something unexpected.
+- Prefer one targeted `read` over repeated full reads. Re-read before finishing to
+  visibly verify every task constraint; otherwise re-read only if the reply is unexpected.
 - Use `type(id, text, true)` to type and press Enter in one call.
 - Forms: `fill([{id: 12, value: "Ann"}, {id: 9, value: "Canada"}, {id: 15, value: true}])` sets text, dropdowns and checkboxes in one call.
 

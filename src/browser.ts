@@ -103,6 +103,9 @@ function brief(e: unknown): string {
   return first.replace(/^[\w.]+: /, '').trim().slice(0, 200) || 'unknown error';
 }
 
+/** Playwright errors for a control that is hidden, off-screen or covered: the cases the click fallbacks handle. */
+const NOT_CLICKABLE = /element is not visible|waiting for element to be visible|outside of the viewport|intercepts pointer events/;
+
 /**
  * One Chromium, one active page. Actions return short text; read() returns the
  * numbered view of the page.
@@ -229,12 +232,7 @@ export class MantisBrowser {
       try {
         await el.click({ timeout: this.actionTimeout });
       } catch (e) {
-        const msg = String(e instanceof Error ? e.message : e);
-        if (/intercepts pointer events/.test(msg) && await this.clickAssociatedLabel(el)) {
-          // A visible label can legitimately receive the pointer for its control.
-        } else if (/element is not visible|waiting for element to be visible|outside of the viewport|intercepts pointer events/.test(msg) && await this.clickSrOnly(page, el, id)) {
-          // The snapshot verified a screen-reader-only control.
-        } else {
+        if (!(await this.clickFallback(page, el, id, String(e instanceof Error ? e.message : e)))) {
           throw new ActionError(this.explain(e, label));
         }
       } finally {
@@ -327,7 +325,7 @@ export class MantisBrowser {
             if (!on && !/^(false|off|no)$/i.test(String(value))) {
               throw new ActionError(`${name} is a checkbox; use true or false, not "${value}"`);
             }
-            await el.setChecked(on, { timeout: this.actionTimeout });
+            await this.setChecked(page, el, id, on);
             parts.push(`${on ? 'checked' : 'unchecked'} ${name}`);
           } else {
             const text = String(value);
@@ -359,8 +357,11 @@ export class MantisBrowser {
     });
   }
 
-  /** Scroll the page up/down by most of a screen, or bring element `#id` into view. */
-  async scroll(target: 'up' | 'down' | number = 'down'): Promise<string> {
+  /**
+   * Scroll the page up/down by most of a screen, or bring element `#id` into view.
+   * With a direction and `inside` (an id), scroll the list/panel that contains `#inside` instead.
+   */
+  async scroll(target: 'up' | 'down' | number = 'down', inside?: number): Promise<string> {
     return this.act(async (page) => {
       if (typeof target === 'number') {
         const { el, label } = await this.target(page, target);
@@ -373,29 +374,60 @@ export class MantisBrowser {
         }
         return `scrolled ${label} into view`;
       }
-      const r = await page.evaluate((dir) => {
-        const dy = (dir === 'down' ? 1 : -1) * Math.round(window.innerHeight * 0.8);
-        let scroller: Element = document.scrollingElement ?? document.documentElement;
-        const before = scroller.scrollTop;
-        window.scrollBy(0, dy);
-        if (scroller.scrollTop === before) {
-          // The page itself does not scroll; look for the largest inner scroll container.
-          let best = 0;
-          for (const e of Array.from(document.querySelectorAll('*'))) {
-            const area = e.clientWidth * e.clientHeight;
-            if (area > best && e.scrollHeight > e.clientHeight + 4 && /auto|scroll/.test(getComputedStyle(e).overflowY)) {
-              best = area;
-              scroller = e;
-            }
+      if (inside === undefined) return this.scrollPage(page, target);
+      const { el } = await this.target(page, inside);
+      let r;
+      try {
+        r = await el.evaluate((node, dir) => {
+          const parent = (n: Element): Element | null => n.parentElement ?? (n.getRootNode() instanceof ShadowRoot ? (n.getRootNode() as ShadowRoot).host : null);
+          let box: Element | null = null;
+          for (let n: Element | null = node; n && n !== document.body && n !== document.documentElement; n = parent(n)) {
+            if (n.scrollHeight > n.clientHeight + 4 && /auto|scroll|overlay/.test(getComputedStyle(n).overflowY)) { box = n; break; }
           }
-          if (scroller !== (document.scrollingElement ?? document.documentElement)) scroller.scrollBy(0, dy);
-        }
-        const max = scroller.scrollHeight - scroller.clientHeight;
-        return { moved: scroller.scrollTop !== before || scroller !== (document.scrollingElement ?? document.documentElement), pct: max > 0 ? Math.round((scroller.scrollTop / max) * 100) : 100, max };
-      }, target);
-      if (r.max <= 0) return `scroll ${target}: nothing to scroll (page fits on screen)`;
-      return r.moved ? `scrolled ${target}; now at ${r.pct}% of page` : `scroll ${target}: already at the ${target === 'down' ? 'bottom' : 'top'}`;
+          if (!box) return null;
+          const before = box.scrollTop;
+          box.scrollBy({ top: (dir === 'down' ? 1 : -1) * Math.round(box.clientHeight * 0.8), behavior: 'instant' as ScrollBehavior });
+          const max = box.scrollHeight - box.clientHeight;
+          const name = (box.getAttribute('aria-label') ?? '').replace(/\s+/g, ' ').trim();
+          return { moved: box.scrollTop !== before, pct: max > 0 ? Math.round((box.scrollTop / max) * 100) : 100, name: name.length > 40 ? name.slice(0, 39) + '…' : name };
+        }, target);
+      } catch (e) {
+        throw new ActionError(this.explain(e, `#${inside}`));
+      } finally {
+        await el.dispose();
+      }
+      if (!r) return `#${inside} is not inside a scrollable list; ${await this.scrollPage(page, target)}`;
+      const where = r.name ? `"${r.name}"` : `the list containing #${inside}`;
+      return r.moved
+        ? `scrolled ${target} inside ${where}; now at ${r.pct}% of it`
+        : `scroll ${target} inside ${where}: already at the ${target === 'down' ? 'bottom' : 'top'} of it`;
     }, { quiet: true });
+  }
+
+  /** Scroll the page, or its largest inner scroll container when the page itself cannot scroll. */
+  private async scrollPage(page: Page, target: 'up' | 'down'): Promise<string> {
+    const r = await page.evaluate((dir) => {
+      const dy = (dir === 'down' ? 1 : -1) * Math.round(window.innerHeight * 0.8);
+      let scroller: Element = document.scrollingElement ?? document.documentElement;
+      const before = scroller.scrollTop;
+      window.scrollBy(0, dy);
+      if (scroller.scrollTop === before) {
+        // The page itself does not scroll; look for the largest inner scroll container.
+        let best = 0;
+        for (const e of Array.from(document.querySelectorAll('*'))) {
+          const area = e.clientWidth * e.clientHeight;
+          if (area > best && e.scrollHeight > e.clientHeight + 4 && /auto|scroll/.test(getComputedStyle(e).overflowY)) {
+            best = area;
+            scroller = e;
+          }
+        }
+        if (scroller !== (document.scrollingElement ?? document.documentElement)) scroller.scrollBy(0, dy);
+      }
+      const max = scroller.scrollHeight - scroller.clientHeight;
+      return { moved: scroller.scrollTop !== before || scroller !== (document.scrollingElement ?? document.documentElement), pct: max > 0 ? Math.round((scroller.scrollTop / max) * 100) : 100, max };
+    }, target);
+    if (r.max <= 0) return `scroll ${target}: nothing to scroll (page fits on screen)`;
+    return r.moved ? `scrolled ${target}; now at ${r.pct}% of page` : `scroll ${target}: already at the ${target === 'down' ? 'bottom' : 'top'}`;
   }
 
   async back(): Promise<string> {
@@ -682,6 +714,37 @@ export class MantisBrowser {
     if (/not an <input>|not editable|Element is not/.test(msg)) return `${plain} is not a text field`;
     if (/Timeout/.test(msg)) return `${plain} did not become clickable in time`;
     return `${plain}: ${brief(e)}`;
+  }
+
+  /**
+   * Fallbacks for a control Playwright could not click: a visible label that owns it, then a
+   * snapshot-verified screen-reader-only control. True when one of them fired.
+   */
+  private async clickFallback(page: Page, el: ElementHandle<Element>, id: number, msg: string): Promise<boolean> {
+    // A visible label can legitimately receive the pointer for its control.
+    if (/intercepts pointer events/.test(msg) && await this.clickAssociatedLabel(el)) return true;
+    // The snapshot verified a screen-reader-only control.
+    return NOT_CLICKABLE.test(msg) && await this.clickSrOnly(page, el, id);
+  }
+
+  /**
+   * Set a checkbox/radio. If it cannot be clicked directly (visually hidden native input styled via its label),
+   * use the click fallbacks, but only to reach the wanted state: never toggle it the wrong way.
+   */
+  private async setChecked(page: Page, el: ElementHandle<Element>, id: number, on: boolean): Promise<void> {
+    try {
+      await el.setChecked(on, { timeout: this.actionTimeout });
+    } catch (e) {
+      const msg = String(e instanceof Error ? e.message : e);
+      if (!NOT_CLICKABLE.test(msg)) throw e;
+      const state = () => el.evaluate((n) => n instanceof HTMLInputElement ? { checked: n.checked, disabled: n.disabled, radio: n.type === 'radio' } : null).catch(() => null);
+      const cur = await state();
+      if (!cur || cur.disabled) throw e;
+      if (cur.checked === on) return;
+      // A radio cannot be unchecked by clicking it.
+      if (cur.radio && !on) throw e;
+      if (!(await this.clickFallback(page, el, id, msg)) || (await state())?.checked !== on) throw e;
+    }
   }
 
   /** A label may intercept a pointer aimed at its own native control. No other overlay qualifies. */

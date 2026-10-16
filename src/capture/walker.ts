@@ -100,10 +100,13 @@ export function walker(includeSrOnly = false): WalkResult {
   const TAG_REGIONS: Record<string, string> = {
     header: 'header', nav: 'nav', main: 'main', aside: 'aside', footer: 'footer', search: 'search',
   };
+  // Derived from INTERACTIVE_ROLES so the selector can't drift from the roles interactiveRole() accepts.
   const INTERACTIVE_SEL =
-    'a[href],button,input:not([type=hidden]),select,textarea,summary,[role=button],[role=link],' +
-    '[role=checkbox],[role=radio],[role=tab],[role=menuitem],[role=switch],[role=combobox],' +
-    '[role=textbox],[role=searchbox],[role=option],[contenteditable]:not([contenteditable=false]),[onclick]';
+    'a[href],button,input:not([type=hidden]),select,textarea,summary,' +
+    Array.from(INTERACTIVE_ROLES, (r) => `[role=${r}]`).join(',') +
+    ',[contenteditable]:not([contenteditable=false]),[onclick]';
+  // A live region with one of these explicit roles is a widget holding choices, not a status message.
+  const COMPOSITE_ROLES = new Set(['menu', 'menubar', 'listbox', 'tree', 'grid', 'radiogroup', 'tablist']);
   // A node whose subtree contains any of these is not a plain text leaf.
   const LEAF_BLOCKER =
     ':not(span,b,i,em,strong,small,sub,sup,br,code,abbr,mark,u,s,time,cite,q,wbr,font,img,bdi,del,ins,var,kbd,samp),' +
@@ -150,7 +153,7 @@ export function walker(includeSrOnly = false): WalkResult {
   }
 
   /** Rendered text of a subtree, skipping hidden parts; stops once past `limit` chars. */
-  function deepText(root: Element, limit: number): string {
+  function deepText(root: Element, limit: number, ratingMetadata = true): string {
     let out = '';
     const rec = (e: Element, isRoot: boolean): void => {
       if (out.length > limit) return;
@@ -158,7 +161,7 @@ export function walker(includeSrOnly = false): WalkResult {
       let block = false;
       if (!isRoot) {
         if (SKIP.has(t) || e.getAttribute('aria-hidden') === 'true' || (e as HTMLElement).inert) return;
-        if (t === 'img') { out += ' ' + (e.getAttribute('alt') || '') + ' '; return; }
+        if (t === 'img') { out += ' ' + (e.getAttribute('alt') || (ratingMetadata ? e.getAttribute('title') : '') || '') + ' '; return; }
         if (t === 'input') {
           const ty = (e as HTMLInputElement).type;
           if (ty === 'button' || ty === 'submit' || ty === 'reset') out += ' ' + (e as HTMLInputElement).value + ' ';
@@ -170,9 +173,11 @@ export function walker(includeSrOnly = false): WalkResult {
         if (cs.visibility === 'hidden') { for (const c of childrenOf(e)) if (c.nodeType === 1) rec(c as Element, false); return; }
         const semantic = explicitRole(e);
         if (semantic && LABELLED_ROLES.has(semantic)) {
-          const label = collapse(e.getAttribute('aria-label') || '');
+          const label = collapse(e.getAttribute('aria-label') || (ratingMetadata ? e.getAttribute('title') : '') || '');
           if (label) { out += ' ' + label + ' '; return; }
         }
+        const rating = ratingMetadata ? ratingText(e) : '';
+        if (rating) { out += ' ' + rating + ' '; return; }
         block = !cs.display.startsWith('inline') && cs.display !== 'contents';
       }
       if (block) out += ' ';
@@ -183,7 +188,7 @@ export function walker(includeSrOnly = false): WalkResult {
       }
       if (block) out += ' ';
     };
-    if (root.localName === 'img') return root.getAttribute('alt') || '';
+    if (root.localName === 'img') return root.getAttribute('alt') || (ratingMetadata ? root.getAttribute('title') : '') || '';
     rec(root, true);
     return collapse(out);
   }
@@ -244,6 +249,14 @@ export function walker(includeSrOnly = false): WalkResult {
       ((t === 'a' || t === 'area') && el.hasAttribute('href'));
     if (native) return INTERACTIVE_ROLES.has(explicit) ? explicit : implicitRole(el);
     if (INTERACTIVE_ROLES.has(explicit)) return explicit;
+    // Delegated click handlers often leave each item without a role, listener, or pointer cursor.
+    // The ARIA container still establishes that its immediate items are choices.
+    const parentRole = el.parentElement ? explicitRole(el.parentElement) : '';
+    if ((parentRole === 'listbox' || parentRole === 'menu') &&
+      (t === 'li' || t === 'div') && !el.querySelector(INTERACTIVE_SEL) &&
+      collapse(el.textContent || '') && cs.pointerEvents !== 'none') {
+      return parentRole === 'listbox' ? 'option' : 'menuitem';
+    }
     const ce = el.getAttribute('contenteditable');
     if (ce !== null && ce !== 'false') return 'textbox';
     const clickish =
@@ -290,7 +303,7 @@ export function walker(includeSrOnly = false): WalkResult {
         if (n) return cap(n, 80);
       }
     } else {
-      n = withoutIconText(el, deepText(el, 200));
+      n = withoutIconText(el, deepText(el, 200, false));
       if (n) return cap(n, 80);
     }
     n = collapse(el.getAttribute('title') || '');
@@ -440,6 +453,15 @@ export function walker(includeSrOnly = false): WalkResult {
     if (w) return w;
     const withClass = Array.from(el.querySelectorAll('[class]')).slice(0, 12);
     for (const d of withClass) { w = iconFromClasses(d); if (w) return w; }
+    // Common icon libraries place the glyph name in a data attribute instead of a class.
+    for (const e of [el, ...Array.from(el.querySelectorAll('[data-icon],[data-lucide],[data-feather]')).slice(0, 8)]) {
+      for (const attr of ['data-icon', 'data-lucide', 'data-feather']) {
+        const raw = (e.getAttribute(attr) || '').replace(/^(?:mdi|fa|lucide|feather|tabler):/i, '');
+        if (!/^[a-z][a-z0-9_-]{1,30}$/i.test(raw)) continue;
+        w = aliasIcon(raw);
+        if (w) return w;
+      }
+    }
     const lig = iconFontText(el);
     if (/^[a-z][a-z0-9_]{1,30}$/i.test(lig)) { w = aliasIcon(lig); if (w) return w; }
     const use = el.querySelector('use');
@@ -466,6 +488,36 @@ export function walker(includeSrOnly = false): WalkResult {
     if (role === 'link') { const h = nameFromHref(el); if (h) return h; }
     // 5. text right next to it
     return adjacentText(el);
+  }
+
+  const peerCache = new Map<string, Element[]>();
+  const unnamed: { node: RawNode; el: Element; role: string }[] = [];
+  /** Last resort for a control with no accessible name or icon evidence. */
+  function contextualName(el: Element, role: string): string {
+    const group = el.closest('article,section,form,dialog,[role=dialog],[role=group],[role=region],nav,[role=navigation],main,aside,header,footer,[role=main],[role=complementary],[role=banner],[role=contentinfo]');
+    const heading = group?.querySelector('h1,h2,h3,h4,h5,h6,[role=heading]');
+    const context = collapse((heading && !heading.contains(el) ? deepText(heading, 50) : '') ||
+      group?.getAttribute('aria-label') || '');
+    if (context) return `${cap(context, 25)} ${role}`;
+    const siblings = el.parentElement ? Array.from(el.parentElement.children).filter((s) =>
+      s.localName === el.localName && (s.matches(INTERACTIVE_SEL) || s.hasAttribute('onclick'))) : [];
+    if (siblings.length > 1) return `${role} ${siblings.indexOf(el) + 1} of ${siblings.length}`;
+    // Separate wrappers often contain one icon button each. Use their document position
+    // rather than giving every otherwise identical control the same bare role.
+    let peers = peerCache.get(el.localName);
+    if (!peers) {
+      peers = Array.from(document.querySelectorAll(el.localName)).filter((s) =>
+        s.matches(INTERACTIVE_SEL) || s.hasAttribute('onclick'));
+      peerCache.set(el.localName, peers);
+    }
+    const at = peers.indexOf(el);
+    return at >= 0 ? `${role} ${at + 1}` : role;
+  }
+
+  /** Only descriptive rating metadata; arbitrary tooltips remain outside page text. */
+  function ratingText(el: Element): string {
+    const label = collapse(el.getAttribute('aria-label') || el.getAttribute('title') || '');
+    return /\b(?:ratings?|stars?)\b|\b\d(?:\.\d)?\s*(?:\/|out of)\s*\d\b/i.test(label) ? label : '';
   }
 
   function regionInfo(el: Element, explicit: string): { label: string; name: string } | null {
@@ -702,6 +754,8 @@ export function walker(includeSrOnly = false): WalkResult {
       const guess = cap(inferName(el, role), 40);
       if (guess) { node.name = guess; node.inferred = true; }
     }
+    // Unnamed links keep their href as the identifier (translate shows it when the name is empty).
+    if (!node.name && !el.hasAttribute('href')) unnamed.push({ node, el, role });
     const input = el as HTMLInputElement;
     const attr = (a: string): string | null => el.getAttribute(a);
     const ecs = getComputedStyle(el);
@@ -716,7 +770,7 @@ export function walker(includeSrOnly = false): WalkResult {
     if ((t === 'button' || t === 'input') && input.type === 'submit' && input.form) states.push('submit');
     if ((el as HTMLInputElement).required || attr('aria-required') === 'true') states.push('required');
     if (el.matches(':disabled') || attr('aria-disabled') === 'true') states.push('disabled');
-    else if (!srOnly && (effectiveOpacity(el) < 0.5 || ecs.pointerEvents === 'none')) states.push('looks disabled');
+    else if (!srOnly && ((!rescued.has(el) && effectiveOpacity(el) < 0.5) || ecs.pointerEvents === 'none')) states.push('looks disabled');
     if (((t === 'input' || t === 'textarea') && input.readOnly) || attr('aria-readonly') === 'true') states.push('readonly');
     if (role === 'checkbox' || role === 'radio' || role === 'switch' || role === 'menuitemcheckbox' || role === 'menuitemradio') {
       if (t === 'input' && input.indeterminate) states.push('mixed');
@@ -850,6 +904,41 @@ export function walker(includeSrOnly = false): WalkResult {
     nodes.push(stamp({ kind: 'region', role: 'iframe', name: cap(name, 60), frame: id, states: [], parent, depth, inViewport: inView(r), covered: false }, r));
   }
 
+  /** Controls emitted from inside an opacity:0 wrapper (their inherited opacity must not read as "looks disabled"). */
+  const rescued = new WeakSet<Element>();
+
+  /**
+   * An opacity:0 element's text is dropped, but a native control inside it can still be fully
+   * operable (a styled <select> whose visible face is a sibling label). Emit those, never the text.
+   * A control counts only when it could really be used: visible, not pointer-events:none, not
+   * aria-hidden/inert, a real box in the document, and on top. When its centre is in the viewport we
+   * hit-test it (a covered menu, or one under a visible overlay, fails). When the centre is off screen
+   * we cannot hit-test without scrolling, so we accept it on the style checks alone.
+   */
+  function rescueControls(root: Element, parent: number, depth: number): void {
+    for (const c of Array.from(root.querySelectorAll('select,input:not([type=hidden]),textarea'))) {
+      if (nodes.length >= MAX_NODES) { truncated = true; return; }
+      if (c.closest('[aria-hidden="true"],[inert]')) continue;
+      const cs = getComputedStyle(c);
+      if (cs.visibility !== 'visible' || cs.pointerEvents === 'none' || cs.display === 'none' || parseFloat(cs.opacity) === 0) continue;
+      const r = c.getBoundingClientRect();
+      if (r.width <= 0 || r.height <= 0 || !inDoc(r)) continue;
+      const x = r.left + r.width / 2;
+      const y = r.top + r.height / 2;
+      if (x >= 0 && y >= 0 && x < vw && y < vh) {
+        const scope: Document | ShadowRoot = c.getRootNode() instanceof ShadowRoot ? (c.getRootNode() as ShadowRoot) : document;
+        const hit = scope.elementFromPoint(x, y);
+        if (!hit) continue;
+        const labels = (c as HTMLInputElement).labels;
+        if (!composedContains(c, hit) && !(labels && Array.from(labels).some((l) => composedContains(l, hit)))) continue;
+      }
+      const role = interactiveRole(c, explicitRole(c), cs);
+      if (!role) continue;
+      rescued.add(c);
+      emitInteractive(c, role, parent, depth, r);
+    }
+  }
+
   function visit(el: Element, parent: number, depth: number, box: DOMRect, inheritedSr = false): void {
     if (nodes.length >= MAX_NODES) { truncated = true; return; }
     if (el.localName === 'canvas') { canvasMark(el, parent, depth); return; }
@@ -857,7 +946,8 @@ export function walker(includeSrOnly = false): WalkResult {
     if (el.localName === 'iframe' || el.localName === 'frame') { frameMark(el, parent, depth); return; }
     if (el.getAttribute('aria-hidden') === 'true' || (el as HTMLElement).inert) return;
     const cs = getComputedStyle(el);
-    if (cs.display === 'none' || cs.contentVisibility === 'hidden' || parseFloat(cs.opacity) === 0) return;
+    if (cs.display === 'none' || cs.contentVisibility === 'hidden') return;
+    if (parseFloat(cs.opacity) === 0) { rescueControls(el, parent, depth); return; }
 
     const contents = cs.display === 'contents';
     const r = contents ? box : el.getBoundingClientRect();
@@ -879,9 +969,16 @@ export function walker(includeSrOnly = false): WalkResult {
 
     const tag = el.localName;
     if (shown && explicit && LABELLED_ROLES.has(explicit)) {
-      const label = collapse(el.getAttribute('aria-label') || '');
+      const label = collapse(el.getAttribute('aria-label') || el.getAttribute('title') || '');
       if (label && !suppressText) {
         nodes.push(stamp({ kind: 'text', role: 'text', name: cap(label, 120), states: [], parent, depth, inViewport: inView(r), covered: false }, r));
+        if (!el.querySelector(INTERACTIVE_SEL)) return;
+      }
+    }
+    if (shown && !suppressText && !LABELLED_ROLES.has(explicit)) {
+      const rating = ratingText(el);
+      if (rating) {
+        nodes.push(stamp({ kind: 'text', role: 'text', name: cap(rating, 120), states: [], parent, depth, inViewport: inView(r), covered: false }, r));
         if (!el.querySelector(INTERACTIVE_SEL)) return;
       }
     }
@@ -905,7 +1002,7 @@ export function walker(includeSrOnly = false): WalkResult {
       explicit === 'alert' ? 'alert'
         : explicit === 'status' || explicit === 'log' || (liveAttr !== null && liveAttr !== 'off' && explicit !== 'alertdialog' && explicit !== 'dialog')
           ? 'status' : '';
-    if (live && shown && !suppressText) {
+    if (live && shown && !suppressText && !COMPOSITE_ROLES.has(explicit)) {
       const msg = cap(deepText(el, 200), 120);
       if (msg && /[\p{L}\p{N}]/u.test(msg)) {
         nodes.push(stamp({ kind: 'text', role: 'text', name: msg, live, states: [], parent, depth, inViewport: inView(r), covered: false }, r));
@@ -987,6 +1084,28 @@ export function walker(includeSrOnly = false): WalkResult {
   visit(rootEl, -1, 0, rootEl.getBoundingClientRect());
 
   markPrimary();
+
+  // A lone unnamed control stays a bare role (no evidence to guess from). Several identical
+  // bare controls are indistinguishable, so give those a hint from context or position.
+  const bareByRole = new Map<string, number>();
+  for (const u of unnamed) bareByRole.set(u.role, (bareByRole.get(u.role) ?? 0) + 1);
+  const hinted: { node: RawNode; hint: string }[] = [];
+  for (const u of unnamed) {
+    if ((bareByRole.get(u.role) ?? 0) < 2) continue;
+    const hint = contextualName(u.el, u.role);
+    if (hint !== u.role) hinted.push({ node: u.node, hint });
+  }
+  // A shared context ("Play Area button") still does not tell controls apart: number the repeats.
+  const hintCount = new Map<string, number>();
+  for (const h of hinted) hintCount.set(h.hint, (hintCount.get(h.hint) ?? 0) + 1);
+  const hintSeen = new Map<string, number>();
+  for (const h of hinted) {
+    const total = hintCount.get(h.hint) ?? 1;
+    const at = (hintSeen.get(h.hint) ?? 0) + 1;
+    hintSeen.set(h.hint, at);
+    h.node.name = total > 1 && !/ \d+( of \d+)?$/.test(h.hint) ? `${h.hint} ${at} of ${total}` : h.hint;
+    h.node.inferred = true;
+  }
 
   // Visible text is kept even away from controls (prices, status lines, table cells): dropping it
   // silently loses what the accessibility tree would have shown. Budgets trim it later, with a note.

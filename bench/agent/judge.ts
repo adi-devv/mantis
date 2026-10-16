@@ -3,15 +3,16 @@
  *
  *   JUDGE_IN=my-realsite npm run bench:judge        # reads results/my-realsite.json + results/agent-logs/my-realsite/
  *
- * For each judged run it takes the agent's final reply and FINAL_URL, loads that URL in a fresh headless
- * Chromium (1280x800 screenshot), and asks Codex (`codex exec`, screenshot attached, read-only) or `claude -p` (Read tool only) for {"verdict","reason"}. The judge never
+ * For each judged run it takes the agent's final reply and FINAL_URL, prefers its saved final live-page
+ * screenshot, then falls back to loading that URL in fresh Chromium. Codex (`codex exec`, screenshot
+ * attached, read-only) or `claude -p` (Read tool only) returns {"verdict","reason"}. The judge never
  * sees which approach produced a run: tool-revealing lines are stripped from the reply and the run order is shuffled.
  * Writes results/<name>-judged.{json,md}. Env: JUDGE_PROVIDER (codex | claude, default codex), JUDGE_MODEL
  * (gpt-6.1-sol / claude-sonnet-5-5), JUDGE_REASONING (high, Codex only), JUDGE_CONCURRENCY (6), JUDGE_SEED (1),
  * JUDGE_TIMEOUT_S (240), CODEX_BIN, CLAUDE_BIN.
  */
 import { spawn, spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -23,12 +24,13 @@ import type { RealsiteRow } from './realsite.js';
 const REPO = path.resolve(import.meta.dirname, '..', '..');
 const RESULTS = path.join(REPO, 'bench', 'results');
 
-export type Verdict = 'success' | 'failure' | 'unsure';
+export type Verdict = 'success' | 'failure' | 'unsure' | 'blocked';
 
 /** The parts of a bench/agent/run.ts RunResult that the judge needs. */
 export interface SavedRun {
   task: string; approach: string; run: number;
   status: string; answer?: string;
+  finalScreenshotPath?: string | null;
   toolCalls: number; totalInputTokens: number | null;
   timings?: { cliWallMs?: number | null };
 }
@@ -66,9 +68,21 @@ export function readFinalTexts(logDir: string, provider: string): Map<string, st
 
 export const runKey = (task: string, approach: string, run: number): string => `${task}|${approach}|${run}`;
 
+/** Copy the saved live capture into a blind judge folder, or use the legacy fresh-load fallback. */
+export async function selectJudgeScreenshot(savedPath: string | null | undefined, destination: string, finalUrl: string | null, freshLoad: (url: string, file: string) => Promise<boolean>, allowedRoot?: string): Promise<'live' | 'fresh' | null> {
+  const resolved = savedPath && existsSync(savedPath) ? path.resolve(savedPath) : null;
+  const relative = resolved && allowedRoot ? path.relative(path.resolve(allowedRoot), resolved) : null;
+  const withinRoot = !allowedRoot || (relative !== null && relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
+  if (resolved && withinRoot && existsSync(resolved) && statSync(resolved).isFile()) {
+    copyFileSync(resolved, destination);
+    return 'live';
+  }
+  return finalUrl && await freshLoad(finalUrl, destination) ? 'fresh' : null;
+}
+
 // ---- Judge prompt and reply parsing ----
 
-export function buildJudgePrompt(input: { task: string; website: string; finalUrl: string | null; answer: string; screenshotPath: string | null; attached?: boolean }): string {
+export function buildJudgePrompt(input: { task: string; website: string; finalUrl: string | null; answer: string; screenshotPath: string | null; screenshotSource?: 'live' | 'fresh'; attached?: boolean }): string {
   return [
     'You are grading whether a web agent completed a task on a real website. You are not told how the agent worked; judge only the evidence below.',
     '',
@@ -84,11 +98,13 @@ export function buildJudgePrompt(input: { task: string; website: string; finalUr
     '"""',
     '',
     input.screenshotPath
-      ? `A screenshot of that URL, freshly loaded in a new browser (1280x800), ${input.attached ? 'is attached' : `is at ${input.screenshotPath}. Open it with the Read tool and`} use it as evidence. Because it is a fresh load, a page may lack state the agent created (a search, a filter, a form entry); do not penalise that alone when the reply is specific and consistent with the page.`
+      ? input.screenshotSource === 'live'
+        ? `A screenshot of the agent's own final live page (1280x800), captured immediately after its run, ${input.attached ? 'is attached' : `is at ${input.screenshotPath}. Open it with the Read tool and`} use it as evidence.`
+        : `A screenshot of that URL, freshly loaded in a new browser (1280x800), ${input.attached ? 'is attached' : `is at ${input.screenshotPath}. Open it with the Read tool and`} use it as evidence. Because it is a fresh load, a page may lack state the agent created (a search, a filter, a form entry); do not penalise that alone when the reply is specific and consistent with the page.`
       : 'No screenshot is available (the final URL could not be loaded); judge on the reply and URL alone, and answer "unsure" if that is not enough.',
     '',
-    'Mark "success" only if the task was actually accomplished (or, for questions, the answer is correct and supported by the evidence). Mark "failure" if it was not, or the reply is wrong, evasive, or off-task. Mark "unsure" if the evidence is not enough to decide.',
-    'Reply with only strict JSON, no code fence: {"verdict":"success"|"failure"|"unsure","reason":"<one sentence>"}',
+    'Mark "success" only if the task was actually accomplished (or, for questions, the answer is correct and supported by the evidence). Mark "failure" if it was not, or the reply is wrong, evasive, or off-task. Mark "blocked" only for an explicit site refusal of automation or access, such as a CAPTCHA/bot check, HTTP 403/Access Denied, or country/region block, supported by the evidence. An ordinary 404, network error, or incomplete agent attempt is not blocked. Mark "unsure" if the evidence is not enough to decide. A normal login, purchase, or personal-information step after correct prior work counts as success, not blocked.',
+    'Reply with only strict JSON, no code fence: {"verdict":"success"|"failure"|"unsure"|"blocked","reason":"<one sentence>"}',
   ].join('\n');
 }
 
@@ -111,12 +127,24 @@ export function parseJudgeOutput(output: string): { verdict: Verdict; reason: st
   for (const m of text.matchAll(/\{[^{}]*\}/g)) {
     try {
       const v = JSON.parse(m[0]) as Record<string, unknown>;
-      if (v.verdict === 'success' || v.verdict === 'failure' || v.verdict === 'unsure') {
+      if (v.verdict === 'success' || v.verdict === 'failure' || v.verdict === 'unsure' || v.verdict === 'blocked') {
         return { verdict: v.verdict, reason: typeof v.reason === 'string' ? v.reason.trim() : '' };
       }
     } catch { /* keep looking */ }
   }
   return unsure(`unparseable judge reply: ${text.slice(0, 120).replace(/\s+/g, ' ')}`);
+}
+
+/** A stopped run can only receive a blocked exception; otherwise it remains a failure. */
+export function applyRunStatus(status: string, result: { verdict: Verdict; reason: string }): { verdict: Verdict; reason: string } {
+  return status === 'success' || status === 'connection_failure' || result.verdict === 'blocked'
+    ? result
+    : { verdict: 'failure', reason: `The run did not finish (${status}). ${result.reason}`.trim().slice(0, 200) };
+}
+
+/** Legacy result rows keep their original fixed failure; new rows may be judged for a site block. */
+export function shouldJudgeNonSuccess(run: SavedRun, finalText: string): boolean {
+  return Object.hasOwn(run, 'finalScreenshotPath') && Boolean(finalText || run.finalScreenshotPath);
 }
 
 // ---- Report ----
@@ -127,19 +155,32 @@ const avg = (xs: (number | null)[]): number | null => {
 };
 const fmtAvg = (n: number | null, digits = 0): string => (n === null ? 'n/a' : n.toLocaleString('en-US', { maximumFractionDigits: digits, minimumFractionDigits: digits }));
 
+/** Exclude a task only when every recorded run is blocked and each tested approach has a run. */
+export function universallyBlockedTasks(runs: JudgedRun[]): Set<string> {
+  const approaches = new Set(runs.map((r) => r.approach));
+  const ids = new Set<string>();
+  for (const task of new Set(runs.map((r) => r.task))) {
+    const group = runs.filter((r) => r.task === task);
+    if (group.every((r) => r.verdict === 'blocked') && approaches.size === new Set(group.map((r) => r.approach)).size) ids.add(task);
+  }
+  return ids;
+}
+
 export function renderJudgedMarkdown(name: string, runs: JudgedRun[], tasks: Map<string, RealsiteRow>, judgeModel: string): string {
   const approaches = [...new Set(runs.map((r) => r.approach))];
   const taskIds = [...new Set(runs.map((r) => r.task))];
   const L: string[] = [];
   L.push(`# Real-site eval, blind-judged: ${name}`, '');
-  L.push(`> Each run's final reply and a fresh screenshot of its final URL were graded by \`${judgeModel}\` (screenshot only, no other tools) without knowing which approach produced it. Tool-revealing lines were stripped from the reply and the order was shuffled. Sites change over time and the screenshot is a fresh load, so treat this as a snapshot.`, '');
+  L.push(`> Each run's final reply and screenshot were graded by \`${judgeModel}\` without knowing which approach produced it. Screenshots come from the agent's final live page when available; older or failed captures use a fresh load of the reported URL. Tool-revealing lines were stripped and the order shuffled.`, '');
   L.push('## Per approach', '');
-  L.push('| Approach | Runs | Success | Failure | Unsure | Avg tool calls | Avg input tokens | Avg time (s) |');
-  L.push('|---|---:|---:|---:|---:|---:|---:|---:|');
+  L.push('| Approach | Runs | Success | Failure | Unsure | Blocked | Overall success rate | Success rate excluding universally blocked tasks | Avg tool calls | Avg input tokens | Avg time (s) |');
+  L.push('|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|');
+  const excluded = universallyBlockedTasks(runs);
+  const rate = (rs: JudgedRun[]): string => rs.length ? `${(100 * rs.filter((r) => r.verdict === 'success').length / rs.length).toFixed(1)}%` : 'n/a';
   for (const a of approaches) {
     const rs = runs.filter((r) => r.approach === a);
     const count = (v: Verdict): number => rs.filter((r) => r.verdict === v).length;
-    L.push(`| ${a} | ${rs.length} | ${count('success')} | ${count('failure')} | ${count('unsure')} | ${fmtAvg(avg(rs.map((r) => r.toolCalls)), 1)} | ${fmtAvg(avg(rs.map((r) => r.totalInputTokens)))} | ${fmtAvg(avg(rs.map((r) => r.wallS)), 1)} |`);
+    L.push(`| ${a} | ${rs.length} | ${count('success')} | ${count('failure')} | ${count('unsure')} | ${count('blocked')} | ${rate(rs)} | ${rate(rs.filter((r) => !excluded.has(r.task)))} | ${fmtAvg(avg(rs.map((r) => r.toolCalls)), 1)} | ${fmtAvg(avg(rs.map((r) => r.totalInputTokens)))} | ${fmtAvg(avg(rs.map((r) => r.wallS)), 1)} |`);
   }
   L.push('', '## Per task', '');
   L.push(`| Task | ${approaches.join(' | ')} |`);
@@ -172,9 +213,9 @@ function callCodexJudge(prompt: string, cwd: string, model: string, reasoning: s
   });
 }
 
-function callJudge(prompt: string, cwd: string, model: string, timeoutMs: number): Promise<string> {
+function callJudge(prompt: string, cwd: string, model: string, timeoutMs: number, reasoning = 'high'): Promise<string> {
   // Isolation: no user/project settings or CLAUDE.md, no MCP servers, Read is the only tool, nothing saved.
-  const args = ['-p', '--model', model, '--output-format', 'json', '--tools', 'Read', '--allowedTools', 'Read',
+  const args = ['-p', '--model', model, '--effort', reasoning, '--output-format', 'json', '--tools', 'Read', '--allowedTools', 'Read',
     '--setting-sources', '', '--strict-mcp-config', '--disable-slash-commands', '--no-session-persistence'];
   return runCli(claudeBin(), args, prompt, cwd, timeoutMs);
 }
@@ -224,12 +265,13 @@ async function main(): Promise<void> {
   const texts = readFinalTexts(path.join(RESULTS, 'agent-logs', name), provider);
 
   const { chromium } = await import('playwright');
-  const browser = await chromium.launch({ headless: true });
+  let browserPromise: ReturnType<typeof chromium.launch> | null = null;
   const work = mkdtempSync(path.join(os.tmpdir(), 'jdg-'));
   const judged: JudgedRun[] = [];
 
   const screenshot = async (url: string, file: string): Promise<boolean> => {
     if (!/^https?:\/\//i.test(url)) return false;
+    const browser = await (browserPromise ??= chromium.launch({ headless: true }));
     const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
     try {
       const page = await context.newPage();
@@ -251,22 +293,23 @@ async function main(): Promise<void> {
     };
     let result: { verdict: Verdict; reason: string };
     if (r.status === 'connection_failure') result = { verdict: 'unsure', reason: 'MCP connection failure; the run never started.' };
-    else if (r.status !== 'success') result = { verdict: 'failure', reason: `The run did not finish (${r.status}).` };
+    else if (r.status !== 'success' && !shouldJudgeNonSuccess(r, text)) result = { verdict: 'failure', reason: `The run did not finish (${r.status}).` };
     else {
       // Per-judge folder, named by position only so nothing about the approach leaks into the path.
       const dir = path.join(work, `j${index}`);
       mkdirSync(dir, { recursive: true });
       try {
-        const shot = finalUrl ? path.join(dir, 'final.png') : null;
-        const haveShot = shot && finalUrl ? await screenshot(finalUrl, shot) : false;
-        const prompt = buildJudgePrompt({ task: row.task, website: row.website, finalUrl, answer: sanitizeAnswer(text), screenshotPath: haveShot ? shot : null, attached: judgeProvider === 'codex' });
+        const shot = path.join(dir, 'final.png');
+        const source = await selectJudgeScreenshot(r.finalScreenshotPath, shot, finalUrl, screenshot, path.join(RESULTS, 'agent-logs', name));
+        const prompt = buildJudgePrompt({ task: row.task, website: row.website, finalUrl, answer: sanitizeAnswer(text), screenshotPath: source ? shot : null, screenshotSource: source ?? undefined, attached: judgeProvider === 'codex' });
         result = parseJudgeOutput(judgeProvider === 'codex'
-          ? await callCodexJudge(prompt, dir, model, reasoning, haveShot ? shot : null, timeoutMs)
-          : await callJudge(prompt, dir, model, timeoutMs));
+          ? await callCodexJudge(prompt, dir, model, reasoning, source ? shot : null, timeoutMs)
+          : await callJudge(prompt, dir, model, timeoutMs, reasoning));
       } catch (error) {
         result = { verdict: 'unsure', reason: `judge error: ${error instanceof Error ? error.message : String(error)}`.slice(0, 200) };
       }
     }
+    result = applyRunStatus(r.status, result);
     judged.push({ ...base, ...result });
     console.log(`[judge] (${judged.length}/${judgedRuns.length}) ${r.task.slice(0, 8)} ... ${result.verdict}`);
   };
@@ -279,7 +322,7 @@ async function main(): Promise<void> {
       while (next < order.length) { const i = next++; await judgeOne(order[i]!, i); }
     }));
   } finally {
-    await browser.close().catch(() => {});
+    if (browserPromise) await browserPromise.then((browser) => browser.close()).catch(() => {});
     try { rmSync(work, { recursive: true, force: true }); } catch { /* temp cleanup is best effort */ }
   }
 

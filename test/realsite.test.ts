@@ -188,8 +188,8 @@ describe('judge helpers', () => {
       run('easy-0', 'mantis', 'success', 4, 1000, 10), run('easy-1', 'mantis', 'failure', 6, null, 20),
       run('easy-0', 'tree', 'success', 10, 5000, 30), run('easy-1', 'tree', 'unsure', 12, 7000, 50),
     ], rows, 'claude-sonnet-5-5');
-    expect(md).toContain('| mantis | 2 | 1 | 1 | 0 | 5.0 | 1,000 | 15.0 |');
-    expect(md).toContain('| tree | 2 | 1 | 0 | 1 | 11.0 | 6,000 | 40.0 |');
+    expect(md).toContain('| mantis | 2 | 1 | 1 | 0 | 0 | 50.0% | 50.0% | 5.0 | 1,000 | 15.0 |');
+    expect(md).toContain('| tree | 2 | 1 | 0 | 1 | 0 | 50.0% | 50.0% | 11.0 | 6,000 | 40.0 |');
     expect(md).toContain('| Task | mantis | tree |');
     expect(md).toMatch(/easy-0.*\| success \| success \|/);
     expect(md).toMatch(/easy-1.*\| failure \| unsure \|/);

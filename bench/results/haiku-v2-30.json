@@ -1,0 +1,3119 @@
+{
+  "metadata": {
+    "schemaVersion": 3,
+    "configFingerprint": "ff8f964142a32eba889a257c8a8c08cc4430970acb17ddaba516d7ede35f9996",
+    "settings": {
+      "provider": "claude",
+      "tasks": [
+        "ec78d3a635e417bc2a80d03ca93d7165",
+        "6b5be1764692d1dc8f17dc4375b2daa8",
+        "bd1e3770b7181f6fce9c35e18caa9785",
+        "5c00e9561eae94789443f405525a5869",
+        "eb323dc584156d0eb3a2b90bb8c4b791_110325",
+        "c03ee2be3d73556ab789c0ad1cbd3451",
+        "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+        "0e42c3a73f2aece1f854e0ba55b7c8b0",
+        "046138801a05ddf56ad94e8672942496_070826",
+        "bb314cb80f0f8489135cbf59074d11e2",
+        "11857213ca01510f12813740afd59918_110325",
+        "0e5536aaad9d3462b06cf725e6ed535a",
+        "52efbab520734ef9bf7c09ba0f62cdc8",
+        "f158345f8489e0d1d91e28768c39bca1",
+        "34992feb69eb8e788faa06868b365c49",
+        "a7a73c8fa75441fc76df9746c327bdd6",
+        "239a29bde438fe44fe17fe1390ef1634",
+        "1ab384fb3a791edfb410213cc6b82151_110325",
+        "ab6ee3b83aab6cd283320f5e01003cff",
+        "b3a7da968de13bbdcaed12ffe4993df6",
+        "c801d1c951f59297f526bab84fa86c6e",
+        "461ab9b0c7b20ac5f912704480979c65",
+        "ce616721ce9aeda69890fbccb29677a6",
+        "2fc51dd3febd447f0fdcdabca8d944ce_110325",
+        "73d08420706ae205a9c5be28b6d4e80f",
+        "864244b6969e0f8733b0eb1ca06cd51f",
+        "64345c365f544375357c7b67917f08a0_070826",
+        "b320c68bffc1f3c7f2a8dc9d5478fb27",
+        "d9a8689393effeed75ea0866e44e1def",
+        "7fff82864f21ddeccf4104a220892824"
+      ],
+      "approaches": [
+        "mantis",
+        "tree",
+        "screenshot"
+      ],
+      "runs": 1,
+      "model": "claude-haiku-5-5",
+      "reasoning": "not-applicable",
+      "timeoutMs": 600000,
+      "concurrency": 2,
+      "toolRestrictions": {
+        "builtins": [
+          "Claude built-ins disabled by --tools \"\""
+        ],
+        "approaches": {
+          "mantis": {
+            "allow": [
+              "mcp__mantis"
+            ],
+            "deny": [
+              "mcp__mantis__bench_capture"
+            ]
+          },
+          "tree": {
+            "allow": [
+              "mcp__playwright__browser_navigate",
+              "mcp__playwright__browser_navigate_back",
+              "mcp__playwright__browser_snapshot",
+              "mcp__playwright__browser_click",
+              "mcp__playwright__browser_type",
+              "mcp__playwright__browser_fill_form",
+              "mcp__playwright__browser_select_option",
+              "mcp__playwright__browser_press_key",
+              "mcp__playwright__browser_hover",
+              "mcp__playwright__browser_wait_for",
+              "mcp__playwright__browser_find",
+              "mcp__playwright__browser_tabs",
+              "mcp__playwright__browser_handle_dialog",
+              "mcp__playwright__browser_take_screenshot"
+            ],
+            "deny": [
+              "mcp__playwright__browser_evaluate",
+              "mcp__playwright__browser_run_code_unsafe"
+            ]
+          },
+          "screenshot": {
+            "allow": [
+              "mcp__screenshot"
+            ],
+            "deny": [
+              "mcp__screenshot__bench_capture"
+            ]
+          }
+        }
+      },
+      "runtime": {
+        "nodeVersion": "v20.14.0",
+        "platform": "win32",
+        "arch": "x64"
+      },
+      "environment": {
+        "MANTIS_MEMORY": null,
+        "MANTIS_HEADLESS": null,
+        "BENCH_CHROMIUM": null,
+        "PLAYWRIGHT_BROWSERS_PATH": null,
+        "CODEX_BIN": null,
+        "CLAUDE_BIN": null,
+        "resolvedCliCommand": "C:\\Users\\aadit\\AppData\\Roaming\\npm\\node_modules\\@anthropic-ai\\claude-code\\bin\\claude.exe"
+      },
+      "browserPaths": {
+        "chromiumForMcp": "C:\\Users\\aadit\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1248\\chrome-headless-shell-win64\\chrome-headless-shell.exe",
+        "browserUsePlaywrightBrowsersPath": null
+      }
+    },
+    "sourceHashes": {
+      "bench/agent/run.ts": "e0cfeaa799d60334a1f2330482becaa513c85cad5766d449ea635285da876ce2",
+      "bench/agent/integrity.ts": "ccc5ee1468353d17f4f4ff2d9488997abd997eda30563921fe54d80943a70803",
+      "bench/agent/tasks.ts": "752a4fa3da542fbcc72d591e485dbf142154e58be3359fe5aaf0778c03bb6d6b",
+      "bench/agent/bridge.mjs": "7648b01676db09199b9cda8546c63b0147963960b9b9ec6411921dc6a5cb8f19",
+      "bench/agent/codex.ts": "8f9917013ccf495aa1fd0a085d37a7e94540ff04908a3e81a4a2e10c62649baa",
+      "bench/agent/codex-config.ts": "a9436b14f70bcd503a9c63e81bf40927a438863d2dd3f4a814fa55e642e2764a",
+      "bench/agent/realsite.ts": "7844c8f182d54e14aea855d538db29f2d39d7b1035b16e4240879a0c8ec784aa",
+      "bench/agent/realsite-tasks.json": "7dedf381531d423dc0fc48d21dc1d425655dd75f38b10211a880fa09102f257f",
+      "bench/agent/screenshot-mcp.ts": "07ae652a6ae6f77b06e23389c35382664042648cace007624fbf06b8fa8bb707",
+      "bench/fixtures.ts": "9e8f1399b2a19c89566abeacf469a5810ea780a7249536e1a0ac8ab89998d103",
+      "bench/fixtures-more.ts": "c1a15f3e8f4d00366395994a4d81725203c736f25613150f26ca2b7a5006b594",
+      "bench/adapters.ts": "40fe43a06dc6a730879c2f381e1154de4b603c7ed01cfe2a3d52b11540a7c259",
+      "src/browser.ts": "d566ca874be2b27497286e0205300a845a961af0eda377f7c3fa7a7611be48a6",
+      "src/capture/index.ts": "d32bea9c5df0a0f96f57946c636e001f2be099997ab3ad50711320ab4be90595",
+      "src/capture/walker.ts": "69e09516d66b7f33ba963335048bac867a463a4343aa1a6489cbd1ded4249d6a",
+      "src/cli.ts": "ed184995d3442c646ad297d0a38edf0f5766d4df613a61bbe06f6f7f103bf64b",
+      "src/diff.ts": "e07b305bae7c22d50d6b45f58ebfde5a166ae2601e957785a088be07c1faaab7",
+      "src/fallback/askHuman.ts": "b38e1ba18216dfbffc0a837980139c82186da8b6ce86aed5ae8d96a4d267522d",
+      "src/fallback/captcha.ts": "a404f4aa81b57ad8b9a5d8aca2a402864643725ce7ade918db39966faf8929b0",
+      "src/fallback/look.ts": "0827a0b888544343999b2acc74b5faae22d4b6c0cdd63250687e0f5d6c9f808e",
+      "src/fallback/media.ts": "c37632d85bd0d96a3222f300ca63d5a22e73ca047771b6c8102669c767a0a6ca",
+      "src/fallback/ocr.ts": "b39d18753f6286877f9f283dadb8723e2fbb52a9d72b7c5acb79cf6a4545e54e",
+      "src/fallback/probe.ts": "aa57b2f89883ba44ec3fd69e8f2c4c0e45004246cea056c3fce232ac42c8ebfd",
+      "src/index.ts": "45e1184ffc8836ef803ccb7482b65a93c5bddfc86c20c2faa6c0a723004043a5",
+      "src/memory.ts": "e2cefbbe80ec33dee5149a238f49e8d57a4a60dcd012a6b47d36e0d09eea0368",
+      "src/server.ts": "c230f32ca9f9b16df3c09d782e9d205ecfa97a166a1bb0f2e20a4ac2c1ed971b",
+      "src/translate.ts": "397688cddd18ef5813545a09df7f20b58cefee6c432323287cf0a8f0b7a6ccac",
+      "dist/browser.d.ts": "c65a5fe2166c3ba6140afea40342fbd9fbf2e38a685fd96928269e25fecd89af",
+      "dist/browser.js": "15e687eb6cf0e545bf3e7ed1da185e54a49a3ea90fac5362749b4fde86d7d1b4",
+      "dist/browser.js.map": "39867eb725622217628d678d03385b7467fe3818241712f291d9303093ac450e",
+      "dist/capture/index.d.ts": "bc2d046a0485ecd3eda82fb8b371dea7ff3f1a103905fe83ad97e876ecde9dd5",
+      "dist/capture/index.js": "06217ca6bf33b1778d30796255e08d36ff74ac3e9f03a8c934241d7a84fd5603",
+      "dist/capture/index.js.map": "2322d3ed4d5c9f8dc57e4c27d3ad12d8b39baee3d7c945199409dad57edb9c44",
+      "dist/capture/walker.d.ts": "162c3bd763b2206e8291180b9c2b12fb1cfcb536b3305db3c79ee2ed1290e637",
+      "dist/capture/walker.js": "280566e96d56adfcf0fee9af143029c8cddefcb70da36f19639a96f94381c63a",
+      "dist/capture/walker.js.map": "242c3f5e35ace11c2579edb995c0e700711f1c45baccb6d487888d4fcd64e56b",
+      "dist/cli.d.ts": "43e818adf60173644896298637f47b01d5819b17eda46eaa32d0c7d64724d012",
+      "dist/cli.js": "36e9fec642fcd7d90930ad09516177874d681c627c964c5dc4fa5d205cc70a57",
+      "dist/cli.js.map": "29fc6fc6b9714a98392362f9582c81dcf5d1a3218353b3acd51978a9036f61f9",
+      "dist/diff.d.ts": "92d7bc8793be432eec0b597444f7ee5c0f9a24b0671e6a1776ab0ad2e0f21183",
+      "dist/diff.js": "ccefcd455191d271c56edc0a1dc0284a38ccf6f0073ee1612341f381e0d46360",
+      "dist/diff.js.map": "c61426f0187fe121e1691000a9c255259658ea7fa4563c8707741a03d15e86c7",
+      "dist/fallback/askHuman.d.ts": "cce5053ca7a8ad7fd21ec8d4cf3e69c11cb8fe817d34fa746eba144f1420acfd",
+      "dist/fallback/askHuman.js": "f479ea63e519fd3ce76d2059f6f1740c4fd86d0d74d1efe7b7e371b8f07caa6f",
+      "dist/fallback/askHuman.js.map": "f791903345c7ab1e479e9b76859c9fbda207a5a04baef33a606fa76b306533fc",
+      "dist/fallback/captcha.d.ts": "955f78313568c5b87874348e6b8b9a27047a9b299635518ea0ffbb324039eac5",
+      "dist/fallback/captcha.js": "bb4706ae97c4dc937e80135e568eb5fb97a3edb029483baad47de9ed3286a05c",
+      "dist/fallback/captcha.js.map": "83bba825f4800d6517c70454063756942cb8f1d274eaf9475a44fdbc61977e29",
+      "dist/fallback/look.d.ts": "955e64af5f409d668fdf46d9fdd877ae012f8d246caedeadfb313e0247ecd6af",
+      "dist/fallback/look.js": "8c33ec0526efad8885fad941d332472cd58115e417cb4f3ca9fb8e1f27329a30",
+      "dist/fallback/look.js.map": "9bcc391e5c964b1920fe5101c3fadcc40e053b5447b5e45ff4dff83e9692e805",
+      "dist/fallback/media.d.ts": "2b0f628dba91f7d9da7cb4ee08b102037cb165448c18fa8e0c7cabf05918a749",
+      "dist/fallback/media.js": "939fece5d160b210e6e1f751fa2db765d55c88ddea01bcdb534941858361287c",
+      "dist/fallback/media.js.map": "b56cee770e060ed1b76b9a0ea14d380d59d492cf68e9af3b2e6dc98fd82fdfb2",
+      "dist/fallback/ocr.d.ts": "5f5cb0e04091187d8989520626a8266349b9c1c5c1f934f66c6583f26db5267f",
+      "dist/fallback/ocr.js": "ffe361929c3cd290645f89f70f5dff46828b14136cc54297501478171fcb5b2c",
+      "dist/fallback/ocr.js.map": "a74d12f44c709a8313382da19857b5cb2c7c30162f9ce11b8bae27cd632a3b12",
+      "dist/fallback/probe.d.ts": "d171fbde232b1d41fe67faf83168d57023a66068c69c0aed976d5e0f068cd597",
+      "dist/fallback/probe.js": "2453d56f097a5cb087cbd62b3f82b5c9474128463a73d3a586cf99579f73e876",
+      "dist/fallback/probe.js.map": "8d2441a4855ff20a6b31761476d2a437798e4441ea4ecb5092882fd44b2b6176",
+      "dist/index.d.ts": "45e1184ffc8836ef803ccb7482b65a93c5bddfc86c20c2faa6c0a723004043a5",
+      "dist/index.js": "75c6d8e8dd07075fb8b2508dc8d17bff5066e674fa905f917cbbde5dfac1bb70",
+      "dist/index.js.map": "71adea566fdddd7ed1f13bc48a50948cbc3c968cdbefbc2c85a364efd8b363c2",
+      "dist/memory.d.ts": "15258ea9433619fed0f2c921a8b4a584a79d7603acd26e4954cc535232668e46",
+      "dist/memory.js": "d886daad0a558521e4f0952ddb3a8e4fa0cc5a0b5830379d06d474014e44e65e",
+      "dist/memory.js.map": "092966360dd28b5acccbc1b2a5992d3fa8c4e7c6217e73219829e62535390481",
+      "dist/server.d.ts": "1933eeb4ddcdfff3b415d8bec8a674c31447a294cfdc77d1e5046bdbddae2bc0",
+      "dist/server.js": "757b95b11cf87a2461321b26ec40f0b278304a4d0a70045a5a6ecda7454e89e2",
+      "dist/server.js.map": "ec68aba6b9aef4492b90b458842001ed278c8cc47fdbb30bfe2f93ea98e94f76",
+      "dist/translate.d.ts": "62b37d24579c352c4c1db1eef67bec92cb153121c89b0e5ba914f5dbffb84ecb",
+      "dist/translate.js": "1ae036acafe46f4f16b844e448f3f7b5d580b01a365d5afd51c65e1398e60e95",
+      "dist/translate.js.map": "51f0621bea48fa268fd3630b05776eac5a4345617cbbcf90d381b435d05a5620",
+      "package-lock.json": "99a83003014f16494a40c78a18b1e1ca9a50fffc71c05bbca42c5adcbdb23b8e"
+    },
+    "cliVersion": "2.1.161 (Claude Code)"
+  },
+  "model": "claude-haiku-5-5",
+  "runs": 1,
+  "results": [
+    {
+      "task": "ec78d3a635e417bc2a80d03ca93d7165",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\ec78d3a635e417bc2a80d03ca93d7165--mantis--1--attempt-1-1792151917316-20nr53.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "For a single person in England over State Pension age, with no health conditions or caring for someone with one, the main support is Pension Credit. Figures are",
+      "turns": 12,
+      "toolCalls": 11,
+      "toolErrors": 0,
+      "observationChars": 42884,
+      "observationImages": 0,
+      "inputTokens": 26,
+      "cacheWriteTokens": 29946,
+      "cacheReadTokens": 209867,
+      "totalInputTokens": 239839,
+      "outputTokens": 3679,
+      "costUsd": 0.23052060000000002,
+      "timings": {
+        "mcpStartupMs": 2033,
+        "cliStartupMs": 1877,
+        "cliExecutionMs": 54148,
+        "cliWallMs": 56025,
+        "verificationMs": 0,
+        "cleanupMs": 131
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\ec78d3a635e417bc2a80d03ca93d7165--mantis--1--attempt-1-1792151917316-20nr53.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "For a single person in England over State Pension age, with no health conditions or caring for someone with one, the main support is Pension Credit. Figures are",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 12,
+          "toolCalls": 11,
+          "toolErrors": 0,
+          "observationChars": 42884,
+          "observationImages": 0,
+          "totalInputTokens": 239839,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 26,
+            "cacheWriteTokens": 29946,
+            "cacheReadTokens": 209867,
+            "outputTokens": 3679,
+            "costUsd": 0.23052060000000002
+          },
+          "timings": {
+            "mcpStartupMs": 2033,
+            "cliStartupMs": 1877,
+            "cliExecutionMs": 54148,
+            "cliWallMs": 56025,
+            "verificationMs": 0,
+            "cleanupMs": 131
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "ec78d3a635e417bc2a80d03ca93d7165",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\ec78d3a635e417bc2a80d03ca93d7165--tree--1--attempt-1-1792151917328-piyx8k.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "For a single person in England over State Pension age, unemployed, with no health conditions and not caring for anyone, the main support is Pension Credit, whic",
+      "turns": 33,
+      "toolCalls": 32,
+      "toolErrors": 0,
+      "observationChars": 109778,
+      "observationImages": 0,
+      "inputTokens": 38,
+      "cacheWriteTokens": 65548,
+      "cacheReadTokens": 752219,
+      "totalInputTokens": 817805,
+      "outputTokens": 7590,
+      "costUsd": 0.5854347000000001,
+      "timings": {
+        "mcpStartupMs": 2035,
+        "cliStartupMs": 1914,
+        "cliExecutionMs": 62857,
+        "cliWallMs": 64771,
+        "verificationMs": 0,
+        "cleanupMs": 302
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\ec78d3a635e417bc2a80d03ca93d7165--tree--1--attempt-1-1792151917328-piyx8k.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "For a single person in England over State Pension age, unemployed, with no health conditions and not caring for anyone, the main support is Pension Credit, whic",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 33,
+          "toolCalls": 32,
+          "toolErrors": 0,
+          "observationChars": 109778,
+          "observationImages": 0,
+          "totalInputTokens": 817805,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 38,
+            "cacheWriteTokens": 65548,
+            "cacheReadTokens": 752219,
+            "outputTokens": 7590,
+            "costUsd": 0.5854347000000001
+          },
+          "timings": {
+            "mcpStartupMs": 2035,
+            "cliStartupMs": 1914,
+            "cliExecutionMs": 62857,
+            "cliWallMs": 64771,
+            "verificationMs": 0,
+            "cleanupMs": 302
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "ec78d3a635e417bc2a80d03ca93d7165",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\ec78d3a635e417bc2a80d03ca93d7165--screenshot--1--attempt-1-1792151975594-1yl3x4.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Here's what I found on GOV.UK for a single person in England, over State Pension age, unemployed, with no health condition, who may be a carer. I didn't log in,",
+      "turns": 38,
+      "toolCalls": 37,
+      "toolErrors": 0,
+      "observationChars": 567,
+      "observationImages": 18,
+      "inputTokens": 40,
+      "cacheWriteTokens": 40380,
+      "cacheReadTokens": 426858,
+      "totalInputTokens": 467278,
+      "outputTokens": 6562,
+      "costUsd": 0.37803240000000005,
+      "timings": {
+        "mcpStartupMs": 2017,
+        "cliStartupMs": 1100,
+        "cliExecutionMs": 60665,
+        "cliWallMs": 61765,
+        "verificationMs": 0,
+        "cleanupMs": 138
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\ec78d3a635e417bc2a80d03ca93d7165--screenshot--1--attempt-1-1792151975594-1yl3x4.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Here's what I found on GOV.UK for a single person in England, over State Pension age, unemployed, with no health condition, who may be a carer. I didn't log in,",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 38,
+          "toolCalls": 37,
+          "toolErrors": 0,
+          "observationChars": 567,
+          "observationImages": 18,
+          "totalInputTokens": 467278,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 40,
+            "cacheWriteTokens": 40380,
+            "cacheReadTokens": 426858,
+            "outputTokens": 6562,
+            "costUsd": 0.37803240000000005
+          },
+          "timings": {
+            "mcpStartupMs": 2017,
+            "cliStartupMs": 1100,
+            "cliExecutionMs": 60665,
+            "cliWallMs": 61765,
+            "verificationMs": 0,
+            "cleanupMs": 138
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "6b5be1764692d1dc8f17dc4375b2daa8",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\6b5be1764692d1dc8f17dc4375b2daa8--mantis--1--attempt-1-1792151984568-h0o7b7.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "EUR/USD daily historical data for Oct 16, 2025 to Oct 16, 2026 is on the page (about 250 trading days, Open/High/Low/Close, USD). The Oct 16, 2026 row is still ",
+      "turns": 6,
+      "toolCalls": 5,
+      "toolErrors": 0,
+      "observationChars": 49473,
+      "observationImages": 0,
+      "inputTokens": 14,
+      "cacheWriteTokens": 37030,
+      "cacheReadTokens": 87756,
+      "totalInputTokens": 124800,
+      "outputTokens": 2763,
+      "costUsd": 0.20667629999999998,
+      "timings": {
+        "mcpStartupMs": 2016,
+        "cliStartupMs": 1127,
+        "cliExecutionMs": 33897,
+        "cliWallMs": 35024,
+        "verificationMs": 0,
+        "cleanupMs": 134
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\6b5be1764692d1dc8f17dc4375b2daa8--mantis--1--attempt-1-1792151984568-h0o7b7.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "EUR/USD daily historical data for Oct 16, 2025 to Oct 16, 2026 is on the page (about 250 trading days, Open/High/Low/Close, USD). The Oct 16, 2026 row is still ",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 6,
+          "toolCalls": 5,
+          "toolErrors": 0,
+          "observationChars": 49473,
+          "observationImages": 0,
+          "totalInputTokens": 124800,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 14,
+            "cacheWriteTokens": 37030,
+            "cacheReadTokens": 87756,
+            "outputTokens": 2763,
+            "costUsd": 0.20667629999999998
+          },
+          "timings": {
+            "mcpStartupMs": 2016,
+            "cliStartupMs": 1127,
+            "cliExecutionMs": 33897,
+            "cliWallMs": 35024,
+            "verificationMs": 0,
+            "cleanupMs": 134
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "6b5be1764692d1dc8f17dc4375b2daa8",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\6b5be1764692d1dc8f17dc4375b2daa8--tree--1--attempt-1-1792152021857-6iu0qf.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "EUR/USD historical prices on Yahoo Finance, Oct 16 back to Aug 3, 2026 (quoted in USD). The table on the page has about 55 sessions; the most recent 12 are belo",
+      "turns": 19,
+      "toolCalls": 18,
+      "toolErrors": 2,
+      "observationChars": 51336,
+      "observationImages": 0,
+      "inputTokens": 34,
+      "cacheWriteTokens": 29828,
+      "cacheReadTokens": 296208,
+      "totalInputTokens": 326070,
+      "outputTokens": 10421,
+      "costUsd": 0.35713439999999996,
+      "timings": {
+        "mcpStartupMs": 2025,
+        "cliStartupMs": 1078,
+        "cliExecutionMs": 79116,
+        "cliWallMs": 80194,
+        "verificationMs": 0,
+        "cleanupMs": 199
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\6b5be1764692d1dc8f17dc4375b2daa8--tree--1--attempt-1-1792152021857-6iu0qf.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "EUR/USD historical prices on Yahoo Finance, Oct 16 back to Aug 3, 2026 (quoted in USD). The table on the page has about 55 sessions; the most recent 12 are belo",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 19,
+          "toolCalls": 18,
+          "toolErrors": 2,
+          "observationChars": 51336,
+          "observationImages": 0,
+          "totalInputTokens": 326070,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 34,
+            "cacheWriteTokens": 29828,
+            "cacheReadTokens": 296208,
+            "outputTokens": 10421,
+            "costUsd": 0.35713439999999996
+          },
+          "timings": {
+            "mcpStartupMs": 2025,
+            "cliStartupMs": 1078,
+            "cliExecutionMs": 79116,
+            "cliWallMs": 80194,
+            "verificationMs": 0,
+            "cleanupMs": 199
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "6b5be1764692d1dc8f17dc4375b2daa8",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\6b5be1764692d1dc8f17dc4375b2daa8--screenshot--1--attempt-1-1792152039623-o6ofaj.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Yahoo Finance's EUR/USD (ticker EURUSD=X) Historical Data page shows daily prices for Oct 16, 2025 to Oct 16, 2026. I searched for EUR/USD, opened the quote pag",
+      "turns": 14,
+      "toolCalls": 13,
+      "toolErrors": 1,
+      "observationChars": 328,
+      "observationImages": 6,
+      "inputTokens": 18,
+      "cacheWriteTokens": 15098,
+      "cacheReadTokens": 98602,
+      "totalInputTokens": 113718,
+      "outputTokens": 2053,
+      "costUsd": 0.1170471,
+      "timings": {
+        "mcpStartupMs": 2013,
+        "cliStartupMs": 1545,
+        "cliExecutionMs": 25251,
+        "cliWallMs": 26796,
+        "verificationMs": 0,
+        "cleanupMs": 138
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\6b5be1764692d1dc8f17dc4375b2daa8--screenshot--1--attempt-1-1792152039623-o6ofaj.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Yahoo Finance's EUR/USD (ticker EURUSD=X) Historical Data page shows daily prices for Oct 16, 2025 to Oct 16, 2026. I searched for EUR/USD, opened the quote pag",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 14,
+          "toolCalls": 13,
+          "toolErrors": 1,
+          "observationChars": 328,
+          "observationImages": 6,
+          "totalInputTokens": 113718,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 18,
+            "cacheWriteTokens": 15098,
+            "cacheReadTokens": 98602,
+            "outputTokens": 2053,
+            "costUsd": 0.1170471
+          },
+          "timings": {
+            "mcpStartupMs": 2013,
+            "cliStartupMs": 1545,
+            "cliExecutionMs": 25251,
+            "cliWallMs": 26796,
+            "verificationMs": 0,
+            "cleanupMs": 138
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "bd1e3770b7181f6fce9c35e18caa9785",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\bd1e3770b7181f6fce9c35e18caa9785--mantis--1--attempt-1-1792152068708-rki5mf.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "The search for \"solar panel installer\" in Delhi services is done, with \"hide duplicates\" checked. It returns one listing: \"Top Commercial 10 kW Solar Installati",
+      "turns": 13,
+      "toolCalls": 12,
+      "toolErrors": 3,
+      "observationChars": 12855,
+      "observationImages": 0,
+      "inputTokens": 22,
+      "cacheWriteTokens": 13008,
+      "cacheReadTokens": 143789,
+      "totalInputTokens": 156819,
+      "outputTokens": 1701,
+      "costUsd": 0.11749769999999998,
+      "timings": {
+        "mcpStartupMs": 2010,
+        "cliStartupMs": 1245,
+        "cliExecutionMs": 31764,
+        "cliWallMs": 33009,
+        "verificationMs": 0,
+        "cleanupMs": 152
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\bd1e3770b7181f6fce9c35e18caa9785--mantis--1--attempt-1-1792152068708-rki5mf.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "The search for \"solar panel installer\" in Delhi services is done, with \"hide duplicates\" checked. It returns one listing: \"Top Commercial 10 kW Solar Installati",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 13,
+          "toolCalls": 12,
+          "toolErrors": 3,
+          "observationChars": 12855,
+          "observationImages": 0,
+          "totalInputTokens": 156819,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 22,
+            "cacheWriteTokens": 13008,
+            "cacheReadTokens": 143789,
+            "outputTokens": 1701,
+            "costUsd": 0.11749769999999998
+          },
+          "timings": {
+            "mcpStartupMs": 2010,
+            "cliStartupMs": 1245,
+            "cliExecutionMs": 31764,
+            "cliWallMs": 33009,
+            "verificationMs": 0,
+            "cleanupMs": 152
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "bd1e3770b7181f6fce9c35e18caa9785",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\bd1e3770b7181f6fce9c35e18caa9785--tree--1--attempt-1-1792152103938-q9wn84.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I searched Craigslist services for \"solar panel installer\" in the Delhi area and turned on \"hide duplicates.\" The search returned one listing after the filter w",
+      "turns": 10,
+      "toolCalls": 9,
+      "toolErrors": 0,
+      "observationChars": 18456,
+      "observationImages": 0,
+      "inputTokens": 16,
+      "cacheWriteTokens": 14738,
+      "cacheReadTokens": 113070,
+      "totalInputTokens": 127824,
+      "outputTokens": 1546,
+      "costUsd": 0.11242649999999998,
+      "timings": {
+        "mcpStartupMs": 2028,
+        "cliStartupMs": 1249,
+        "cliExecutionMs": 36275,
+        "cliWallMs": 37524,
+        "verificationMs": 0,
+        "cleanupMs": 156
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\bd1e3770b7181f6fce9c35e18caa9785--tree--1--attempt-1-1792152103938-q9wn84.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I searched Craigslist services for \"solar panel installer\" in the Delhi area and turned on \"hide duplicates.\" The search returned one listing after the filter w",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 10,
+          "toolCalls": 9,
+          "toolErrors": 0,
+          "observationChars": 18456,
+          "observationImages": 0,
+          "totalInputTokens": 127824,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 16,
+            "cacheWriteTokens": 14738,
+            "cacheReadTokens": 113070,
+            "outputTokens": 1546,
+            "costUsd": 0.11242649999999998
+          },
+          "timings": {
+            "mcpStartupMs": 2028,
+            "cliStartupMs": 1249,
+            "cliExecutionMs": 36275,
+            "cliWallMs": 37524,
+            "verificationMs": 0,
+            "cleanupMs": 156
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "bd1e3770b7181f6fce9c35e18caa9785",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\bd1e3770b7181f6fce9c35e18caa9785--screenshot--1--attempt-1-1792152104439-pisgzc.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I couldn't browse the service listings. Navigating to craigslist.org redirected to the Delhi area page (https://www.craigslist.org/area/delhi), which rendered a",
+      "turns": 8,
+      "toolCalls": 7,
+      "toolErrors": 0,
+      "observationChars": 113,
+      "observationImages": 4,
+      "inputTokens": 12,
+      "cacheWriteTokens": 11954,
+      "cacheReadTokens": 51425,
+      "totalInputTokens": 63391,
+      "outputTokens": 1281,
+      "costUsd": 0.079506,
+      "timings": {
+        "mcpStartupMs": 2024,
+        "cliStartupMs": 1351,
+        "cliExecutionMs": 20496,
+        "cliWallMs": 21847,
+        "verificationMs": 0,
+        "cleanupMs": 136
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\bd1e3770b7181f6fce9c35e18caa9785--screenshot--1--attempt-1-1792152104439-pisgzc.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I couldn't browse the service listings. Navigating to craigslist.org redirected to the Delhi area page (https://www.craigslist.org/area/delhi), which rendered a",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 8,
+          "toolCalls": 7,
+          "toolErrors": 0,
+          "observationChars": 113,
+          "observationImages": 4,
+          "totalInputTokens": 63391,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 12,
+            "cacheWriteTokens": 11954,
+            "cacheReadTokens": 51425,
+            "outputTokens": 1281,
+            "costUsd": 0.079506
+          },
+          "timings": {
+            "mcpStartupMs": 2024,
+            "cliStartupMs": 1351,
+            "cliExecutionMs": 20496,
+            "cliWallMs": 21847,
+            "verificationMs": 0,
+            "cleanupMs": 136
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "5c00e9561eae94789443f405525a5869",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\5c00e9561eae94789443f405525a5869--mantis--1--attempt-1-1792152128517-xvfsac.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Healthline's Vivitrol dosage page says the usual dose is a **380 mg injection every 4 weeks** (once a month). Vivitrol comes as a powder in a vial that is mixed",
+      "turns": 9,
+      "toolCalls": 8,
+      "toolErrors": 0,
+      "observationChars": 65761,
+      "observationImages": 0,
+      "inputTokens": 20,
+      "cacheWriteTokens": 34371,
+      "cacheReadTokens": 157261,
+      "totalInputTokens": 191652,
+      "outputTokens": 1909,
+      "costUsd": 0.20476455,
+      "timings": {
+        "mcpStartupMs": 2017,
+        "cliStartupMs": 1043,
+        "cliExecutionMs": 36906,
+        "cliWallMs": 37949,
+        "verificationMs": 0,
+        "cleanupMs": 144
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\5c00e9561eae94789443f405525a5869--mantis--1--attempt-1-1792152128517-xvfsac.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Healthline's Vivitrol dosage page says the usual dose is a **380 mg injection every 4 weeks** (once a month). Vivitrol comes as a powder in a vial that is mixed",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 9,
+          "toolCalls": 8,
+          "toolErrors": 0,
+          "observationChars": 65761,
+          "observationImages": 0,
+          "totalInputTokens": 191652,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 20,
+            "cacheWriteTokens": 34371,
+            "cacheReadTokens": 157261,
+            "outputTokens": 1909,
+            "costUsd": 0.20476455
+          },
+          "timings": {
+            "mcpStartupMs": 2017,
+            "cliStartupMs": 1043,
+            "cliExecutionMs": 36906,
+            "cliWallMs": 37949,
+            "verificationMs": 0,
+            "cleanupMs": 144
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "5c00e9561eae94789443f405525a5869",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\5c00e9561eae94789443f405525a5869--tree--1--attempt-1-1792152143722-lgrtcu.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Healthline's recommended Vivitrol dosage is one 380 mg injection about once a month (every 4 weeks), given intramuscularly by a healthcare professional. Healthl",
+      "turns": 19,
+      "toolCalls": 18,
+      "toolErrors": 1,
+      "observationChars": 73188,
+      "observationImages": 0,
+      "inputTokens": 38,
+      "cacheWriteTokens": 39426,
+      "cacheReadTokens": 406004,
+      "totalInputTokens": 445468,
+      "outputTokens": 2241,
+      "costUsd": 0.3033777,
+      "timings": {
+        "mcpStartupMs": 2019,
+        "cliStartupMs": 1250,
+        "cliExecutionMs": 46563,
+        "cliWallMs": 47813,
+        "verificationMs": 0,
+        "cleanupMs": 156
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\5c00e9561eae94789443f405525a5869--tree--1--attempt-1-1792152143722-lgrtcu.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Healthline's recommended Vivitrol dosage is one 380 mg injection about once a month (every 4 weeks), given intramuscularly by a healthcare professional. Healthl",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 19,
+          "toolCalls": 18,
+          "toolErrors": 1,
+          "observationChars": 73188,
+          "observationImages": 0,
+          "totalInputTokens": 445468,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 38,
+            "cacheWriteTokens": 39426,
+            "cacheReadTokens": 406004,
+            "outputTokens": 2241,
+            "costUsd": 0.3033777
+          },
+          "timings": {
+            "mcpStartupMs": 2019,
+            "cliStartupMs": 1250,
+            "cliExecutionMs": 46563,
+            "cliWallMs": 47813,
+            "verificationMs": 0,
+            "cleanupMs": 156
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "5c00e9561eae94789443f405525a5869",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\5c00e9561eae94789443f405525a5869--screenshot--1--attempt-1-1792152168743-2vzhwa.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "The recommended Vivitrol dose is one 380 mg injection about once a month, given by a healthcare professional. This comes from Healthline's \"Vivitrol Dosage and ",
+      "turns": 16,
+      "toolCalls": 15,
+      "toolErrors": 1,
+      "observationChars": 364,
+      "observationImages": 6,
+      "inputTokens": 18,
+      "cacheWriteTokens": 15219,
+      "cacheReadTokens": 101358,
+      "totalInputTokens": 116595,
+      "outputTokens": 1694,
+      "costUsd": 0.11294264999999999,
+      "timings": {
+        "mcpStartupMs": 2018,
+        "cliStartupMs": 1345,
+        "cliExecutionMs": 26226,
+        "cliWallMs": 27571,
+        "verificationMs": 0,
+        "cleanupMs": 152
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\5c00e9561eae94789443f405525a5869--screenshot--1--attempt-1-1792152168743-2vzhwa.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "The recommended Vivitrol dose is one 380 mg injection about once a month, given by a healthcare professional. This comes from Healthline's \"Vivitrol Dosage and ",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 16,
+          "toolCalls": 15,
+          "toolErrors": 1,
+          "observationChars": 364,
+          "observationImages": 6,
+          "totalInputTokens": 116595,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 18,
+            "cacheWriteTokens": 15219,
+            "cacheReadTokens": 101358,
+            "outputTokens": 1694,
+            "costUsd": 0.11294264999999999
+          },
+          "timings": {
+            "mcpStartupMs": 2018,
+            "cliStartupMs": 1345,
+            "cliExecutionMs": 26226,
+            "cliWallMs": 27571,
+            "verificationMs": 0,
+            "cleanupMs": 152
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "eb323dc584156d0eb3a2b90bb8c4b791_110325",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\eb323dc584156d0eb3a2b90bb8c4b791_110325--mantis--1--attempt-1-1792152193849-er3fp2.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "The cheapest 2-bed, 3+-bath rental I found in New York is **720 West End Avenue, Unit 7H (Upper West Side, Manhattan)** at **$13,500/mo**, with 2 beds, 3 baths,",
+      "turns": 28,
+      "toolCalls": 27,
+      "toolErrors": 1,
+      "observationChars": 39524,
+      "observationImages": 0,
+      "inputTokens": 46,
+      "cacheWriteTokens": 29916,
+      "cacheReadTokens": 456290,
+      "totalInputTokens": 486252,
+      "outputTokens": 4844,
+      "costUsd": 0.32187,
+      "timings": {
+        "mcpStartupMs": 2016,
+        "cliStartupMs": 1157,
+        "cliExecutionMs": 90919,
+        "cliWallMs": 92076,
+        "verificationMs": 0,
+        "cleanupMs": 177
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\eb323dc584156d0eb3a2b90bb8c4b791_110325--mantis--1--attempt-1-1792152193849-er3fp2.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "The cheapest 2-bed, 3+-bath rental I found in New York is **720 West End Avenue, Unit 7H (Upper West Side, Manhattan)** at **$13,500/mo**, with 2 beds, 3 baths,",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 28,
+          "toolCalls": 27,
+          "toolErrors": 1,
+          "observationChars": 39524,
+          "observationImages": 0,
+          "totalInputTokens": 486252,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 46,
+            "cacheWriteTokens": 29916,
+            "cacheReadTokens": 456290,
+            "outputTokens": 4844,
+            "costUsd": 0.32187
+          },
+          "timings": {
+            "mcpStartupMs": 2016,
+            "cliStartupMs": 1157,
+            "cliExecutionMs": 90919,
+            "cliWallMs": 92076,
+            "verificationMs": 0,
+            "cleanupMs": 177
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "eb323dc584156d0eb3a2b90bb8c4b791_110325",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\eb323dc584156d0eb3a2b90bb8c4b791_110325--tree--1--attempt-1-1792152198605-lid2vy.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "The cheapest 2-bed, 3+ bath rental I found in Manhattan is **$6,995/mo at West 121st Street, Harlem, NY 10027** (listed by Corcoran, marked New Construction, 1,",
+      "turns": 67,
+      "toolCalls": 66,
+      "toolErrors": 4,
+      "observationChars": 184348,
+      "observationImages": 14,
+      "inputTokens": 100,
+      "cacheWriteTokens": 119826,
+      "cacheReadTokens": 3170729,
+      "totalInputTokens": 3290655,
+      "outputTokens": 13122,
+      "costUsd": 1.5976962,
+      "timings": {
+        "mcpStartupMs": 2019,
+        "cliStartupMs": 1236,
+        "cliExecutionMs": 255777,
+        "cliWallMs": 257013,
+        "verificationMs": 0,
+        "cleanupMs": 158
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\eb323dc584156d0eb3a2b90bb8c4b791_110325--tree--1--attempt-1-1792152198605-lid2vy.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "The cheapest 2-bed, 3+ bath rental I found in Manhattan is **$6,995/mo at West 121st Street, Harlem, NY 10027** (listed by Corcoran, marked New Construction, 1,",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 67,
+          "toolCalls": 66,
+          "toolErrors": 4,
+          "observationChars": 184348,
+          "observationImages": 14,
+          "totalInputTokens": 3290655,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 100,
+            "cacheWriteTokens": 119826,
+            "cacheReadTokens": 3170729,
+            "outputTokens": 13122,
+            "costUsd": 1.5976962
+          },
+          "timings": {
+            "mcpStartupMs": 2019,
+            "cliStartupMs": 1236,
+            "cliExecutionMs": 255777,
+            "cliWallMs": 257013,
+            "verificationMs": 0,
+            "cleanupMs": 158
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "eb323dc584156d0eb3a2b90bb8c4b791_110325",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\eb323dc584156d0eb3a2b90bb8c4b791_110325--screenshot--1--attempt-1-1792152288321-2eenh9.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "The cheapest 2+ bed, 3+ bath rental I found in New York is **$3,090/month**: 32 West 39th Street, Unit 7 (Midtown South), 4 beds and 3 baths, listed by Compass.",
+      "turns": 98,
+      "toolCalls": 97,
+      "toolErrors": 1,
+      "observationChars": 1326,
+      "observationImages": 33,
+      "inputTokens": 72,
+      "cacheWriteTokens": 68607,
+      "cacheReadTokens": 1258190,
+      "totalInputTokens": 1326869,
+      "outputTokens": 15507,
+      "costUsd": 0.8675542500000001,
+      "timings": {
+        "mcpStartupMs": 2015,
+        "cliStartupMs": 1142,
+        "cliExecutionMs": 235896,
+        "cliWallMs": 237038,
+        "verificationMs": 0,
+        "cleanupMs": 143
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\eb323dc584156d0eb3a2b90bb8c4b791_110325--screenshot--1--attempt-1-1792152288321-2eenh9.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "The cheapest 2+ bed, 3+ bath rental I found in New York is **$3,090/month**: 32 West 39th Street, Unit 7 (Midtown South), 4 beds and 3 baths, listed by Compass.",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 98,
+          "toolCalls": 97,
+          "toolErrors": 1,
+          "observationChars": 1326,
+          "observationImages": 33,
+          "totalInputTokens": 1326869,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 72,
+            "cacheWriteTokens": 68607,
+            "cacheReadTokens": 1258190,
+            "outputTokens": 15507,
+            "costUsd": 0.8675542500000001
+          },
+          "timings": {
+            "mcpStartupMs": 2015,
+            "cliStartupMs": 1142,
+            "cliExecutionMs": 235896,
+            "cliWallMs": 237038,
+            "verificationMs": 0,
+            "cleanupMs": 143
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "c03ee2be3d73556ab789c0ad1cbd3451",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\c03ee2be3d73556ab789c0ad1cbd3451--mantis--1--attempt-1-1792152457910-ggiavt.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I couldn't complete the search. AKC's \"Find a Dog Groomer\" link (on akc.org) opens https://marketplace.akc.org/search-groomers, which returns \"403 Forbidden\" fo",
+      "turns": 6,
+      "toolCalls": 5,
+      "toolErrors": 0,
+      "observationChars": 6266,
+      "observationImages": 0,
+      "inputTokens": 12,
+      "cacheWriteTokens": 9051,
+      "cacheReadTokens": 59767,
+      "totalInputTokens": 68830,
+      "outputTokens": 941,
+      "costUsd": 0.06602235000000001,
+      "timings": {
+        "mcpStartupMs": 2026,
+        "cliStartupMs": 1287,
+        "cliExecutionMs": 18836,
+        "cliWallMs": 20123,
+        "verificationMs": 0,
+        "cleanupMs": 224
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\c03ee2be3d73556ab789c0ad1cbd3451--mantis--1--attempt-1-1792152457910-ggiavt.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I couldn't complete the search. AKC's \"Find a Dog Groomer\" link (on akc.org) opens https://marketplace.akc.org/search-groomers, which returns \"403 Forbidden\" fo",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 6,
+          "toolCalls": 5,
+          "toolErrors": 0,
+          "observationChars": 6266,
+          "observationImages": 0,
+          "totalInputTokens": 68830,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 12,
+            "cacheWriteTokens": 9051,
+            "cacheReadTokens": 59767,
+            "outputTokens": 941,
+            "costUsd": 0.06602235000000001
+          },
+          "timings": {
+            "mcpStartupMs": 2026,
+            "cliStartupMs": 1287,
+            "cliExecutionMs": 18836,
+            "cliWallMs": 20123,
+            "verificationMs": 0,
+            "cleanupMs": 224
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "c03ee2be3d73556ab789c0ad1cbd3451",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\c03ee2be3d73556ab789c0ad1cbd3451--tree--1--attempt-1-1792152480337-4udsr7.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I couldn't find a groomer or check prices because the AKC groomer directory blocks this browser session.\n\n- The AKC homepage loads, and its \"Find a Dog Groomer\"",
+      "turns": 10,
+      "toolCalls": 9,
+      "toolErrors": 0,
+      "observationChars": 82185,
+      "observationImages": 0,
+      "inputTokens": 14,
+      "cacheWriteTokens": 40449,
+      "cacheReadTokens": 167945,
+      "totalInputTokens": 208408,
+      "outputTokens": 1592,
+      "costUsd": 0.22598925,
+      "timings": {
+        "mcpStartupMs": 2025,
+        "cliStartupMs": 1089,
+        "cliExecutionMs": 23344,
+        "cliWallMs": 24433,
+        "verificationMs": 0,
+        "cleanupMs": 174
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\c03ee2be3d73556ab789c0ad1cbd3451--tree--1--attempt-1-1792152480337-4udsr7.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I couldn't find a groomer or check prices because the AKC groomer directory blocks this browser session.\n\n- The AKC homepage loads, and its \"Find a Dog Groomer\"",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 10,
+          "toolCalls": 9,
+          "toolErrors": 0,
+          "observationChars": 82185,
+          "observationImages": 0,
+          "totalInputTokens": 208408,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 14,
+            "cacheWriteTokens": 40449,
+            "cacheReadTokens": 167945,
+            "outputTokens": 1592,
+            "costUsd": 0.22598925
+          },
+          "timings": {
+            "mcpStartupMs": 2025,
+            "cliStartupMs": 1089,
+            "cliExecutionMs": 23344,
+            "cliWallMs": 24433,
+            "verificationMs": 0,
+            "cleanupMs": 174
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "c03ee2be3d73556ab789c0ad1cbd3451",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\c03ee2be3d73556ab789c0ad1cbd3451--screenshot--1--attempt-1-1792152507018-rhj0xr.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I could not complete this task: AKC's site has no groomer directory that I could find, so I never reached a groomer's price list.\n\nWhat I checked:\n- **Groomer H",
+      "turns": 64,
+      "toolCalls": 63,
+      "toolErrors": 3,
+      "observationChars": 1337,
+      "observationImages": 23,
+      "inputTokens": 56,
+      "cacheWriteTokens": 44464,
+      "cacheReadTokens": 722228,
+      "totalInputTokens": 766748,
+      "outputTokens": 6415,
+      "costUsd": 0.4798014,
+      "timings": {
+        "mcpStartupMs": 2012,
+        "cliStartupMs": 1262,
+        "cliExecutionMs": 101245,
+        "cliWallMs": 102507,
+        "verificationMs": 0,
+        "cleanupMs": 148
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\c03ee2be3d73556ab789c0ad1cbd3451--screenshot--1--attempt-1-1792152507018-rhj0xr.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I could not complete this task: AKC's site has no groomer directory that I could find, so I never reached a groomer's price list.\n\nWhat I checked:\n- **Groomer H",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 64,
+          "toolCalls": 63,
+          "toolErrors": 3,
+          "observationChars": 1337,
+          "observationImages": 23,
+          "totalInputTokens": 766748,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 56,
+            "cacheWriteTokens": 44464,
+            "cacheReadTokens": 722228,
+            "outputTokens": 6415,
+            "costUsd": 0.4798014
+          },
+          "timings": {
+            "mcpStartupMs": 2012,
+            "cliStartupMs": 1262,
+            "cliExecutionMs": 101245,
+            "cliWallMs": 102507,
+            "verificationMs": 0,
+            "cleanupMs": 148
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\824eb7bb0ef1ce40bfd49c12182d9428_070826--mantis--1--attempt-1-1792152527790-4hxhp3.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I added Women's Solid Leaderback Swimsuit Black (Team Black, size 40) to your cart at $37.00 sale price (regular $74.00), quantity 1. I stopped before checkout.",
+      "turns": 64,
+      "toolCalls": 63,
+      "toolErrors": 6,
+      "observationChars": 221060,
+      "observationImages": 0,
+      "inputTokens": 116,
+      "cacheWriteTokens": 130689,
+      "cacheReadTokens": 3632576,
+      "totalInputTokens": 3763381,
+      "outputTokens": 19707,
+      "costUsd": 1.87580955,
+      "timings": {
+        "mcpStartupMs": 2012,
+        "cliStartupMs": 1100,
+        "cliExecutionMs": 294528,
+        "cliWallMs": 295628,
+        "verificationMs": 0,
+        "cleanupMs": 161
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\824eb7bb0ef1ce40bfd49c12182d9428_070826--mantis--1--attempt-1-1792152527790-4hxhp3.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I added Women's Solid Leaderback Swimsuit Black (Team Black, size 40) to your cart at $37.00 sale price (regular $74.00), quantity 1. I stopped before checkout.",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 64,
+          "toolCalls": 63,
+          "toolErrors": 6,
+          "observationChars": 221060,
+          "observationImages": 0,
+          "totalInputTokens": 3763381,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 116,
+            "cacheWriteTokens": 130689,
+            "cacheReadTokens": 3632576,
+            "outputTokens": 19707,
+            "costUsd": 1.87580955
+          },
+          "timings": {
+            "mcpStartupMs": 2012,
+            "cliStartupMs": 1100,
+            "cliExecutionMs": 294528,
+            "cliWallMs": 295628,
+            "verificationMs": 0,
+            "cleanupMs": 161
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\824eb7bb0ef1ce40bfd49c12182d9428_070826--tree--1--attempt-1-1792152611835-fbqam8.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I added the Women's Solid Leaderback Swimsuit Black, size 40, to your cart at $37.00 (regular $74.00, 50% off). The cart subtotal is $37.00. I stopped before ch",
+      "turns": 61,
+      "toolCalls": 60,
+      "toolErrors": 5,
+      "observationChars": 312399,
+      "observationImages": 0,
+      "inputTokens": 92,
+      "cacheWriteTokens": 179231,
+      "cacheReadTokens": 4190306,
+      "totalInputTokens": 4369629,
+      "outputTokens": 23571,
+      "costUsd": 2.2830490500000002,
+      "timings": {
+        "mcpStartupMs": 2022,
+        "cliStartupMs": 1191,
+        "cliExecutionMs": 253587,
+        "cliWallMs": 254778,
+        "verificationMs": 0,
+        "cleanupMs": 243
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\824eb7bb0ef1ce40bfd49c12182d9428_070826--tree--1--attempt-1-1792152611835-fbqam8.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I added the Women's Solid Leaderback Swimsuit Black, size 40, to your cart at $37.00 (regular $74.00, 50% off). The cart subtotal is $37.00. I stopped before ch",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 61,
+          "toolCalls": 60,
+          "toolErrors": 5,
+          "observationChars": 312399,
+          "observationImages": 0,
+          "totalInputTokens": 4369629,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 92,
+            "cacheWriteTokens": 179231,
+            "cacheReadTokens": 4190306,
+            "outputTokens": 23571,
+            "costUsd": 2.2830490500000002
+          },
+          "timings": {
+            "mcpStartupMs": 2022,
+            "cliStartupMs": 1191,
+            "cliExecutionMs": 253587,
+            "cliWallMs": 254778,
+            "verificationMs": 0,
+            "cleanupMs": 243
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\824eb7bb0ef1ce40bfd49c12182d9428_070826--screenshot--1--attempt-1-1792152825788-c2jb05.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I did not add anything to your cart. The site's Size L filter doesn't match the sizes shown on the product pages, so I couldn't confirm an L option.\n\n- **Lowest",
+      "turns": 150,
+      "toolCalls": 149,
+      "toolErrors": 0,
+      "observationChars": 2761,
+      "observationImages": 71,
+      "inputTokens": 146,
+      "cacheWriteTokens": 128227,
+      "cacheReadTokens": 4836195,
+      "totalInputTokens": 4964568,
+      "outputTokens": 21578,
+      "costUsd": 2.2558177499999994,
+      "timings": {
+        "mcpStartupMs": 2016,
+        "cliStartupMs": 1339,
+        "cliExecutionMs": 426394,
+        "cliWallMs": 427733,
+        "verificationMs": 0,
+        "cleanupMs": 176
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\824eb7bb0ef1ce40bfd49c12182d9428_070826--screenshot--1--attempt-1-1792152825788-c2jb05.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I did not add anything to your cart. The site's Size L filter doesn't match the sizes shown on the product pages, so I couldn't confirm an L option.\n\n- **Lowest",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 150,
+          "toolCalls": 149,
+          "toolErrors": 0,
+          "observationChars": 2761,
+          "observationImages": 71,
+          "totalInputTokens": 4964568,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 146,
+            "cacheWriteTokens": 128227,
+            "cacheReadTokens": 4836195,
+            "outputTokens": 21578,
+            "costUsd": 2.2558177499999994
+          },
+          "timings": {
+            "mcpStartupMs": 2016,
+            "cliStartupMs": 1339,
+            "cliExecutionMs": 426394,
+            "cliWallMs": 427733,
+            "verificationMs": 0,
+            "cleanupMs": 176
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\0e42c3a73f2aece1f854e0ba55b7c8b0--mantis--1--attempt-1-1792152869005-7p8fuq.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I couldn't finish this: the only Manhattan gas station I found rated above 4.0 has no reviews section, so there were no reviews to sort.\n\n- I searched \"gas stat",
+      "turns": 41,
+      "toolCalls": 40,
+      "toolErrors": 0,
+      "observationChars": 37117,
+      "observationImages": 3,
+      "inputTokens": 64,
+      "cacheWriteTokens": 32358,
+      "cacheReadTokens": 728434,
+      "totalInputTokens": 760856,
+      "outputTokens": 6473,
+      "costUsd": 0.4371596999999999,
+      "timings": {
+        "mcpStartupMs": 2016,
+        "cliStartupMs": 1262,
+        "cliExecutionMs": 89169,
+        "cliWallMs": 90431,
+        "verificationMs": 0,
+        "cleanupMs": 155
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\0e42c3a73f2aece1f854e0ba55b7c8b0--mantis--1--attempt-1-1792152869005-7p8fuq.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I couldn't finish this: the only Manhattan gas station I found rated above 4.0 has no reviews section, so there were no reviews to sort.\n\n- I searched \"gas stat",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 41,
+          "toolCalls": 40,
+          "toolErrors": 0,
+          "observationChars": 37117,
+          "observationImages": 3,
+          "totalInputTokens": 760856,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 64,
+            "cacheWriteTokens": 32358,
+            "cacheReadTokens": 728434,
+            "outputTokens": 6473,
+            "costUsd": 0.4371596999999999
+          },
+          "timings": {
+            "mcpStartupMs": 2016,
+            "cliStartupMs": 1262,
+            "cliExecutionMs": 89169,
+            "cliWallMs": 90431,
+            "verificationMs": 0,
+            "cleanupMs": 155
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\0e42c3a73f2aece1f854e0ba55b7c8b0--tree--1--attempt-1-1792152961730-ru5flp.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I found a gas station that qualifies, but I could not sort its reviews because Google Maps gated them behind sign-in in this session.\n\n- **Station:** Global Gas",
+      "turns": 22,
+      "toolCalls": 21,
+      "toolErrors": 0,
+      "observationChars": 104365,
+      "observationImages": 0,
+      "inputTokens": 38,
+      "cacheWriteTokens": 47512,
+      "cacheReadTokens": 609511,
+      "totalInputTokens": 657061,
+      "outputTokens": 3495,
+      "costUsd": 0.4135623,
+      "timings": {
+        "mcpStartupMs": 2031,
+        "cliStartupMs": 1651,
+        "cliExecutionMs": 48316,
+        "cliWallMs": 49967,
+        "verificationMs": 0,
+        "cleanupMs": 247
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\0e42c3a73f2aece1f854e0ba55b7c8b0--tree--1--attempt-1-1792152961730-ru5flp.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I found a gas station that qualifies, but I could not sort its reviews because Google Maps gated them behind sign-in in this session.\n\n- **Station:** Global Gas",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 22,
+          "toolCalls": 21,
+          "toolErrors": 0,
+          "observationChars": 104365,
+          "observationImages": 0,
+          "totalInputTokens": 657061,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 38,
+            "cacheWriteTokens": 47512,
+            "cacheReadTokens": 609511,
+            "outputTokens": 3495,
+            "costUsd": 0.4135623
+          },
+          "timings": {
+            "mcpStartupMs": 2031,
+            "cliStartupMs": 1651,
+            "cliExecutionMs": 48316,
+            "cliWallMs": 49967,
+            "verificationMs": 0,
+            "cleanupMs": 247
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\0e42c3a73f2aece1f854e0ba55b7c8b0--screenshot--1--attempt-1-1792153014165-qiwl2o.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I couldn't sort the reviews. Global Gas Station (89 St Nicholas Pl, New York, NY 10032, Manhattan) is rated 4.3, but Google Maps only shows its reviews to signe",
+      "turns": 58,
+      "toolCalls": 57,
+      "toolErrors": 0,
+      "observationChars": 680,
+      "observationImages": 24,
+      "inputTokens": 52,
+      "cacheWriteTokens": 46898,
+      "cacheReadTokens": 687049,
+      "totalInputTokens": 733999,
+      "outputTokens": 7554,
+      "costUsd": 0.4954482,
+      "timings": {
+        "mcpStartupMs": 2028,
+        "cliStartupMs": 1168,
+        "cliExecutionMs": 121352,
+        "cliWallMs": 122520,
+        "verificationMs": 0,
+        "cleanupMs": 129
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\0e42c3a73f2aece1f854e0ba55b7c8b0--screenshot--1--attempt-1-1792153014165-qiwl2o.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I couldn't sort the reviews. Global Gas Station (89 St Nicholas Pl, New York, NY 10032, Manhattan) is rated 4.3, but Google Maps only shows its reviews to signe",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 58,
+          "toolCalls": 57,
+          "toolErrors": 0,
+          "observationChars": 680,
+          "observationImages": 24,
+          "totalInputTokens": 733999,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 52,
+            "cacheWriteTokens": 46898,
+            "cacheReadTokens": 687049,
+            "outputTokens": 7554,
+            "costUsd": 0.4954482
+          },
+          "timings": {
+            "mcpStartupMs": 2028,
+            "cliStartupMs": 1168,
+            "cliExecutionMs": 121352,
+            "cliWallMs": 122520,
+            "verificationMs": 0,
+            "cleanupMs": 129
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "046138801a05ddf56ad94e8672942496_070826",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\046138801a05ddf56ad94e8672942496_070826--mantis--1--attempt-1-1792153139121-f7bl1w.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I opened \"The Banter Thread\" in FlightAware's Discussions forum, the topic with the most replies of all time. It's in the General category, started by mduell on",
+      "turns": 17,
+      "toolCalls": 16,
+      "toolErrors": 0,
+      "observationChars": 25658,
+      "observationImages": 0,
+      "inputTokens": 34,
+      "cacheWriteTokens": 19668,
+      "cacheReadTokens": 268948,
+      "totalInputTokens": 288650,
+      "outputTokens": 2290,
+      "costUsd": 0.1888914,
+      "timings": {
+        "mcpStartupMs": 2016,
+        "cliStartupMs": 1188,
+        "cliExecutionMs": 54667,
+        "cliWallMs": 55855,
+        "verificationMs": 0,
+        "cleanupMs": 244
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\046138801a05ddf56ad94e8672942496_070826--mantis--1--attempt-1-1792153139121-f7bl1w.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I opened \"The Banter Thread\" in FlightAware's Discussions forum, the topic with the most replies of all time. It's in the General category, started by mduell on",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 17,
+          "toolCalls": 16,
+          "toolErrors": 0,
+          "observationChars": 25658,
+          "observationImages": 0,
+          "totalInputTokens": 288650,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 34,
+            "cacheWriteTokens": 19668,
+            "cacheReadTokens": 268948,
+            "outputTokens": 2290,
+            "costUsd": 0.1888914
+          },
+          "timings": {
+            "mcpStartupMs": 2016,
+            "cliStartupMs": 1188,
+            "cliExecutionMs": 54667,
+            "cliWallMs": 55855,
+            "verificationMs": 0,
+            "cleanupMs": 244
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "046138801a05ddf56ad94e8672942496_070826",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\046138801a05ddf56ad94e8672942496_070826--tree--1--attempt-1-1792153197330-dm84bb.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "The most-replied topic I found is \"The Banter Thread\" in the FlightAware General category, with 5,518 replies. I got there from flightaware.com's Community foot",
+      "turns": 11,
+      "toolCalls": 10,
+      "toolErrors": 0,
+      "observationChars": 59838,
+      "observationImages": 0,
+      "inputTokens": 18,
+      "cacheWriteTokens": 32215,
+      "cacheReadTokens": 155981,
+      "totalInputTokens": 188214,
+      "outputTokens": 1894,
+      "costUsd": 0.19606455,
+      "timings": {
+        "mcpStartupMs": 2040,
+        "cliStartupMs": 1258,
+        "cliExecutionMs": 34041,
+        "cliWallMs": 35299,
+        "verificationMs": 0,
+        "cleanupMs": 171
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\046138801a05ddf56ad94e8672942496_070826--tree--1--attempt-1-1792153197330-dm84bb.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "The most-replied topic I found is \"The Banter Thread\" in the FlightAware General category, with 5,518 replies. I got there from flightaware.com's Community foot",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 11,
+          "toolCalls": 10,
+          "toolErrors": 0,
+          "observationChars": 59838,
+          "observationImages": 0,
+          "totalInputTokens": 188214,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 18,
+            "cacheWriteTokens": 32215,
+            "cacheReadTokens": 155981,
+            "outputTokens": 1894,
+            "costUsd": 0.19606455
+          },
+          "timings": {
+            "mcpStartupMs": 2040,
+            "cliStartupMs": 1258,
+            "cliExecutionMs": 34041,
+            "cliWallMs": 35299,
+            "verificationMs": 0,
+            "cleanupMs": 171
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "046138801a05ddf56ad94e8672942496_070826",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\046138801a05ddf56ad94e8672942496_070826--screenshot--1--attempt-1-1792153234913-xgaz54.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I opened \"The Banter Thread\" in the FlightAware Discussions forum (General category). It has the most replies of the topics I checked: the list shows 5.5k repli",
+      "turns": 65,
+      "toolCalls": 64,
+      "toolErrors": 0,
+      "observationChars": 486,
+      "observationImages": 32,
+      "inputTokens": 68,
+      "cacheWriteTokens": 58132,
+      "cacheReadTokens": 1108462,
+      "totalInputTokens": 1166662,
+      "outputTokens": 7970,
+      "costUsd": 0.6702876,
+      "timings": {
+        "mcpStartupMs": 2018,
+        "cliStartupMs": 1170,
+        "cliExecutionMs": 109733,
+        "cliWallMs": 110903,
+        "verificationMs": 0,
+        "cleanupMs": 244
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\046138801a05ddf56ad94e8672942496_070826--screenshot--1--attempt-1-1792153234913-xgaz54.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I opened \"The Banter Thread\" in the FlightAware Discussions forum (General category). It has the most replies of the topics I checked: the list shows 5.5k repli",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 65,
+          "toolCalls": 64,
+          "toolErrors": 0,
+          "observationChars": 486,
+          "observationImages": 32,
+          "totalInputTokens": 1166662,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 68,
+            "cacheWriteTokens": 58132,
+            "cacheReadTokens": 1108462,
+            "outputTokens": 7970,
+            "costUsd": 0.6702876
+          },
+          "timings": {
+            "mcpStartupMs": 2018,
+            "cliStartupMs": 1170,
+            "cliExecutionMs": 109733,
+            "cliWallMs": 110903,
+            "verificationMs": 0,
+            "cleanupMs": 244
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "bb314cb80f0f8489135cbf59074d11e2",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\bb314cb80f0f8489135cbf59074d11e2--mantis--1--attempt-1-1792153256260-thvlg6.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "The first Best Paper Award recording from ICLR 2016 is \"Deep Compression: Compressing Deep Neural Networks with Pruning, Trained Quantization and Huffman Coding",
+      "turns": 22,
+      "toolCalls": 21,
+      "toolErrors": 2,
+      "observationChars": 22167,
+      "observationImages": 0,
+      "inputTokens": 42,
+      "cacheWriteTokens": 18129,
+      "cacheReadTokens": 334672,
+      "totalInputTokens": 352843,
+      "outputTokens": 3348,
+      "costUsd": 0.21873134999999996,
+      "timings": {
+        "mcpStartupMs": 2013,
+        "cliStartupMs": 1064,
+        "cliExecutionMs": 51849,
+        "cliWallMs": 52913,
+        "verificationMs": 0,
+        "cleanupMs": 172
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\bb314cb80f0f8489135cbf59074d11e2--mantis--1--attempt-1-1792153256260-thvlg6.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "The first Best Paper Award recording from ICLR 2016 is \"Deep Compression: Compressing Deep Neural Networks with Pruning, Trained Quantization and Huffman Coding",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 22,
+          "toolCalls": 21,
+          "toolErrors": 2,
+          "observationChars": 22167,
+          "observationImages": 0,
+          "totalInputTokens": 352843,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 42,
+            "cacheWriteTokens": 18129,
+            "cacheReadTokens": 334672,
+            "outputTokens": 3348,
+            "costUsd": 0.21873134999999996
+          },
+          "timings": {
+            "mcpStartupMs": 2013,
+            "cliStartupMs": 1064,
+            "cliExecutionMs": 51849,
+            "cliWallMs": 52913,
+            "verificationMs": 0,
+            "cleanupMs": 172
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "bb314cb80f0f8489135cbf59074d11e2",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\bb314cb80f0f8489135cbf59074d11e2--tree--1--attempt-1-1792153311486-qfcab4.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I opened the video page for \"Neural Programmer-Interpreters\" by Scott Reed, the first Best Paper Award talk from ICLR 2016. Path: iclr.cc, then the year menu to",
+      "turns": 16,
+      "toolCalls": 15,
+      "toolErrors": 0,
+      "observationChars": 48716,
+      "observationImages": 0,
+      "inputTokens": 28,
+      "cacheWriteTokens": 27766,
+      "cacheReadTokens": 337691,
+      "totalInputTokens": 365485,
+      "outputTokens": 2623,
+      "costUsd": 0.2448588,
+      "timings": {
+        "mcpStartupMs": 2026,
+        "cliStartupMs": 1065,
+        "cliExecutionMs": 51790,
+        "cliWallMs": 52855,
+        "verificationMs": 0,
+        "cleanupMs": 163
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\bb314cb80f0f8489135cbf59074d11e2--tree--1--attempt-1-1792153311486-qfcab4.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I opened the video page for \"Neural Programmer-Interpreters\" by Scott Reed, the first Best Paper Award talk from ICLR 2016. Path: iclr.cc, then the year menu to",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 16,
+          "toolCalls": 15,
+          "toolErrors": 0,
+          "observationChars": 48716,
+          "observationImages": 0,
+          "totalInputTokens": 365485,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 28,
+            "cacheWriteTokens": 27766,
+            "cacheReadTokens": 337691,
+            "outputTokens": 2623,
+            "costUsd": 0.2448588
+          },
+          "timings": {
+            "mcpStartupMs": 2026,
+            "cliStartupMs": 1065,
+            "cliExecutionMs": 51790,
+            "cliWallMs": 52855,
+            "verificationMs": 0,
+            "cleanupMs": 163
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "bb314cb80f0f8489135cbf59074d11e2",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\bb314cb80f0f8489135cbf59074d11e2--screenshot--1--attempt-1-1792153348238-mnglca.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "The first Best Paper Award recording from ICLR 2016 is \"Deep Compression: Compressing Deep Neural Networks with Pruning, Trained Quantization and Huffman Coding",
+      "turns": 24,
+      "toolCalls": 23,
+      "toolErrors": 0,
+      "observationChars": 231,
+      "observationImages": 12,
+      "inputTokens": 28,
+      "cacheWriteTokens": 25406,
+      "cacheReadTokens": 226190,
+      "totalInputTokens": 251624,
+      "outputTokens": 3735,
+      "costUsd": 0.2192385,
+      "timings": {
+        "mcpStartupMs": 2017,
+        "cliStartupMs": 1247,
+        "cliExecutionMs": 48809,
+        "cliWallMs": 50056,
+        "verificationMs": 0,
+        "cleanupMs": 154
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\bb314cb80f0f8489135cbf59074d11e2--screenshot--1--attempt-1-1792153348238-mnglca.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "The first Best Paper Award recording from ICLR 2016 is \"Deep Compression: Compressing Deep Neural Networks with Pruning, Trained Quantization and Huffman Coding",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 24,
+          "toolCalls": 23,
+          "toolErrors": 0,
+          "observationChars": 231,
+          "observationImages": 12,
+          "totalInputTokens": 251624,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 28,
+            "cacheWriteTokens": 25406,
+            "cacheReadTokens": 226190,
+            "outputTokens": 3735,
+            "costUsd": 0.2192385
+          },
+          "timings": {
+            "mcpStartupMs": 2017,
+            "cliStartupMs": 1247,
+            "cliExecutionMs": 48809,
+            "cliWallMs": 50056,
+            "verificationMs": 0,
+            "cleanupMs": 154
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "11857213ca01510f12813740afd59918_110325",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\11857213ca01510f12813740afd59918_110325--mantis--1--attempt-1-1792153366639-rh5d1c.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I added the Birkenstock Boston Lammfell Veloursleder in Mocca (brown), size EU 44 / UK 9.5, Normal width, 195,00 € to your cart. I stopped there and did not log",
+      "turns": 49,
+      "toolCalls": 48,
+      "toolErrors": 5,
+      "observationChars": 70573,
+      "observationImages": 3,
+      "inputTokens": 90,
+      "cacheWriteTokens": 52328,
+      "cacheReadTokens": 1574483,
+      "totalInputTokens": 1626901,
+      "outputTokens": 9686,
+      "costUsd": 0.8141348999999998,
+      "timings": {
+        "mcpStartupMs": 2020,
+        "cliStartupMs": 1131,
+        "cliExecutionMs": 140786,
+        "cliWallMs": 141917,
+        "verificationMs": 0,
+        "cleanupMs": 125
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\11857213ca01510f12813740afd59918_110325--mantis--1--attempt-1-1792153366639-rh5d1c.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I added the Birkenstock Boston Lammfell Veloursleder in Mocca (brown), size EU 44 / UK 9.5, Normal width, 195,00 € to your cart. I stopped there and did not log",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 49,
+          "toolCalls": 48,
+          "toolErrors": 5,
+          "observationChars": 70573,
+          "observationImages": 3,
+          "totalInputTokens": 1626901,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 90,
+            "cacheWriteTokens": 52328,
+            "cacheReadTokens": 1574483,
+            "outputTokens": 9686,
+            "costUsd": 0.8141348999999998
+          },
+          "timings": {
+            "mcpStartupMs": 2020,
+            "cliStartupMs": 1131,
+            "cliExecutionMs": 140786,
+            "cliWallMs": 141917,
+            "verificationMs": 0,
+            "cleanupMs": 125
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "11857213ca01510f12813740afd59918_110325",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\11857213ca01510f12813740afd59918_110325--tree--1--attempt-1-1792153400596-hlbcrc.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I added one Birkenstock Naples Wrapped Mischleder in Dark Tea, size EU 45 / UK 10.5, to the cart. I did not log in or check out. The cart shows 1 item.\n\nChoices",
+      "turns": 21,
+      "toolCalls": 20,
+      "toolErrors": 1,
+      "observationChars": 117536,
+      "observationImages": 0,
+      "inputTokens": 44,
+      "cacheWriteTokens": 61746,
+      "cacheReadTokens": 805729,
+      "totalInputTokens": 867519,
+      "outputTokens": 5685,
+      "costUsd": 0.5586732000000001,
+      "timings": {
+        "mcpStartupMs": 2019,
+        "cliStartupMs": 1204,
+        "cliExecutionMs": 79427,
+        "cliWallMs": 80631,
+        "verificationMs": 0,
+        "cleanupMs": 146
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\11857213ca01510f12813740afd59918_110325--tree--1--attempt-1-1792153400596-hlbcrc.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I added one Birkenstock Naples Wrapped Mischleder in Dark Tea, size EU 45 / UK 10.5, to the cart. I did not log in or check out. The cart shows 1 item.\n\nChoices",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 21,
+          "toolCalls": 20,
+          "toolErrors": 1,
+          "observationChars": 117536,
+          "observationImages": 0,
+          "totalInputTokens": 867519,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 44,
+            "cacheWriteTokens": 61746,
+            "cacheReadTokens": 805729,
+            "outputTokens": 5685,
+            "costUsd": 0.5586732000000001
+          },
+          "timings": {
+            "mcpStartupMs": 2019,
+            "cliStartupMs": 1204,
+            "cliExecutionMs": 79427,
+            "cliWallMs": 80631,
+            "verificationMs": 0,
+            "cleanupMs": 146
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "11857213ca01510f12813740afd59918_110325",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\11857213ca01510f12813740afd59918_110325--screenshot--1--attempt-1-1792153483541-aa1s3s.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I added the Naples Wrapped clog in Dark Tea to your cart, size UK 10.5 (EU 45), and stopped there without logging in or checking out.\n\n- **Product choice:** I u",
+      "turns": 31,
+      "toolCalls": 30,
+      "toolErrors": 1,
+      "observationChars": 488,
+      "observationImages": 14,
+      "inputTokens": 34,
+      "cacheWriteTokens": 29068,
+      "cacheReadTokens": 306706,
+      "totalInputTokens": 335808,
+      "outputTokens": 4466,
+      "costUsd": 0.2681087999999999,
+      "timings": {
+        "mcpStartupMs": 2014,
+        "cliStartupMs": 1280,
+        "cliExecutionMs": 64719,
+        "cliWallMs": 65999,
+        "verificationMs": 0,
+        "cleanupMs": 128
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\11857213ca01510f12813740afd59918_110325--screenshot--1--attempt-1-1792153483541-aa1s3s.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I added the Naples Wrapped clog in Dark Tea to your cart, size UK 10.5 (EU 45), and stopped there without logging in or checking out.\n\n- **Product choice:** I u",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 31,
+          "toolCalls": 30,
+          "toolErrors": 1,
+          "observationChars": 488,
+          "observationImages": 14,
+          "totalInputTokens": 335808,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 34,
+            "cacheWriteTokens": 29068,
+            "cacheReadTokens": 306706,
+            "outputTokens": 4466,
+            "costUsd": 0.2681087999999999
+          },
+          "timings": {
+            "mcpStartupMs": 2014,
+            "cliStartupMs": 1280,
+            "cliExecutionMs": 64719,
+            "cliWallMs": 65999,
+            "verificationMs": 0,
+            "cleanupMs": 128
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "0e5536aaad9d3462b06cf725e6ed535a",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\0e5536aaad9d3462b06cf725e6ed535a--mantis--1--attempt-1-1792153510852-c4ai7t.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Here are the U.S. citizen average wait times for Raleigh-Durham International Airport (RDU) on 2025-03-12, Terminal 2 (the only terminal in the report):\n\n| Hour",
+      "turns": 18,
+      "toolCalls": 17,
+      "toolErrors": 0,
+      "observationChars": 24089,
+      "observationImages": 0,
+      "inputTokens": 34,
+      "cacheWriteTokens": 19217,
+      "cacheReadTokens": 277018,
+      "totalInputTokens": 296269,
+      "outputTokens": 3916,
+      "costUsd": 0.21401115,
+      "timings": {
+        "mcpStartupMs": 2038,
+        "cliStartupMs": 1272,
+        "cliExecutionMs": 49423,
+        "cliWallMs": 50695,
+        "verificationMs": 0,
+        "cleanupMs": 129
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\0e5536aaad9d3462b06cf725e6ed535a--mantis--1--attempt-1-1792153510852-c4ai7t.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Here are the U.S. citizen average wait times for Raleigh-Durham International Airport (RDU) on 2025-03-12, Terminal 2 (the only terminal in the report):\n\n| Hour",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 18,
+          "toolCalls": 17,
+          "toolErrors": 0,
+          "observationChars": 24089,
+          "observationImages": 0,
+          "totalInputTokens": 296269,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 34,
+            "cacheWriteTokens": 19217,
+            "cacheReadTokens": 277018,
+            "outputTokens": 3916,
+            "costUsd": 0.21401115
+          },
+          "timings": {
+            "mcpStartupMs": 2038,
+            "cliStartupMs": 1272,
+            "cliExecutionMs": 49423,
+            "cliWallMs": 50695,
+            "verificationMs": 0,
+            "cleanupMs": 129
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "0e5536aaad9d3462b06cf725e6ed535a",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\0e5536aaad9d3462b06cf725e6ed535a--tree--1--attempt-1-1792153551824-691469.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Here are the U.S. citizen average wait times for Raleigh-Durham International Airport (RDU) on 2025-03-12. The report shows only Terminal 2 and lists 5 hourly i",
+      "turns": 28,
+      "toolCalls": 27,
+      "toolErrors": 0,
+      "observationChars": 54293,
+      "observationImages": 0,
+      "inputTokens": 34,
+      "cacheWriteTokens": 31940,
+      "cacheReadTokens": 416295,
+      "totalInputTokens": 448269,
+      "outputTokens": 4807,
+      "costUsd": 0.31687049999999994,
+      "timings": {
+        "mcpStartupMs": 2024,
+        "cliStartupMs": 1119,
+        "cliExecutionMs": 50358,
+        "cliWallMs": 51477,
+        "verificationMs": 0,
+        "cleanupMs": 167
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\0e5536aaad9d3462b06cf725e6ed535a--tree--1--attempt-1-1792153551824-691469.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Here are the U.S. citizen average wait times for Raleigh-Durham International Airport (RDU) on 2025-03-12. The report shows only Terminal 2 and lists 5 hourly i",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 28,
+          "toolCalls": 27,
+          "toolErrors": 0,
+          "observationChars": 54293,
+          "observationImages": 0,
+          "totalInputTokens": 448269,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 34,
+            "cacheWriteTokens": 31940,
+            "cacheReadTokens": 416295,
+            "outputTokens": 4807,
+            "costUsd": 0.31687049999999994
+          },
+          "timings": {
+            "mcpStartupMs": 2024,
+            "cliStartupMs": 1119,
+            "cliExecutionMs": 50358,
+            "cliWallMs": 51477,
+            "verificationMs": 0,
+            "cleanupMs": 167
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "0e5536aaad9d3462b06cf725e6ed535a",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\0e5536aaad9d3462b06cf725e6ed535a--screenshot--1--attempt-1-1792153563773-7qrwcq.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Raleigh-Durham (RDU) Terminal 2, 2025-03-12, U.S. citizen average wait times by hour:\n\n| Hour | Avg wait (min) | Max wait (min) |\n|---|---|---|\n| 13:00-14:00 | ",
+      "turns": 37,
+      "toolCalls": 36,
+      "toolErrors": 1,
+      "observationChars": 378,
+      "observationImages": 16,
+      "inputTokens": 36,
+      "cacheWriteTokens": 32094,
+      "cacheReadTokens": 348192,
+      "totalInputTokens": 380322,
+      "outputTokens": 4351,
+      "costUsd": 0.2901831,
+      "timings": {
+        "mcpStartupMs": 2012,
+        "cliStartupMs": 1071,
+        "cliExecutionMs": 45255,
+        "cliWallMs": 46326,
+        "verificationMs": 0,
+        "cleanupMs": 171
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\0e5536aaad9d3462b06cf725e6ed535a--screenshot--1--attempt-1-1792153563773-7qrwcq.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Raleigh-Durham (RDU) Terminal 2, 2025-03-12, U.S. citizen average wait times by hour:\n\n| Hour | Avg wait (min) | Max wait (min) |\n|---|---|---|\n| 13:00-14:00 | ",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 37,
+          "toolCalls": 36,
+          "toolErrors": 1,
+          "observationChars": 378,
+          "observationImages": 16,
+          "totalInputTokens": 380322,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 36,
+            "cacheWriteTokens": 32094,
+            "cacheReadTokens": 348192,
+            "outputTokens": 4351,
+            "costUsd": 0.2901831
+          },
+          "timings": {
+            "mcpStartupMs": 2012,
+            "cliStartupMs": 1071,
+            "cliExecutionMs": 45255,
+            "cliWallMs": 46326,
+            "verificationMs": 0,
+            "cleanupMs": 171
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "52efbab520734ef9bf7c09ba0f62cdc8",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\52efbab520734ef9bf7c09ba0f62cdc8--mantis--1--attempt-1-1792153605556-9i8rqi.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "The iOS app is listed on Recreation.gov's mobile app page. I didn't log in, buy anything, or enter personal information.\n\nThe \"Download on the App Store\" link p",
+      "turns": 3,
+      "toolCalls": 2,
+      "toolErrors": 0,
+      "observationChars": 11029,
+      "observationImages": 0,
+      "inputTokens": 8,
+      "cacheWriteTokens": 10208,
+      "cacheReadTokens": 30805,
+      "totalInputTokens": 41021,
+      "outputTokens": 598,
+      "costUsd": 0.056515499999999996,
+      "timings": {
+        "mcpStartupMs": 2020,
+        "cliStartupMs": 1091,
+        "cliExecutionMs": 16487,
+        "cliWallMs": 17578,
+        "verificationMs": 0,
+        "cleanupMs": 227
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\52efbab520734ef9bf7c09ba0f62cdc8--mantis--1--attempt-1-1792153605556-9i8rqi.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "The iOS app is listed on Recreation.gov's mobile app page. I didn't log in, buy anything, or enter personal information.\n\nThe \"Download on the App Store\" link p",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 3,
+          "toolCalls": 2,
+          "toolErrors": 0,
+          "observationChars": 11029,
+          "observationImages": 0,
+          "totalInputTokens": 41021,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 8,
+            "cacheWriteTokens": 10208,
+            "cacheReadTokens": 30805,
+            "outputTokens": 598,
+            "costUsd": 0.056515499999999996
+          },
+          "timings": {
+            "mcpStartupMs": 2020,
+            "cliStartupMs": 1091,
+            "cliExecutionMs": 16487,
+            "cliWallMs": 17578,
+            "verificationMs": 0,
+            "cleanupMs": 227
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "52efbab520734ef9bf7c09ba0f62cdc8",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\52efbab520734ef9bf7c09ba0f62cdc8--tree--1--attempt-1-1792153612356-d3v05y.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "The iOS app is the \"Recreation.gov App\" on the Apple App Store (id1440487780). I found it through the \"Download our iOS App\" link on recreation.gov, which leads",
+      "turns": 6,
+      "toolCalls": 5,
+      "toolErrors": 0,
+      "observationChars": 24274,
+      "observationImages": 0,
+      "inputTokens": 10,
+      "cacheWriteTokens": 15964,
+      "cacheReadTokens": 64517,
+      "totalInputTokens": 80491,
+      "outputTokens": 807,
+      "costUsd": 0.09135510000000001,
+      "timings": {
+        "mcpStartupMs": 2023,
+        "cliStartupMs": 1597,
+        "cliExecutionMs": 18914,
+        "cliWallMs": 20511,
+        "verificationMs": 0,
+        "cleanupMs": 178
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\52efbab520734ef9bf7c09ba0f62cdc8--tree--1--attempt-1-1792153612356-d3v05y.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "The iOS app is the \"Recreation.gov App\" on the Apple App Store (id1440487780). I found it through the \"Download our iOS App\" link on recreation.gov, which leads",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 6,
+          "toolCalls": 5,
+          "toolErrors": 0,
+          "observationChars": 24274,
+          "observationImages": 0,
+          "totalInputTokens": 80491,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 10,
+            "cacheWriteTokens": 15964,
+            "cacheReadTokens": 64517,
+            "outputTokens": 807,
+            "costUsd": 0.09135510000000001
+          },
+          "timings": {
+            "mcpStartupMs": 2023,
+            "cliStartupMs": 1597,
+            "cliExecutionMs": 18914,
+            "cliWallMs": 20511,
+            "verificationMs": 0,
+            "cleanupMs": 178
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "52efbab520734ef9bf7c09ba0f62cdc8",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\52efbab520734ef9bf7c09ba0f62cdc8--screenshot--1--attempt-1-1792153625617-w47r9o.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "The iOS app is the \"Recreation.gov Mobile App.\" I found it through the homepage's Quick Links (\"Download our iOS App\"), which opened the app's landing page with",
+      "turns": 13,
+      "toolCalls": 12,
+      "toolErrors": 0,
+      "observationChars": 122,
+      "observationImages": 6,
+      "inputTokens": 16,
+      "cacheWriteTokens": 15054,
+      "cacheReadTokens": 84120,
+      "totalInputTokens": 99190,
+      "outputTokens": 1755,
+      "costUsd": 0.10806149999999999,
+      "timings": {
+        "mcpStartupMs": 2024,
+        "cliStartupMs": 1087,
+        "cliExecutionMs": 24660,
+        "cliWallMs": 25747,
+        "verificationMs": 0,
+        "cleanupMs": 152
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "D:\\Aadit\\claudez\\mantis\\bench\\results\\agent-logs\\haiku-v2-30\\52efbab520734ef9bf7c09ba0f62cdc8--screenshot--1--attempt-1-1792153625617-w47r9o.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "The iOS app is the \"Recreation.gov Mobile App.\" I found it through the homepage's Quick Links (\"Download our iOS App\"), which opened the app's landing page with",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 13,
+          "toolCalls": 12,
+          "toolErrors": 0,
+          "observationChars": 122,
+          "observationImages": 6,
+          "totalInputTokens": 99190,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 16,
+            "cacheWriteTokens": 15054,
+            "cacheReadTokens": 84120,
+            "outputTokens": 1755,
+            "costUsd": 0.10806149999999999
+          },
+          "timings": {
+            "mcpStartupMs": 2024,
+            "cliStartupMs": 1087,
+            "cliExecutionMs": 24660,
+            "cliWallMs": 25747,
+            "verificationMs": 0,
+            "cleanupMs": 152
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    }
+  ]
+}
