@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Rendered widget checks</title></head>
+<body>
+  <main><h1>Account form</h1><button>Continue</button></main>
+  <script>
+    const mode = new URLSearchParams(location.search).get('case');
+    const vendorUrl = 'https://www.google.com/recaptcha/api2/anchor?k=fixture';
+    const frame = () => {
+      const element = document.createElement('iframe');
+      element.src = vendorUrl;
+      element.width = '300';
+      element.height = '80';
+      return element;
+    };
+    if (mode === 'visible-widget') {
+      const widget = document.createElement('div');
+      widget.className = 'g-recaptcha';
+      widget.style.cssText = 'width:300px;height:80px';
+      document.body.append(widget);
+    } else if (mode === 'hidden-widget') {
+      const widget = document.createElement('div');
+      widget.className = 'g-recaptcha';
+      widget.style.cssText = 'visibility:hidden;width:300px;height:80px';
+      document.body.append(widget);
+    } else if (mode === 'display-none-frame') {
+      const element = frame();
+      element.style.cssText = 'display:none;width:0;height:0;border:0';
+      document.body.append(element);
+    } else if (mode === 'zero-frame') {
+      const element = frame();
+      element.style.cssText = 'display:block;width:0;height:0;border:0';
+      document.body.append(element);
+    } else if (mode === 'offscreen-frame') {
+      const element = frame();
+      element.style.cssText = 'position:absolute;left:-10000px;top:0';
+      document.body.append(element);
+    } else if (mode === 'visible-frame') {
+      document.body.append(frame());
+    } else if (mode === 'shadow-visible' || mode === 'shadow-hidden') {
+      const host = document.createElement('div');
+      if (mode === 'shadow-hidden') host.style.display = 'none';
+      document.body.append(host);
+      host.attachShadow({ mode: 'open' }).append(frame());
+    }
+  </script>
+</body>
+</html>

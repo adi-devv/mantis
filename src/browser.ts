@@ -128,6 +128,54 @@ const NOT_CLICKABLE = /element is not visible|waiting for element to be visible|
 /** How long Playwright keeps retrying a click on an element something else is covering. */
 const COVERED_CLICK_TIMEOUT = 600;
 
+/**
+ * Page-side predicate for a visually hidden labelable control and its rendered label.
+ * This is deliberately self-contained because Playwright serializes evaluate callbacks.
+ */
+function renderedLabelForHiddenControl(target: Element): HTMLLabelElement | null {
+  if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement ||
+        target instanceof HTMLTextAreaElement || target instanceof HTMLButtonElement)) return null;
+  const rect = target.getBoundingClientRect();
+  if (!rect.width || !rect.height) return null;
+  const parent = (node: Element): Element | null =>
+    node.parentElement ?? (node.getRootNode() instanceof ShadowRoot ? (node.getRootNode() as ShadowRoot).host : null);
+  const effectiveOpacity = (element: Element): number => {
+    let opacity = 1;
+    for (let node: Element | null = element; node; node = parent(node)) {
+      const value = parseFloat(getComputedStyle(node).opacity);
+      if (!Number.isNaN(value)) opacity *= value;
+    }
+    return opacity;
+  };
+  const style = getComputedStyle(target);
+  const clip = style.clip.replace(/\s+/g, '').toLowerCase();
+  const path = style.clipPath.replace(/\s+/g, '').toLowerCase();
+  const alwaysHidden = rect.width <= 4 || rect.height <= 4 ||
+    /^rect\((?:0(?:px)?,){3}0(?:px)?\)$/.test(clip) || path === 'inset(50%)' || path === 'inset(100%)';
+  const transparent = effectiveOpacity(target) < 0.01;
+  if ((!alwaysHidden && !transparent) || !target.labels) return null;
+  if (!alwaysHidden) {
+    const left = Math.max(rect.left, 0);
+    const right = Math.min(rect.right, innerWidth);
+    const top = Math.max(rect.top, 0);
+    const bottom = Math.min(rect.bottom, innerHeight);
+    // Preserve the hidden-control path when there is no visible centre to test.
+    if (left < right && top < bottom) {
+      const root = target.getRootNode();
+      const scope: Document | ShadowRoot = root instanceof ShadowRoot ? root : document;
+      const hit = scope.elementFromPoint((left + right) / 2, (top + bottom) / 2);
+      if (hit === target || !!hit && target.contains(hit)) return null;
+    }
+  }
+  for (const label of Array.from(target.labels)) {
+    const labelStyle = getComputedStyle(label);
+    const labelRect = label.getBoundingClientRect();
+    if (labelStyle.display !== 'none' && labelStyle.visibility === 'visible' &&
+        effectiveOpacity(label) > 0 && labelRect.width >= 4 && labelRect.height >= 4) return label;
+  }
+  return null;
+}
+
 /** The unrelated element on top of a click target (see coveredBy). */
 interface Cover {
   desc: string;
@@ -264,20 +312,23 @@ export class MantisBrowser {
   async click(id: number): Promise<string> {
     return this.act(async (page) => {
       const { el, label } = await this.target(page, id);
+      const associatedLabel = await this.renderedAssociatedLabel(el);
       // An element under an overlay will not become clickable by waiting: give Playwright a short
       // window (the overlay may be about to close), then fail fast and name what covers it.
-      const cover = await this.coveredBy(el);
+      const cover = await this.coveredBy(el, associatedLabel);
       try {
-        await el.click({ timeout: cover ? COVERED_CLICK_TIMEOUT : this.actionTimeout });
+        if (associatedLabel && !cover) await associatedLabel.click({ timeout: this.actionTimeout });
+        else await el.click({ timeout: cover ? COVERED_CLICK_TIMEOUT : this.actionTimeout });
       } catch (e) {
         const msg = String(e instanceof Error ? e.message : e);
-        if (!(await this.clickFallback(page, el, id, msg))) {
+        if (!(await this.clickFallback(page, el, id, msg, associatedLabel))) {
           const blocked = cover && /intercepts pointer events|Timeout/.test(msg) ? cover : null;
           // An empty transparent layer is nothing the agent could dismiss: click the element itself.
           if (blocked?.invisible) await el.evaluate((n) => n instanceof HTMLElement ? n.click() : n.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })));
           else throw new ActionError(blocked ? this.coveredMessage(label, blocked) : this.explain(e, label));
         }
       } finally {
+        await associatedLabel?.dispose().catch(() => undefined);
         await el.dispose();
       }
       return `clicked ${label}`;
@@ -367,7 +418,7 @@ export class MantisBrowser {
             if (!on && !/^(false|off|no)$/i.test(String(value))) {
               throw new ActionError(`${name} is a checkbox; use true or false, not "${value}"`);
             }
-            await this.setChecked(page, el, id, on);
+            await this.setChecked(page, el, id, on, name);
             parts.push(`${on ? 'checked' : 'unchecked'} ${name}`);
           } else {
             const text = String(value);
@@ -767,20 +818,21 @@ export class MantisBrowser {
    * Hit-tests through open shadow roots. A descendant, an ancestor and an associated label all
    * count as the element itself, as does anything when the center cannot be tested.
    */
-  private async coveredBy(el: ElementHandle<Element>): Promise<Cover | null> {
-    return el.evaluate((target) => {
+  private async coveredBy(el: ElementHandle<Element>, label: ElementHandle<Element> | null = null): Promise<Cover | null> {
+    return el.evaluate((target, associatedLabel) => {
       const r0 = target.getBoundingClientRect();
       if (!r0.width || !r0.height || getComputedStyle(target).pointerEvents === 'none') return null;
+      const pointerTarget = associatedLabel ?? target;
       const off = (r: DOMRect): boolean => r.left + r.width / 2 < 0 || r.top + r.height / 2 < 0 || r.left + r.width / 2 >= innerWidth || r.top + r.height / 2 >= innerHeight;
-      if (off(r0)) target.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' as ScrollBehavior });
+      if (off(pointerTarget.getBoundingClientRect())) pointerTarget.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' as ScrollBehavior });
       const parent = (node: Element): Element | null => node.parentElement ?? (node.getRootNode() instanceof ShadowRoot ? (node.getRootNode() as ShadowRoot).host : null);
       // The unrelated element on top of the center right now, or null.
       const probe = (): Element | null => {
-        const r = target.getBoundingClientRect();
+        const r = pointerTarget.getBoundingClientRect();
         if (off(r)) return null;
         const x = r.left + r.width / 2;
         const y = r.top + r.height / 2;
-        const root = target.getRootNode() as Document | ShadowRoot;
+        const root = pointerTarget.getRootNode() as Document | ShadowRoot;
         let top: Element | null = (root instanceof ShadowRoot ? root : document).elementFromPoint(x, y);
         while (top?.shadowRoot) {
           const inner = top.shadowRoot.elementFromPoint(x, y);
@@ -790,20 +842,21 @@ export class MantisBrowser {
         if (!top || top === document.documentElement || top === document.body) return null;
         for (let n: Element | null = top; n; n = parent(n)) if (n === target) return null; // the element or inside it
         for (let n: Element | null = target; n; n = parent(n)) if (n === top) return null; // wraps the element
+        if (pointerTarget !== target && pointerTarget.contains(top)) return null; // inside the associated label
         return top;
       };
       let hit = probe();
       if (!hit) return null;
       // A sticky/fixed bar over the center is not a blocker: Playwright scrolls past it. Centre the element and look again.
       const floats = (): boolean => {
-        for (let n: Element | null = hit; n && n !== document.documentElement && !n.contains(target); n = parent(n)) {
+        for (let n: Element | null = hit; n && n !== document.documentElement && !n.contains(pointerTarget); n = parent(n)) {
           const pos = getComputedStyle(n).position;
           if (pos === 'fixed' || pos === 'sticky') return true;
         }
         return false;
       };
       if (floats()) {
-        target.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' as ScrollBehavior });
+        pointerTarget.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' as ScrollBehavior });
         hit = probe();
         if (!hit) return null;
       }
@@ -824,7 +877,7 @@ export class MantisBrowser {
       const CLOSE = /^(close|dismiss|cancel|no thanks|not now|decline|reject|[x×✕✖])$/i;
       let close: { id: number; name: string } | undefined;
       let hitId: number | undefined;
-      for (let n: Element | null = hit; n && n !== document.documentElement && !n.contains(target) && !close; n = parent(n)) {
+      for (let n: Element | null = hit; n && n !== document.documentElement && !n.contains(pointerTarget) && !close; n = parent(n)) {
         hitId ??= idOfNode(n);
         const scope: ParentNode = n.parentElement ? n : (n.getRootNode() as ParentNode); // top of a shadow tree: search the whole tree
         for (const b of Array.from(scope.querySelectorAll('button, [role="button"], a'))) {
@@ -850,9 +903,9 @@ export class MantisBrowser {
         return !paints(node) && border && cs.boxShadow === 'none';
       };
       let invisible = empty(hit);
-      for (let n: Element | null = parent(hit); invisible && n && n !== document.documentElement && !n.contains(target); n = parent(n)) if (paints(n)) invisible = false;
+      for (let n: Element | null = parent(hit); invisible && n && n !== document.documentElement && !n.contains(pointerTarget); n = parent(n)) if (paints(n)) invisible = false;
       return { desc: describe(hit), hitId, close, invisible };
-    }).catch(() => null);
+    }, label).catch(() => null);
   }
 
   private coveredMessage(label: string, cover: Cover): string {
@@ -882,9 +935,9 @@ export class MantisBrowser {
    * Fallbacks for a control Playwright could not click: a visible label that owns it, then a
    * snapshot-verified screen-reader-only control. True when one of them fired.
    */
-  private async clickFallback(page: Page, el: ElementHandle<Element>, id: number, msg: string): Promise<boolean> {
+  private async clickFallback(page: Page, el: ElementHandle<Element>, id: number, msg: string, associatedLabel: ElementHandle<Element> | null = null): Promise<boolean> {
     // A visible label can legitimately receive the pointer for its control.
-    if (/intercepts pointer events/.test(msg) && await this.clickAssociatedLabel(el)) return true;
+    if (/intercepts pointer events/.test(msg) && await this.clickAssociatedLabel(el, associatedLabel)) return true;
     // The snapshot verified a screen-reader-only control.
     return NOT_CLICKABLE.test(msg) && await this.clickSrOnly(page, el, id);
   }
@@ -893,46 +946,96 @@ export class MantisBrowser {
    * Set a checkbox/radio. If it cannot be clicked directly (visually hidden native input styled via its label),
    * use the click fallbacks, but only to reach the wanted state: never toggle it the wrong way.
    */
-  private async setChecked(page: Page, el: ElementHandle<Element>, id: number, on: boolean): Promise<void> {
-    try {
+  private async setChecked(page: Page, el: ElementHandle<Element>, id: number, on: boolean, label: string): Promise<void> {
+    const state = () => el.evaluate((n) => n instanceof HTMLInputElement ? { checked: n.checked, disabled: n.disabled, radio: n.type === 'radio' } : null).catch(() => null);
+    const verify = async (): Promise<void> => {
+      if ((await state())?.checked !== on) throw new ActionError(`${label} did not reach the requested state`);
+    };
+    const current = await state();
+    if (!current || current.disabled) {
       await el.setChecked(on, { timeout: this.actionTimeout });
+      await verify();
+      return;
+    }
+    if (current.checked === on) return;
+    // A radio cannot be unchecked by clicking it.
+    if (current.radio && !on) throw new ActionError(`${label} is a radio; select another option instead`);
+    const associatedLabel = await this.renderedAssociatedLabel(el);
+    const cover = await this.coveredBy(el, associatedLabel);
+    try {
+      if (associatedLabel && !cover) await associatedLabel.click({ timeout: this.actionTimeout });
+      else await el.setChecked(on, { timeout: cover ? COVERED_CLICK_TIMEOUT : this.actionTimeout });
+      await verify();
     } catch (e) {
+      if (e instanceof ActionError) throw e;
       const msg = String(e instanceof Error ? e.message : e);
+      if (cover && /intercepts pointer events|Timeout/.test(msg)) throw new ActionError(this.coveredMessage(label, cover));
       if (!NOT_CLICKABLE.test(msg)) throw e;
-      const state = () => el.evaluate((n) => n instanceof HTMLInputElement ? { checked: n.checked, disabled: n.disabled, radio: n.type === 'radio' } : null).catch(() => null);
       const cur = await state();
       if (!cur || cur.disabled) throw e;
       if (cur.checked === on) return;
-      // A radio cannot be unchecked by clicking it.
       if (cur.radio && !on) throw e;
-      if (!(await this.clickFallback(page, el, id, msg)) || (await state())?.checked !== on) throw e;
+      if (!(await this.clickFallback(page, el, id, msg, associatedLabel)) || (await state())?.checked !== on) throw e;
+    } finally {
+      await associatedLabel?.dispose().catch(() => undefined);
     }
   }
 
   /** A label may intercept a pointer aimed at its own native control. No other overlay qualifies. */
-  private async clickAssociatedLabel(el: ElementHandle<Element>): Promise<boolean> {
-    return el.evaluate((target) => {
-      if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement || target instanceof HTMLButtonElement)) return false;
-      const r = target.getBoundingClientRect();
-      if (!r.width || !r.height) return false;
-      const x = Math.max(0, Math.min(innerWidth - 1, r.left + r.width / 2));
-      const y = Math.max(0, Math.min(innerHeight - 1, r.top + r.height / 2));
-      let hit: Element | null = document.elementFromPoint(x, y);
-      // elementFromPoint on document returns the host; descend through open roots.
-      while (hit?.shadowRoot) {
-        const inner = hit.shadowRoot.elementFromPoint(x, y);
-        if (!inner || inner === hit) break;
-        hit = inner;
+  private async clickAssociatedLabel(el: ElementHandle<Element>, renderedLabel: ElementHandle<Element> | null = null): Promise<boolean> {
+    const label = renderedLabel ?? await this.renderedAssociatedLabel(el);
+    if (label) {
+      try {
+        await label.click({ timeout: COVERED_CLICK_TIMEOUT });
+        return true;
+      } catch {
+        return false;
+      } finally {
+        if (!renderedLabel) await label.dispose().catch(() => undefined);
       }
+    }
+    const handle = await el.evaluateHandle((target) => {
+      if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement || target instanceof HTMLButtonElement)) return null;
       const parent = (node: Element): Element | null => node.parentElement ?? (node.getRootNode() instanceof ShadowRoot ? (node.getRootNode() as ShadowRoot).host : null);
-      for (let node = hit; node; node = parent(node)) {
-        if (node instanceof HTMLLabelElement && node.control === target) {
-          node.click();
-          return true;
+      const hitAt = (element: Element): Element | null => {
+        const rect = element.getBoundingClientRect();
+        const x = Math.max(0, Math.min(innerWidth - 1, rect.left + rect.width / 2));
+        const y = Math.max(0, Math.min(innerHeight - 1, rect.top + rect.height / 2));
+        const root = element.getRootNode() as Document | ShadowRoot;
+        let hit: Element | null = (root instanceof ShadowRoot ? root : document).elementFromPoint(x, y);
+        while (hit?.shadowRoot) {
+          const inner = hit.shadowRoot.elementFromPoint(x, y);
+          if (!inner || inner === hit) break;
+          hit = inner;
         }
+        return hit;
+      };
+      const hit = hitAt(target);
+      for (let node = hit; node; node = parent(node)) {
+        if (node instanceof HTMLLabelElement && node.control === target) return node;
       }
+      return null;
+    }).catch(() => null);
+    const interceptedLabel = handle?.asElement();
+    if (!interceptedLabel) {
+      await handle?.dispose().catch(() => undefined);
       return false;
-    }).catch(() => false);
+    }
+    try {
+      await interceptedLabel.click({ timeout: COVERED_CLICK_TIMEOUT });
+      return true;
+    } catch {
+      return false;
+    } finally {
+      await handle?.dispose().catch(() => undefined);
+    }
+  }
+
+  private async renderedAssociatedLabel(el: ElementHandle<Element>): Promise<ElementHandle<Element> | null> {
+    const handle = await el.evaluateHandle(renderedLabelForHiddenControl).catch(() => null);
+    const label = handle?.asElement();
+    if (!label) await handle?.dispose().catch(() => undefined);
+    return label ?? null;
   }
 
   /** Snapshot eligibility is established by the walker's narrow screen-reader-only predicate. */

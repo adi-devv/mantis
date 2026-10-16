@@ -8,14 +8,18 @@ Rules for any coding agent working in this repo (Codex reads this file; Claude C
 ## Working
 - Do independent light tasks in parallel, not one after another: reads, searches, edits, builds, small test runs. Only steps that need an earlier result wait.
 - Run heavy jobs (agent evals, full suites, anything launching many browsers) one at a time, so they don't fight over RAM.
+- Fix bugs that evals expose in general, never around the case that exposed them. No site names, URLs, site class names or task text in `src/`. Reproduce the pattern in a synthetic fixture, then test it with a passing case and a near miss.
 
 ## Models
 | Agent | Planning, analysis, review | Implementation (writing and editing code) |
 |---|---|---|
 | Claude Code | Opus, high effort | Sonnet subagent (`model: "sonnet"`) |
-| Codex | `gpt-6.1-sol`, high reasoning effort | `gpt-6-sol` (not `gpt-6-luna`: its code needed too many fixes) |
+| Codex | `gpt-6.1-sol`, high reasoning effort | `gpt-5.6-terra` |
 
 Plan on the strong model and hand the coding to the cheaper one with a clear brief (files, what done looks like). Then review the diff on the strong model.
+
+- Cloud sessions (cloud evals and other cloud work) run on Sonnet.
+- The agent under test in evals is `claude-haiku-5-5` (`AGENT_PROVIDER=claude`) or `gpt-6-luna` (Codex, `AGENT_MODEL=gpt-6-luna`).
 
 ## Testing and evals
 - Always run at the highest parallelism this machine allows (12 cores). For vitest, use the default thread pool and don't serialise. For agent evals, set `AGENT_CONCURRENCY` as high as RAM allows (about 6 browsers).
@@ -27,7 +31,7 @@ See `docs/SETUP.md` (build/test) and `bench/README.md` (benchmarks, `AGENT_*` en
 
 ## Benchmark focus
 - Our main competitor is the accessibility-tree tool (Playwright MCP). Routine comparisons are Mantis vs tree vs screenshot. Skip browser-use and DevTools unless asked.
-- Real-site runs are graded by the blind judge (`npm run bench:judge`) on Codex `gpt-6.1-sol`, high reasoning (the default; `JUDGE_PROVIDER=claude` for Sonnet). Use a different model from the agent under test.
+- Real-site runs are graded by the blind judge (`npm run bench:judge`). Whenever Codex is available, judge on Codex `gpt-6.1-sol`, high reasoning (the default). Use Sonnet (`JUDGE_PROVIDER=claude`) only where Codex isn't, such as cloud sessions. The judge must be a different model from the agent under test.
 - Before briefing a cloud eval, read "Running in the cloud" in `bench/README.md`. The brief must include the real-site task rows inline, because the task file is gitignored and gated.
 - Every agent task needs a grader test in `test/fixture-verification.test.ts` with a passing case and a near-miss failing case.
 
