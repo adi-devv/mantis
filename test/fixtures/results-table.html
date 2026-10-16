@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Tax results</title></head>
+<body>
+<main>
+  <h1>Tax calculator</h1>
+  <button id="calc">Calculate</button>
+  <button id="prices">Update prices</button>
+  <button id="note">Update note</button>
+  <h2 id="total-h">Your 2025 taxes</h2>
+  <p id="total">$--</p>
+  <table id="t">
+    <tbody>
+      <tr><td>Federal Tax</td><td class="v">--</td><td class="v">$--</td></tr>
+      <tr><td>FICA Tax</td><td class="v">--</td><td class="v">$--</td></tr>
+      <tr><td>Total Income Taxes</td><td class="v">--</td><td class="v">$--</td></tr>
+    </tbody>
+  </table>
+  <ul id="plain"><li id="p1">$10.00</li><li id="p2">$20.00</li><li id="p3">$30.00</li></ul>
+  <p id="msg">Review before filing.</p>
+</main>
+<script>
+  const cells = [...document.querySelectorAll('#t .v')];
+  document.getElementById('calc').addEventListener('click', () => {
+    const vals = ['24.00%', '$27,107', '7.65%', '$12,125', '\u2014', '$46,996'];
+    cells.forEach((c, i) => { c.textContent = vals[i]; });
+    document.getElementById('total').textContent = '$39,232';
+  });
+  document.getElementById('prices').addEventListener('click', () => {
+    ['$11.50', '$21.50', '$31.50'].forEach((v, i) => { document.getElementById('p' + (i + 1)).textContent = v; });
+  });
+  document.getElementById('note').addEventListener('click', () => {
+    document.getElementById('msg').textContent = 'Reviewed and approved.';
+  });
+</script>
+</body>
+</html>

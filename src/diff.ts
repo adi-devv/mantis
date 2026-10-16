@@ -59,6 +59,18 @@ function idRanges(ids: number[], max = 4): string {
   return runs.length > max ? `${runs.slice(0, max).join(', ')}, …` : runs.join(', ');
 }
 
+// ---- context for bare values ------------------------------------------------
+
+/** Short, mostly numeric text ("$27,107", "24.00%", "—"): meaningless without its label. */
+const VALUE_RE = /^[\s$€£¥+\-−–—%.,:\d()]+[A-Za-z%]{0,4}$/;
+export function isValueLike(s: string): boolean {
+  const t = s.trim();
+  return t.length > 0 && t.length <= 24 && VALUE_RE.test(t) && /[\d\-−–—]/.test(t);
+}
+
+/** How far back (in nodes) a label may sit from the value it explains. */
+const LABEL_WINDOW = 3;
+
 // ---- snapshot indexing -----------------------------------------------------
 
 interface Indexed {
@@ -192,6 +204,7 @@ function collect(before: Snapshot, after: Snapshot): Parts {
   const addedText = surplusText(B, A);
   const goneText = surplusText(A, B);
   const pairLines: string[] = [];
+  const pairAt = new Map<number, number>(); // pairLines index -> node index in B
   const paired = new Set<number>();
   const pairedGone = new Set<number>();
   {
@@ -213,6 +226,7 @@ function collect(before: Snapshot, after: Snapshot): Parts {
         const na = A.nodes[gi[n]];
         const tag = nb.kind === 'heading' ? `${hashes(nb)} ` : '';
         pairLines.push(`~ ${tag}"${quote(clip(na.name, 50))}" → "${quote(clip(nb.name, 50))}"`);
+        pairAt.set(pairLines.length - 1, bi);
         paired.add(bi);
         pairedGone.add(gi[n]);
       });
@@ -228,6 +242,28 @@ function collect(before: Snapshot, after: Snapshot): Parts {
     return addedTextSet.has(i) && !paired.has(i);
   };
 
+  /** Nearest unchanged label (plain text or heading) above value node `i` in the new snapshot:
+   *  looks back at most LABEL_WINDOW nodes in the same container, skipping other changed values,
+   *  and gives up at a region, control, changed text or anything else. */
+  const labelOf = (i: number): { idx: number; text: string } | undefined => {
+    for (let j = i - 1; j >= 0 && i - j <= LABEL_WINDOW; j--) {
+      const m = B.nodes[j];
+      if (B.container[j] !== B.container[i]) return undefined;
+      if (m.kind === 'heading') {
+        if (B.textKey[j] === undefined || addedTextSet.has(j)) return undefined;
+        return { idx: j, text: `${hashes(m)} ${clip(quote(m.name), 40)}` };
+      }
+      if (m.kind !== 'text' || m.live || B.textKey[j] === undefined) return undefined;
+      // Skip only values that changed in this same action (one row updating together); an unchanged
+      // value in between means the label belongs to an earlier row.
+      if (isValueLike(m.name)) { if (addedTextSet.has(j) || paired.has(j)) continue; return undefined; }
+      if (addedTextSet.has(j) || !/\p{L}/u.test(m.name)) return undefined;
+      return { idx: j, text: `"${clip(quote(m.name), 40)}"` };
+    }
+    return undefined;
+  };
+
+  let run: { g: Group; label: number; item: number } | undefined;
   B.nodes.forEach((n, i) => {
     if (consumed.has(i)) return;
     if (n.kind === 'region') {
@@ -261,7 +297,15 @@ function collect(before: Snapshot, after: Snapshot): Parts {
       g.interactive++;
       consumed.add(i + 1);
     } else {
-      g.items.push(textLine(n));
+      const label = n.kind === 'text' && !n.live && isValueLike(n.name) ? labelOf(i) : undefined;
+      if (!label) {
+        g.items.push(textLine(n));
+      } else if (run && run.g === g && run.label === label.idx && g.items.length - 1 === run.item) {
+        g.items[run.item] += ` · ${textLine(n)}`;
+      } else {
+        g.items.push(`${label.text}: ${textLine(n)}`);
+        run = { g, label: label.idx, item: g.items.length - 1 };
+      }
     }
   });
 
@@ -315,7 +359,22 @@ function collect(before: Snapshot, after: Snapshot): Parts {
     });
 
   // ---- changed ----
-  const changes: string[] = [...pairLines];
+  const changes: string[] = [];
+  {
+    let prev: { label: number; at: number } | undefined;
+    pairLines.forEach((line, k) => {
+      const bi = pairAt.get(k)!;
+      const label = B.nodes[bi].kind === 'text' && isValueLike(B.nodes[bi].name) ? labelOf(bi) : undefined;
+      if (!label) { changes.push(line); prev = undefined; return; }
+      const body = line.slice(2); // drop "~ "
+      if (prev && prev.label === label.idx && changes.length - 1 === prev.at) {
+        changes[prev.at] += ` · ${body}`;
+      } else {
+        changes.push(`~ ${label.text}: ${body}`);
+        prev = { label: label.idx, at: changes.length - 1 };
+      }
+    });
+  }
   const coveredOn: number[] = [];
   const coveredOff: number[] = [];
   const perElement: string[] = [];

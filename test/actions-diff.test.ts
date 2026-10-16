@@ -147,3 +147,25 @@ describe('plain text away from controls', () => {
     expect(diffOf(res)).toContain('+ [main] "Subscribed from Canada."');
   });
 });
+
+describe('action diffs: labels for bare values', () => {
+  it('prints each new table value next to its row label', async () => {
+    const view = await b.open(fixture('results-table.html'));
+    const res = await b.click(idOf(view, 'button "Calculate"'));
+    const lines = diffOf(res);
+    expect(lines).toContain('+ "Federal Tax": "24.00%" · "$27,107"');
+    expect(lines).toContain('+ "FICA Tax": "7.65%" · "$12,125"');
+    expect(lines).toContain('+ "Total Income Taxes": "—" · "$46,996"');
+    expect(lines.join(' | ')).toContain('## Your 2025 taxes: "$39,232"');
+  });
+
+  it('leaves unlabelled price changes and changed prose as they were', async () => {
+    const view = await b.open(fixture('results-table.html'));
+    const prices = await b.click(idOf(view, 'button "Update prices"'));
+    expect(diffOf(prices)).toEqual(['~ "$10.00" → "$11.50"', '~ "$20.00" → "$21.50"', '~ "$30.00" → "$31.50"']);
+    const note = await b.click(idOf(view, 'button "Update note"'));
+    expect(diffOf(note)).toEqual([
+      '~ "Review before filing." → "Reviewed and approved."',
+    ]);
+  });
+});

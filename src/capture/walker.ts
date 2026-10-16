@@ -153,14 +153,14 @@ export function walker(includeSrOnly = false): WalkResult {
   }
 
   /** Rendered text of a subtree, skipping hidden parts; stops once past `limit` chars. */
-  function deepText(root: Element, limit: number, ratingMetadata = true): string {
+  function deepText(root: Element, limit: number, ratingMetadata = true, withHidden = false): string {
     let out = '';
     const rec = (e: Element, isRoot: boolean): void => {
       if (out.length > limit) return;
       const t = e.localName;
       let block = false;
       if (!isRoot) {
-        if (SKIP.has(t) || e.getAttribute('aria-hidden') === 'true' || (e as HTMLElement).inert) return;
+        if (SKIP.has(t) || (!withHidden && e.getAttribute('aria-hidden') === 'true') || (e as HTMLElement).inert) return;
         if (t === 'img') { out += ' ' + (e.getAttribute('alt') || (ratingMetadata ? e.getAttribute('title') : '') || '') + ' '; return; }
         if (t === 'input') {
           const ty = (e as HTMLInputElement).type;
@@ -484,9 +484,14 @@ export function walker(includeSrOnly = false): WalkResult {
         if (v) return v;
       }
     }
-    // 4. where the link goes
+    // 4. a dismiss class on the control or its icon: close-btn, btn-close, modal-close, closeButton
+    for (const e of [el, ...Array.from(el.querySelectorAll('[class]')).slice(0, 6)]) {
+      const parts = classOf(e).replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase().split(/[\s_-]+/);
+      if (parts.includes('close') || parts.includes('dismiss')) return 'close';
+    }
+    // 5. where the link goes
     if (role === 'link') { const h = nameFromHref(el); if (h) return h; }
-    // 5. text right next to it
+    // 6. text right next to it
     return adjacentText(el);
   }
 
@@ -512,6 +517,44 @@ export function walker(includeSrOnly = false): WalkResult {
     }
     const at = peers.indexOf(el);
     return at >= 0 ? `${role} ${at + 1}` : role;
+  }
+
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  /**
+   * A name that is an identifier, not words: one whitespace-free string that is a URI with a scheme
+   * (gid://..., urn:...; not a plain web address), a UUID, or 16+ chars of hex/digits/_-:/. .
+   * "SKU-1234 blue" (words around a code) is a real name.
+   */
+  function isMachineToken(raw: string): boolean {
+    const s = raw.replace(/…$/, '');
+    if (!s || /\s/.test(s)) return false;
+    if (/^[a-z][a-z0-9+.-]*:\/\/\S+$/i.test(s)) return !/^(?:https?|ftp|wss?|file):/i.test(s);
+    if (/^urn:\S+$/i.test(s) || UUID.test(s)) return true;
+    return s.length >= 16 && /^[0-9a-f_:/.-]+$/i.test(s) && /[0-9a-f]/i.test(s);
+  }
+
+  const ROW_STOP = new Set(['body', 'html', 'main', 'form', 'nav', 'header', 'footer', 'aside', 'section', 'article',
+    'dialog', 'fieldset', 'details', 'ul', 'ol', 'table', 'tbody', 'thead']);
+  /**
+   * Text of the row a control sits in, for a control whose own name is empty or a machine token.
+   * Walks up (at most 5 levels) through ancestors holding exactly this one interactive control; the
+   * first one with short text wins (a li/tr/row or any non-inline block). Screen-reader-only text counts,
+   * aria-hidden text only when nothing else is there. Two or more controls, a structural container or a
+   * long text end the search: nothing is borrowed.
+   */
+  function rowName(el: Element): string {
+    let a = el.parentElement;
+    for (let d = 0; a && d < 5; d++, a = a.parentElement) {
+      if (ROW_STOP.has(a.localName)) return '';
+      if (a.querySelectorAll(INTERACTIVE_SEL).length + (a.matches(INTERACTIVE_SEL) ? 1 : 0) !== 1) return '';
+      const rowish = a.localName === 'li' || a.localName === 'tr' || /^(?:row|option|listitem)$/.test(explicitRole(a));
+      if (!rowish && getComputedStyle(a).display.startsWith('inline')) continue;
+      const t = deepText(a, 160, false) || deepText(a, 160, false, true);
+      if (!t) { if (rowish) return ''; continue; }
+      if (t.length > 120 || !/[\p{L}\p{N}]/u.test(t) || isMachineToken(t)) return '';
+      return cap(t, 80);
+    }
+    return '';
   }
 
   /** Only descriptive rating metadata; arbitrary tooltips remain outside page text. */
@@ -745,14 +788,17 @@ export function walker(includeSrOnly = false): WalkResult {
   function emitInteractive(el: Element, role: string, parent: number, depth: number, r: DOMRect, srOnly = false): void {
     const t = el.localName;
     const states: string[] = [];
+    let ownName = accName(el, role);
+    if (ownName && isMachineToken(ownName)) ownName = rowName(el) || ownName;
     const node: RawNode = {
-      kind: 'interactive', role, name: accName(el, role), states, parent, depth,
+      kind: 'interactive', role, name: ownName, states, parent, depth,
       inViewport: inView(r), covered: isCovered(el, r),
     };
     if (srOnly) node.srOnly = true;
     if (!node.name) {
       const guess = cap(inferName(el, role), 40);
       if (guess) { node.name = guess; node.inferred = true; }
+      else if (/^(?:input|select|textarea)$/.test(t)) node.name = rowName(el);
     }
     // Unnamed links keep their href as the identifier (translate shows it when the name is empty).
     if (!node.name && !el.hasAttribute('href')) unnamed.push({ node, el, role });
@@ -908,29 +954,61 @@ export function walker(includeSrOnly = false): WalkResult {
   const rescued = new WeakSet<Element>();
 
   /**
-   * An opacity:0 element's text is dropped, but a native control inside it can still be fully
-   * operable (a styled <select> whose visible face is a sibling label). Emit those, never the text.
-   * A control counts only when it could really be used: visible, not pointer-events:none, not
-   * aria-hidden/inert, a real box in the document, and on top. When its centre is in the viewport we
-   * hit-test it (a covered menu, or one under a visible overlay, fails). When the centre is off screen
-   * we cannot hit-test without scrolling, so we accept it on the style checks alone.
+   * Is this stacked element part of a page-level overlay (cookie banner, signup popup, modal) that sits
+   * over `control` without containing it? Same notion as coversPage: a modal dialog, or a position:fixed box.
+   * A hit on a shadow host (a web-component popup whose fixed box lives in its shadow root) is followed
+   * down to the element really hit at (x, y).
+   */
+  function inOverlay(h: Element, control: Element, x: number, y: number): boolean {
+    let deep = h;
+    for (let k = 0; k < 8 && deep.shadowRoot && !composedContains(deep, control); k++) {
+      const inner = deep.shadowRoot.elementFromPoint(x, y);
+      if (!inner || inner === deep) break;
+      deep = inner;
+    }
+    for (let n: Element | null = deep; n; n = n.parentElement ?? ((n.getRootNode() as ShadowRoot).host ?? null)) {
+      if (composedContains(n, control)) return false;
+      if (n.getAttribute('aria-modal') === 'true') return true;
+      try { if (n.matches(':modal')) return true; } catch { /* :modal unsupported */ }
+      if (getComputedStyle(n).position === 'fixed') return true;
+    }
+    return false;
+  }
+
+  /**
+   * An opacity:0 element's text is dropped, but a native control inside it (or the element itself, the
+   * "transparent click target" pattern: an invisible checkbox stretched over its row) can still be fully
+   * operable. Emit those, never the text. A control counts only when it could really be used: visible,
+   * not pointer-events:none, not aria-hidden/inert, a real box in the document, and on top. When its centre
+   * is in the viewport we hit-test it with the stack at that point, skipping page-level overlays (fixed
+   * popups, modals; the control is then emitted flagged covered); any other element on top hides it, as
+   * does a covered menu. When the centre is off screen we cannot hit-test without scrolling, so we accept
+   * it on the style checks alone.
    */
   function rescueControls(root: Element, parent: number, depth: number): void {
-    for (const c of Array.from(root.querySelectorAll('select,input:not([type=hidden]),textarea'))) {
+    const sel = 'select,input:not([type=hidden]),textarea';
+    const found = Array.from(root.querySelectorAll(sel));
+    if (root.matches(sel)) found.unshift(root);
+    for (const c of found) {
       if (nodes.length >= MAX_NODES) { truncated = true; return; }
       if (c.closest('[aria-hidden="true"],[inert]')) continue;
       const cs = getComputedStyle(c);
-      if (cs.visibility !== 'visible' || cs.pointerEvents === 'none' || cs.display === 'none' || parseFloat(cs.opacity) === 0) continue;
+      if (cs.visibility !== 'visible' || cs.pointerEvents === 'none' || cs.display === 'none' || (c !== root && parseFloat(cs.opacity) === 0)) continue;
       const r = c.getBoundingClientRect();
       if (r.width <= 0 || r.height <= 0 || !inDoc(r)) continue;
       const x = r.left + r.width / 2;
       const y = r.top + r.height / 2;
       if (x >= 0 && y >= 0 && x < vw && y < vh) {
         const scope: Document | ShadowRoot = c.getRootNode() instanceof ShadowRoot ? (c.getRootNode() as ShadowRoot) : document;
-        const hit = scope.elementFromPoint(x, y);
-        if (!hit) continue;
         const labels = (c as HTMLInputElement).labels;
-        if (!composedContains(c, hit) && !(labels && Array.from(labels).some((l) => composedContains(l, hit)))) continue;
+        let top: Element | undefined;
+        for (const h of scope.elementsFromPoint(x, y)) {
+          if (inOverlay(h, c, x, y)) continue;
+          top = h;
+          break;
+        }
+        if (!top) continue;
+        if (!composedContains(c, top) && !(labels && Array.from(labels).some((l) => composedContains(l, top!)))) continue;
       }
       const role = interactiveRole(c, explicitRole(c), cs);
       if (!role) continue;

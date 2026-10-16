@@ -183,3 +183,70 @@ describe('diffSnapshots (pure)', () => {
     expect(diffSnapshots(a, b)).toBe(diffSnapshots(a, b));
   });
 });
+
+describe('diffSnapshots: labels for bare values', () => {
+  const table = (vals: string[]): RawNode[] => [
+    region('main'),
+    heading('Your 2025 taxes', 2, { parent: 0 }),
+    text(vals[0], { parent: 0 }),
+    text('Federal Tax', { parent: 0 }),
+    text(vals[1], { parent: 0 }),
+    text(vals[2], { parent: 0 }),
+    text('FICA Tax', { parent: 0 }),
+    text(vals[3], { parent: 0 }),
+    text(vals[4], { parent: 0 }),
+    text('Total Income Taxes', { parent: 0 }),
+    text(vals[5], { parent: 0 }),
+    text(vals[6], { parent: 0 }),
+  ];
+
+  it('puts the nearest unchanged label before added values and collapses runs', () => {
+    const before = snap(table(['$--', '--', '$--', '--', '$--', '--', '$--']));
+    const after = snap(table(['$39,232', '24.00%', '$27,107', '7.65%', '$12,125', '—', '$46,996']));
+    expect(diffSnapshots(before, after).split('\n')).toEqual([
+      '+ [main] ## Your 2025 taxes: "$39,232"',
+      '+ "Federal Tax": "24.00%" · "$27,107"',
+      '+ "FICA Tax": "7.65%" · "$12,125"',
+      '+ "Total Income Taxes": "—" · "$46,996"',
+      '- removed: "$--", "--", "$--", …+4 more',
+    ]);
+  });
+
+  it('labels values that changed in place', () => {
+    const mk = (a: string, b: string): Snapshot =>
+      snap([region('main'), text('Federal Tax', { parent: 0 }), text(a, { parent: 0 }), text(b, { parent: 0 })]);
+    expect(diffSnapshots(mk('$--', '$--'), mk('$1,000', '$2,000'))).toBe(
+      '~ "Federal Tax": "$--" → "$1,000" · "$--" → "$2,000"',
+    );
+  });
+
+  it('leaves unlabelled values and changed prose exactly as before', () => {
+    // a control sits directly above the prices: no label to borrow
+    const prices = (a: string, b: string): Snapshot =>
+      snap([region('main'), btn(1, 'Go', { parent: 0 }), text(a, { parent: 0 }), text(b, { parent: 0 })]);
+    expect(diffSnapshots(prices('$1.00', '$2.00'), prices('$1.50', '$2.50')).split('\n')).toEqual([
+      '~ "$1.00" → "$1.50"',
+      '~ "$2.00" → "$2.50"',
+    ]);
+    // new bare prices with nothing above them
+    const list = (v: string[]): Snapshot => snap([region('main'), ...v.map((s) => text(s, { parent: 0 }))]);
+    expect(diffSnapshots(list(['$1.00']), list(['$1.00', '$2.50', '$3.50']))).toBe(
+      ['+ [main] "$2.50"', '+ "$3.50"'].join('\n'),
+    );
+    // text that is not value-like is never relabelled
+    const prose = (t: string): Snapshot =>
+      snap([region('main'), text('Status', { parent: 0 }), text(t, { parent: 0 })]);
+    expect(diffSnapshots(prose('Draft saved'), prose('Published to everyone'))).toBe(
+      '~ "Draft saved" → "Published to everyone"',
+    );
+  });
+
+  it('does not borrow a label that is itself changed, or one beyond the window', () => {
+    const a = snap([region('main'), text('Total', { parent: 0 }), text('$1', { parent: 0 })]);
+    const b = snap([region('main'), text('Grand total', { parent: 0 }), text('$2', { parent: 0 })]);
+    expect(diffSnapshots(a, b).split('\n')).toEqual(['~ "Total" → "Grand total"', '~ "$1" → "$2"']);
+    const far = (v: string): Snapshot =>
+      snap([region('main'), text('Label', { parent: 0 }), ...['1', '2', '3'].map((x) => text(x, { parent: 0 })), text(v, { parent: 0 })]);
+    expect(diffSnapshots(far('$1'), far('$2'))).toBe('~ "$1" → "$2"');
+  });
+});
