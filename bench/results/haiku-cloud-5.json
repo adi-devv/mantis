@@ -1,0 +1,1294 @@
+{
+  "metadata": {
+    "schemaVersion": 3,
+    "configFingerprint": "e011e51713a5a104b0dccaf74c6d182733228f62ced14db7c1a7c1f176de8bc6",
+    "settings": {
+      "provider": "claude",
+      "tasks": [
+        "0e42c3a73f2aece1f854e0ba55b7c8b0",
+        "046138801a05ddf56ad94e8672942496_070826",
+        "11857213ca01510f12813740afd59918_110325",
+        "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+        "eb323dc584156d0eb3a2b90bb8c4b791_110325"
+      ],
+      "approaches": [
+        "mantis",
+        "tree",
+        "screenshot"
+      ],
+      "runs": 1,
+      "model": "claude-haiku-5-5",
+      "reasoning": "not-applicable",
+      "timeoutMs": 600000,
+      "concurrency": 6,
+      "toolRestrictions": {
+        "builtins": [
+          "Claude built-ins disabled by --tools \"\""
+        ],
+        "approaches": {
+          "mantis": {
+            "allow": [
+              "mcp__mantis"
+            ],
+            "deny": [
+              "mcp__mantis__bench_capture"
+            ]
+          },
+          "tree": {
+            "allow": [
+              "mcp__playwright__browser_navigate",
+              "mcp__playwright__browser_navigate_back",
+              "mcp__playwright__browser_snapshot",
+              "mcp__playwright__browser_click",
+              "mcp__playwright__browser_type",
+              "mcp__playwright__browser_fill_form",
+              "mcp__playwright__browser_select_option",
+              "mcp__playwright__browser_press_key",
+              "mcp__playwright__browser_hover",
+              "mcp__playwright__browser_wait_for",
+              "mcp__playwright__browser_find",
+              "mcp__playwright__browser_tabs",
+              "mcp__playwright__browser_handle_dialog",
+              "mcp__playwright__browser_take_screenshot"
+            ],
+            "deny": [
+              "mcp__playwright__browser_evaluate",
+              "mcp__playwright__browser_run_code_unsafe"
+            ]
+          },
+          "screenshot": {
+            "allow": [
+              "mcp__screenshot"
+            ],
+            "deny": [
+              "mcp__screenshot__bench_capture"
+            ]
+          }
+        }
+      },
+      "runtime": {
+        "nodeVersion": "v22.22.0",
+        "platform": "linux",
+        "arch": "x64"
+      },
+      "environment": {
+        "MANTIS_MEMORY": null,
+        "MANTIS_HEADLESS": null,
+        "BENCH_CHROMIUM": null,
+        "PLAYWRIGHT_BROWSERS_PATH": "/opt/pw-browsers",
+        "CODEX_BIN": null,
+        "CLAUDE_BIN": null,
+        "resolvedCliCommand": "claude"
+      },
+      "browserPaths": {
+        "chromiumForMcp": "/opt/pw-browsers/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell",
+        "browserUsePlaywrightBrowsersPath": "/opt/pw-browsers"
+      }
+    },
+    "sourceHashes": {
+      "bench/agent/run.ts": "9473a3e87036581055dd3cdb00ce997b90a4ece8a004386e7a81ca225958db24",
+      "bench/agent/integrity.ts": "69829d9853f0166252050c3a0bf0a864ae595901c85bf8191c9e2714de024e99",
+      "bench/agent/tasks.ts": "752a4fa3da542fbcc72d591e485dbf142154e58be3359fe5aaf0778c03bb6d6b",
+      "bench/agent/bridge.mjs": "7648b01676db09199b9cda8546c63b0147963960b9b9ec6411921dc6a5cb8f19",
+      "bench/agent/codex.ts": "e7d16855e24ef025d87b4f18a4ec32c50b8cef701985ef85aa6d03f748ddd236",
+      "bench/agent/codex-config.ts": "7ea7bccfcbf19c4d9dbd236e6c30bdc6b366be78d54f63f88f670f4482a00435",
+      "bench/agent/realsite.ts": "7844c8f182d54e14aea855d538db29f2d39d7b1035b16e4240879a0c8ec784aa",
+      "bench/agent/realsite-tasks.json": "52834561876a9e34eca543150719978e9c5d03321836eae71ba4b0fc92b04eaa",
+      "bench/agent/screenshot-mcp.ts": "07ae652a6ae6f77b06e23389c35382664042648cace007624fbf06b8fa8bb707",
+      "bench/fixtures.ts": "315a6a1724e81b4519bc62443ce6ead7fc6c56bd2d547292c1fb845ac9f76dd6",
+      "bench/fixtures-more.ts": "c1a15f3e8f4d00366395994a4d81725203c736f25613150f26ca2b7a5006b594",
+      "bench/adapters.ts": "40fe43a06dc6a730879c2f381e1154de4b603c7ed01cfe2a3d52b11540a7c259",
+      "src/browser.ts": "b8008b8b27cbdebf7697ef6119f5e05aa07333ddfab11f8947910f6508a26b1e",
+      "src/capture/index.ts": "637c4cd540105630da976a4a1749c5e43f182b88fd499026bdd2eb97973ed721",
+      "src/capture/walker.ts": "3a6abf3f4e40624e32b4c638c30e90608a1e094d4f22da47ea72266f82cec710",
+      "src/cli.ts": "ed184995d3442c646ad297d0a38edf0f5766d4df613a61bbe06f6f7f103bf64b",
+      "src/diff.ts": "28701e41e1a5899f088334939f9cec7291d97a2586e3dfd78f083abbaa78ae4d",
+      "src/fallback/askHuman.ts": "013b786651865008b288edbd6b6f149263fec3c2598595e564153843c4706d25",
+      "src/fallback/captcha.ts": "7736825167c3613eae411db3f45a5b0a0e23723595dbf3687fb6eb729139abd7",
+      "src/fallback/look.ts": "a1fce059e961f8201de7e7d634b266d1531e89593d2b04f2491223413f991114",
+      "src/fallback/media.ts": "22e07e781bcd2697e201beee906182e8abd948486003aeebd31c64025fc3ed81",
+      "src/fallback/ocr.ts": "4a401a33ee5f8b6c32b3f957b080405f2e8de150fe8c13333d3c7c6e2f8bd50d",
+      "src/fallback/probe.ts": "aa57b2f89883ba44ec3fd69e8f2c4c0e45004246cea056c3fce232ac42c8ebfd",
+      "src/index.ts": "45e1184ffc8836ef803ccb7482b65a93c5bddfc86c20c2faa6c0a723004043a5",
+      "src/memory.ts": "2d7c5fe8f142a67a80bb73fc45aa66ff5dea6ffb6d038a48453ddd1514ac6e9f",
+      "src/server.ts": "0214c92788b4e7c9c0996ef7b6cb1395f48de16b2849b524a2a90046d9c4a14b",
+      "src/translate.ts": "3a22c6095969a859bb54efd55c829c814a9dd044bc90183d9271072af1b7cafa",
+      "dist/browser.d.ts": "6f6d05e46128ba8473dabeda1f423f0600bb3a6b3f81c639c07951a78589bc3f",
+      "dist/browser.js": "c38a23c0c13f6d087530a61aaa2cbb3f1942e45a01d737e9064ed9302da11805",
+      "dist/browser.js.map": "6cdda6b348d207d54d4fbf8246e13cb8040c487d84c99de8ff76c5a70bc20cdf",
+      "dist/capture/index.d.ts": "bc2d046a0485ecd3eda82fb8b371dea7ff3f1a103905fe83ad97e876ecde9dd5",
+      "dist/capture/index.js": "06217ca6bf33b1778d30796255e08d36ff74ac3e9f03a8c934241d7a84fd5603",
+      "dist/capture/index.js.map": "2322d3ed4d5c9f8dc57e4c27d3ad12d8b39baee3d7c945199409dad57edb9c44",
+      "dist/capture/walker.d.ts": "162c3bd763b2206e8291180b9c2b12fb1cfcb536b3305db3c79ee2ed1290e637",
+      "dist/capture/walker.js": "4e127a4af123a52bb70707bf3d894a3323dcd3552fbad3d5e707eff6ae53ea38",
+      "dist/capture/walker.js.map": "00726c8f562ca28f87bd8c66c9f6d672014f3f065c560ff0500dd33bb2bb7c1d",
+      "dist/cli.d.ts": "43e818adf60173644896298637f47b01d5819b17eda46eaa32d0c7d64724d012",
+      "dist/cli.js": "36e9fec642fcd7d90930ad09516177874d681c627c964c5dc4fa5d205cc70a57",
+      "dist/cli.js.map": "29fc6fc6b9714a98392362f9582c81dcf5d1a3218353b3acd51978a9036f61f9",
+      "dist/diff.d.ts": "92d7bc8793be432eec0b597444f7ee5c0f9a24b0671e6a1776ab0ad2e0f21183",
+      "dist/diff.js": "ccefcd455191d271c56edc0a1dc0284a38ccf6f0073ee1612341f381e0d46360",
+      "dist/diff.js.map": "c61426f0187fe121e1691000a9c255259658ea7fa4563c8707741a03d15e86c7",
+      "dist/fallback/askHuman.d.ts": "cce5053ca7a8ad7fd21ec8d4cf3e69c11cb8fe817d34fa746eba144f1420acfd",
+      "dist/fallback/askHuman.js": "f479ea63e519fd3ce76d2059f6f1740c4fd86d0d74d1efe7b7e371b8f07caa6f",
+      "dist/fallback/askHuman.js.map": "f791903345c7ab1e479e9b76859c9fbda207a5a04baef33a606fa76b306533fc",
+      "dist/fallback/captcha.d.ts": "955f78313568c5b87874348e6b8b9a27047a9b299635518ea0ffbb324039eac5",
+      "dist/fallback/captcha.js": "bb4706ae97c4dc937e80135e568eb5fb97a3edb029483baad47de9ed3286a05c",
+      "dist/fallback/captcha.js.map": "83bba825f4800d6517c70454063756942cb8f1d274eaf9475a44fdbc61977e29",
+      "dist/fallback/look.d.ts": "955e64af5f409d668fdf46d9fdd877ae012f8d246caedeadfb313e0247ecd6af",
+      "dist/fallback/look.js": "8c33ec0526efad8885fad941d332472cd58115e417cb4f3ca9fb8e1f27329a30",
+      "dist/fallback/look.js.map": "9bcc391e5c964b1920fe5101c3fadcc40e053b5447b5e45ff4dff83e9692e805",
+      "dist/fallback/media.d.ts": "2b0f628dba91f7d9da7cb4ee08b102037cb165448c18fa8e0c7cabf05918a749",
+      "dist/fallback/media.js": "939fece5d160b210e6e1f751fa2db765d55c88ddea01bcdb534941858361287c",
+      "dist/fallback/media.js.map": "b56cee770e060ed1b76b9a0ea14d380d59d492cf68e9af3b2e6dc98fd82fdfb2",
+      "dist/fallback/ocr.d.ts": "5f5cb0e04091187d8989520626a8266349b9c1c5c1f934f66c6583f26db5267f",
+      "dist/fallback/ocr.js": "ffe361929c3cd290645f89f70f5dff46828b14136cc54297501478171fcb5b2c",
+      "dist/fallback/ocr.js.map": "a74d12f44c709a8313382da19857b5cb2c7c30162f9ce11b8bae27cd632a3b12",
+      "dist/fallback/probe.d.ts": "d171fbde232b1d41fe67faf83168d57023a66068c69c0aed976d5e0f068cd597",
+      "dist/fallback/probe.js": "2453d56f097a5cb087cbd62b3f82b5c9474128463a73d3a586cf99579f73e876",
+      "dist/fallback/probe.js.map": "8d2441a4855ff20a6b31761476d2a437798e4441ea4ecb5092882fd44b2b6176",
+      "dist/index.d.ts": "45e1184ffc8836ef803ccb7482b65a93c5bddfc86c20c2faa6c0a723004043a5",
+      "dist/index.js": "75c6d8e8dd07075fb8b2508dc8d17bff5066e674fa905f917cbbde5dfac1bb70",
+      "dist/index.js.map": "71adea566fdddd7ed1f13bc48a50948cbc3c968cdbefbc2c85a364efd8b363c2",
+      "dist/memory.d.ts": "15258ea9433619fed0f2c921a8b4a584a79d7603acd26e4954cc535232668e46",
+      "dist/memory.js": "d886daad0a558521e4f0952ddb3a8e4fa0cc5a0b5830379d06d474014e44e65e",
+      "dist/memory.js.map": "092966360dd28b5acccbc1b2a5992d3fa8c4e7c6217e73219829e62535390481",
+      "dist/server.d.ts": "1933eeb4ddcdfff3b415d8bec8a674c31447a294cfdc77d1e5046bdbddae2bc0",
+      "dist/server.js": "aaab3b8ea265443d55431bac654abaa2a8e73942e6c5d2d0ec199a29d9926792",
+      "dist/server.js.map": "300e7160ecf5eca4b840c6401399292bbe48a53580d9d68648d5b76bb9992d3b",
+      "dist/translate.d.ts": "62b37d24579c352c4c1db1eef67bec92cb153121c89b0e5ba914f5dbffb84ecb",
+      "dist/translate.js": "1ae036acafe46f4f16b844e448f3f7b5d580b01a365d5afd51c65e1398e60e95",
+      "dist/translate.js.map": "51f0621bea48fa268fd3630b05776eac5a4345617cbbcf90d381b435d05a5620",
+      "package-lock.json": "99a83003014f16494a40c78a18b1e1ca9a50fffc71c05bbca42c5adcbdb23b8e"
+    },
+    "cliVersion": "2.1.301 (Claude Code)"
+  },
+  "model": "claude-haiku-5-5",
+  "runs": 1,
+  "results": [
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/0e42c3a73f2aece1f854e0ba55b7c8b0--mantis--1--attempt-1-1792157118649-w4zxev.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I couldn't finish this. I found a qualifying station but couldn't open it, so I didn't sort any reviews.\n\n**What I found:** Google Maps search results for \"gas ",
+      "turns": 49,
+      "toolCalls": 48,
+      "toolErrors": 6,
+      "observationChars": 37431,
+      "observationImages": 0,
+      "inputTokens": 64,
+      "cacheWriteTokens": 26888,
+      "cacheReadTokens": 543953,
+      "totalInputTokens": 570905,
+      "outputTokens": 5100,
+      "costUsd": 0.013373529999999998,
+      "timings": {
+        "mcpStartupMs": 2057,
+        "cliStartupMs": 2135,
+        "cliExecutionMs": 99556,
+        "cliWallMs": 101691,
+        "verificationMs": 0,
+        "cleanupMs": 4
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/0e42c3a73f2aece1f854e0ba55b7c8b0--mantis--1--attempt-1-1792157118649-w4zxev.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I couldn't finish this. I found a qualifying station but couldn't open it, so I didn't sort any reviews.\n\n**What I found:** Google Maps search results for \"gas ",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 49,
+          "toolCalls": 48,
+          "toolErrors": 6,
+          "observationChars": 37431,
+          "observationImages": 0,
+          "totalInputTokens": 570905,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 64,
+            "cacheWriteTokens": 26888,
+            "cacheReadTokens": 543953,
+            "outputTokens": 5100,
+            "costUsd": 0.013373529999999998
+          },
+          "timings": {
+            "mcpStartupMs": 2057,
+            "cliStartupMs": 2135,
+            "cliExecutionMs": 99556,
+            "cliWallMs": 101691,
+            "verificationMs": 0,
+            "cleanupMs": 4
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/0e42c3a73f2aece1f854e0ba55b7c8b0--tree--1--attempt-1-1792157118658-c2dqog.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I didn't find a gas station in Manhattan with a rating above 4.0, so I didn't reach the review sorting step.\n\n- **\"gas station Manhattan NY\" search:** Google Ma",
+      "turns": 21,
+      "toolCalls": 20,
+      "toolErrors": 0,
+      "observationChars": 21449,
+      "observationImages": 0,
+      "inputTokens": 28,
+      "cacheWriteTokens": 12385,
+      "cacheReadTokens": 194940,
+      "totalInputTokens": 207353,
+      "outputTokens": 2115,
+      "costUsd": 0.005486699999999999,
+      "timings": {
+        "mcpStartupMs": 2064,
+        "cliStartupMs": 2525,
+        "cliExecutionMs": 60551,
+        "cliWallMs": 63076,
+        "verificationMs": 0,
+        "cleanupMs": 34
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/0e42c3a73f2aece1f854e0ba55b7c8b0--tree--1--attempt-1-1792157118658-c2dqog.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I didn't find a gas station in Manhattan with a rating above 4.0, so I didn't reach the review sorting step.\n\n- **\"gas station Manhattan NY\" search:** Google Ma",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 21,
+          "toolCalls": 20,
+          "toolErrors": 0,
+          "observationChars": 21449,
+          "observationImages": 0,
+          "totalInputTokens": 207353,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 28,
+            "cacheWriteTokens": 12385,
+            "cacheReadTokens": 194940,
+            "outputTokens": 2115,
+            "costUsd": 0.005486699999999999
+          },
+          "timings": {
+            "mcpStartupMs": 2064,
+            "cliStartupMs": 2525,
+            "cliExecutionMs": 60551,
+            "cliWallMs": 63076,
+            "verificationMs": 0,
+            "cleanupMs": 34
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/0e42c3a73f2aece1f854e0ba55b7c8b0--screenshot--1--attempt-1-1792157118666-jexgw3.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I could not finish this task. I did not find a Manhattan gas station rated above 4.0, and I did not reach the review sorting step.\n\n- **What I checked:** The se",
+      "turns": 28,
+      "toolCalls": 27,
+      "toolErrors": 0,
+      "observationChars": 2593,
+      "observationImages": 14,
+      "inputTokens": 30,
+      "cacheWriteTokens": 24888,
+      "cacheReadTokens": 225237,
+      "totalInputTokens": 250155,
+      "outputTokens": 3111,
+      "costUsd": 0.00878847,
+      "timings": {
+        "mcpStartupMs": 2065,
+        "cliStartupMs": 2208,
+        "cliExecutionMs": 43827,
+        "cliWallMs": 46035,
+        "verificationMs": 0,
+        "cleanupMs": 3
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/0e42c3a73f2aece1f854e0ba55b7c8b0--screenshot--1--attempt-1-1792157118666-jexgw3.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I could not finish this task. I did not find a Manhattan gas station rated above 4.0, and I did not reach the review sorting step.\n\n- **What I checked:** The se",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 28,
+          "toolCalls": 27,
+          "toolErrors": 0,
+          "observationChars": 2593,
+          "observationImages": 14,
+          "totalInputTokens": 250155,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 30,
+            "cacheWriteTokens": 24888,
+            "cacheReadTokens": 225237,
+            "outputTokens": 3111,
+            "costUsd": 0.00878847
+          },
+          "timings": {
+            "mcpStartupMs": 2065,
+            "cliStartupMs": 2208,
+            "cliExecutionMs": 43827,
+            "cliWallMs": 46035,
+            "verificationMs": 0,
+            "cleanupMs": 3
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "046138801a05ddf56ad94e8672942496_070826",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/046138801a05ddf56ad94e8672942496_070826--mantis--1--attempt-1-1792157118671-cduasz.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "The community thread with the most replies of all time is **\"The Banter Thread\"** in the FlightAware Discussions General category. Its topic list shows 5,518 re",
+      "turns": 13,
+      "toolCalls": 12,
+      "toolErrors": 1,
+      "observationChars": 20861,
+      "observationImages": 0,
+      "inputTokens": 24,
+      "cacheWriteTokens": 11945,
+      "cacheReadTokens": 129500,
+      "totalInputTokens": 141469,
+      "outputTokens": 1517,
+      "costUsd": 0.0044449,
+      "timings": {
+        "mcpStartupMs": 2096,
+        "cliStartupMs": 1951,
+        "cliExecutionMs": 40028,
+        "cliWallMs": 41979,
+        "verificationMs": 0,
+        "cleanupMs": 46
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/046138801a05ddf56ad94e8672942496_070826--mantis--1--attempt-1-1792157118671-cduasz.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "The community thread with the most replies of all time is **\"The Banter Thread\"** in the FlightAware Discussions General category. Its topic list shows 5,518 re",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 13,
+          "toolCalls": 12,
+          "toolErrors": 1,
+          "observationChars": 20861,
+          "observationImages": 0,
+          "totalInputTokens": 141469,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 24,
+            "cacheWriteTokens": 11945,
+            "cacheReadTokens": 129500,
+            "outputTokens": 1517,
+            "costUsd": 0.0044449
+          },
+          "timings": {
+            "mcpStartupMs": 2096,
+            "cliStartupMs": 1951,
+            "cliExecutionMs": 40028,
+            "cliWallMs": 41979,
+            "verificationMs": 0,
+            "cleanupMs": 46
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "046138801a05ddf56ad94e8672942496_070826",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/046138801a05ddf56ad94e8672942496_070826--tree--1--attempt-1-1792157118678-c3vsn9.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "The community's most-replied topic is **\"The Banter Thread\"** on the FlightAware Discussions forum, with 5,518 replies. I opened it and stopped there. I did not",
+      "turns": 12,
+      "toolCalls": 11,
+      "toolErrors": 0,
+      "observationChars": 91872,
+      "observationImages": 0,
+      "inputTokens": 14,
+      "cacheWriteTokens": 41793,
+      "cacheReadTokens": 162472,
+      "totalInputTokens": 204279,
+      "outputTokens": 1891,
+      "costUsd": 0.01093022,
+      "timings": {
+        "mcpStartupMs": 2113,
+        "cliStartupMs": 2452,
+        "cliExecutionMs": 51664,
+        "cliWallMs": 54116,
+        "verificationMs": 0,
+        "cleanupMs": 26
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/046138801a05ddf56ad94e8672942496_070826--tree--1--attempt-1-1792157118678-c3vsn9.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "The community's most-replied topic is **\"The Banter Thread\"** on the FlightAware Discussions forum, with 5,518 replies. I opened it and stopped there. I did not",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 12,
+          "toolCalls": 11,
+          "toolErrors": 0,
+          "observationChars": 91872,
+          "observationImages": 0,
+          "totalInputTokens": 204279,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 14,
+            "cacheWriteTokens": 41793,
+            "cacheReadTokens": 162472,
+            "outputTokens": 1891,
+            "costUsd": 0.01093022
+          },
+          "timings": {
+            "mcpStartupMs": 2113,
+            "cliStartupMs": 2452,
+            "cliExecutionMs": 51664,
+            "cliWallMs": 54116,
+            "verificationMs": 0,
+            "cleanupMs": 26
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "046138801a05ddf56ad94e8672942496_070826",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/046138801a05ddf56ad94e8672942496_070826--screenshot--1--attempt-1-1792157118684-8s8j39.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I opened The Banter Thread, but I couldn't read the page's URL from the browser tools, so the FINAL_URL below is not verified.\n\n**Answer: The Banter Thread** in",
+      "turns": 48,
+      "toolCalls": 47,
+      "toolErrors": 0,
+      "observationChars": 3975,
+      "observationImages": 21,
+      "inputTokens": 44,
+      "cacheWriteTokens": 37747,
+      "cacheReadTokens": 474772,
+      "totalInputTokens": 512563,
+      "outputTokens": 5039,
+      "costUsd": 0.014821020000000002,
+      "timings": {
+        "mcpStartupMs": 2121,
+        "cliStartupMs": 2153,
+        "cliExecutionMs": 79176,
+        "cliWallMs": 81329,
+        "verificationMs": 0,
+        "cleanupMs": 2
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/046138801a05ddf56ad94e8672942496_070826--screenshot--1--attempt-1-1792157118684-8s8j39.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I opened The Banter Thread, but I couldn't read the page's URL from the browser tools, so the FINAL_URL below is not verified.\n\n**Answer: The Banter Thread** in",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 48,
+          "toolCalls": 47,
+          "toolErrors": 0,
+          "observationChars": 3975,
+          "observationImages": 21,
+          "totalInputTokens": 512563,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 44,
+            "cacheWriteTokens": 37747,
+            "cacheReadTokens": 474772,
+            "outputTokens": 5039,
+            "costUsd": 0.014821020000000002
+          },
+          "timings": {
+            "mcpStartupMs": 2121,
+            "cliStartupMs": 2153,
+            "cliExecutionMs": 79176,
+            "cliWallMs": 81329,
+            "verificationMs": 0,
+            "cleanupMs": 2
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "11857213ca01510f12813740afd59918_110325",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/11857213ca01510f12813740afd59918_110325--mantis--1--attempt-1-1792157162994-so65vq.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I added the Birkenstock Boston Soft Footbed Suede Leather clog in Mocha, men's size 10-10.5, to your cart. I stopped there and did not log in, check out, or ent",
+      "turns": 20,
+      "toolCalls": 19,
+      "toolErrors": 3,
+      "observationChars": 38859,
+      "observationImages": 0,
+      "inputTokens": 36,
+      "cacheWriteTokens": 22775,
+      "cacheReadTokens": 277742,
+      "totalInputTokens": 300553,
+      "outputTokens": 2952,
+      "costUsd": 0.00881202,
+      "timings": {
+        "mcpStartupMs": 2056,
+        "cliStartupMs": 1888,
+        "cliExecutionMs": 116397,
+        "cliWallMs": 118285,
+        "verificationMs": 0,
+        "cleanupMs": 14
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/11857213ca01510f12813740afd59918_110325--mantis--1--attempt-1-1792157162994-so65vq.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I added the Birkenstock Boston Soft Footbed Suede Leather clog in Mocha, men's size 10-10.5, to your cart. I stopped there and did not log in, check out, or ent",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 20,
+          "toolCalls": 19,
+          "toolErrors": 3,
+          "observationChars": 38859,
+          "observationImages": 0,
+          "totalInputTokens": 300553,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 36,
+            "cacheWriteTokens": 22775,
+            "cacheReadTokens": 277742,
+            "outputTokens": 2952,
+            "costUsd": 0.00881202
+          },
+          "timings": {
+            "mcpStartupMs": 2056,
+            "cliStartupMs": 1888,
+            "cliExecutionMs": 116397,
+            "cliWallMs": 118285,
+            "verificationMs": 0,
+            "cleanupMs": 14
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "11857213ca01510f12813740afd59918_110325",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/11857213ca01510f12813740afd59918_110325--tree--1--attempt-1-1792157167298-wdb1ks.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I added one pair to your cart and stopped there. I didn't log in, check out, or enter any personal information.\n\nThe item is the **Boston Soft Footbed in Oiled ",
+      "turns": 29,
+      "toolCalls": 28,
+      "toolErrors": 0,
+      "observationChars": 62670,
+      "observationImages": 8,
+      "inputTokens": 44,
+      "cacheWriteTokens": 43591,
+      "cacheReadTokens": 621327,
+      "totalInputTokens": 664962,
+      "outputTokens": 4403,
+      "costUsd": 0.01713737,
+      "timings": {
+        "mcpStartupMs": 2018,
+        "cliStartupMs": 1459,
+        "cliExecutionMs": 143833,
+        "cliWallMs": 145292,
+        "verificationMs": 0,
+        "cleanupMs": 121
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/11857213ca01510f12813740afd59918_110325--tree--1--attempt-1-1792157167298-wdb1ks.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I added one pair to your cart and stopped there. I didn't log in, check out, or enter any personal information.\n\nThe item is the **Boston Soft Footbed in Oiled ",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 29,
+          "toolCalls": 28,
+          "toolErrors": 0,
+          "observationChars": 62670,
+          "observationImages": 8,
+          "totalInputTokens": 664962,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 44,
+            "cacheWriteTokens": 43591,
+            "cacheReadTokens": 621327,
+            "outputTokens": 4403,
+            "costUsd": 0.01713737
+          },
+          "timings": {
+            "mcpStartupMs": 2018,
+            "cliStartupMs": 1459,
+            "cliExecutionMs": 143833,
+            "cliWallMs": 145292,
+            "verificationMs": 0,
+            "cleanupMs": 121
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "11857213ca01510f12813740afd59918_110325",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/11857213ca01510f12813740afd59918_110325--screenshot--1--attempt-1-1792157175186-000fni.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I added one pair to your cart: Birkenstock **Boston, Oiled Leather, Habana** (brown), US men's 10-10.5, Regular/Wide, $154.95. I stopped there without logging i",
+      "turns": 88,
+      "toolCalls": 87,
+      "toolErrors": 1,
+      "observationChars": 8146,
+      "observationImages": 45,
+      "inputTokens": 92,
+      "cacheWriteTokens": 78120,
+      "cacheReadTokens": 1890526,
+      "totalInputTokens": 1968738,
+      "outputTokens": 8303,
+      "costUsd": 0.03868996,
+      "timings": {
+        "mcpStartupMs": 2048,
+        "cliStartupMs": 1973,
+        "cliExecutionMs": 206901,
+        "cliWallMs": 208874,
+        "verificationMs": 0,
+        "cleanupMs": 5
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/11857213ca01510f12813740afd59918_110325--screenshot--1--attempt-1-1792157175186-000fni.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I added one pair to your cart: Birkenstock **Boston, Oiled Leather, Habana** (brown), US men's 10-10.5, Regular/Wide, $154.95. I stopped there without logging i",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 88,
+          "toolCalls": 87,
+          "toolErrors": 1,
+          "observationChars": 8146,
+          "observationImages": 45,
+          "totalInputTokens": 1968738,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 92,
+            "cacheWriteTokens": 78120,
+            "cacheReadTokens": 1890526,
+            "outputTokens": 8303,
+            "costUsd": 0.03868996
+          },
+          "timings": {
+            "mcpStartupMs": 2048,
+            "cliStartupMs": 1973,
+            "cliExecutionMs": 206901,
+            "cliWallMs": 208874,
+            "verificationMs": 0,
+            "cleanupMs": 5
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/824eb7bb0ef1ce40bfd49c12182d9428_070826--mantis--1--attempt-1-1792157184163-za55fc.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I added the Speedo Women's Solid Leaderback Swimsuit in Black to your cart at the sale price of $37.00 (regular $74.00). I stopped before checkout and didn't lo",
+      "turns": 49,
+      "toolCalls": 48,
+      "toolErrors": 2,
+      "observationChars": 184924,
+      "observationImages": 0,
+      "inputTokens": 78,
+      "cacheWriteTokens": 101688,
+      "cacheReadTokens": 1908315,
+      "totalInputTokens": 2010081,
+      "outputTokens": 12951,
+      "costUsd": 0.08763189,
+      "timings": {
+        "mcpStartupMs": 2092,
+        "cliStartupMs": 3429,
+        "cliExecutionMs": 278911,
+        "cliWallMs": 282340,
+        "verificationMs": 0,
+        "cleanupMs": 3
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/824eb7bb0ef1ce40bfd49c12182d9428_070826--mantis--1--attempt-1-1792157184163-za55fc.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I added the Speedo Women's Solid Leaderback Swimsuit in Black to your cart at the sale price of $37.00 (regular $74.00). I stopped before checkout and didn't lo",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 49,
+          "toolCalls": 48,
+          "toolErrors": 2,
+          "observationChars": 184924,
+          "observationImages": 0,
+          "totalInputTokens": 2010081,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 78,
+            "cacheWriteTokens": 101688,
+            "cacheReadTokens": 1908315,
+            "outputTokens": 12951,
+            "costUsd": 0.08763189
+          },
+          "timings": {
+            "mcpStartupMs": 2092,
+            "cliStartupMs": 3429,
+            "cliExecutionMs": 278911,
+            "cliWallMs": 282340,
+            "verificationMs": 0,
+            "cleanupMs": 3
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/824eb7bb0ef1ce40bfd49c12182d9428_070826--tree--1--attempt-1-1792157202402-ewuunh.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I did not add anything to the cart. Speedo's women's black swimsuits don't offer a size L, so I stopped before adding one.\n\n- **Sizing:** Every women's swimsuit",
+      "turns": 68,
+      "toolCalls": 67,
+      "toolErrors": 9,
+      "observationChars": 259013,
+      "observationImages": 0,
+      "inputTokens": 104,
+      "cacheWriteTokens": 139764,
+      "cacheReadTokens": 4032485,
+      "totalInputTokens": 4172353,
+      "outputTokens": 17890,
+      "costUsd": 0.21851209,
+      "timings": {
+        "mcpStartupMs": 2055,
+        "cliStartupMs": 2668,
+        "cliExecutionMs": 329576,
+        "cliWallMs": 332244,
+        "verificationMs": 0,
+        "cleanupMs": 24
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/824eb7bb0ef1ce40bfd49c12182d9428_070826--tree--1--attempt-1-1792157202402-ewuunh.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I did not add anything to the cart. Speedo's women's black swimsuits don't offer a size L, so I stopped before adding one.\n\n- **Sizing:** Every women's swimsuit",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 68,
+          "toolCalls": 67,
+          "toolErrors": 9,
+          "observationChars": 259013,
+          "observationImages": 0,
+          "totalInputTokens": 4172353,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 104,
+            "cacheWriteTokens": 139764,
+            "cacheReadTokens": 4032485,
+            "outputTokens": 17890,
+            "costUsd": 0.21851209
+          },
+          "timings": {
+            "mcpStartupMs": 2055,
+            "cliStartupMs": 2668,
+            "cliExecutionMs": 329576,
+            "cliWallMs": 332244,
+            "verificationMs": 0,
+            "cleanupMs": 24
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/824eb7bb0ef1ce40bfd49c12182d9428_070826--screenshot--1--attempt-1-1792157222952-lage5l.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I added Women's Shaping Strappy One Piece Black (black, $39.20) to the cart in size 38/14. I stopped there and did not check out, log in, or enter any personal ",
+      "turns": 63,
+      "toolCalls": 62,
+      "toolErrors": 0,
+      "observationChars": 5500,
+      "observationImages": 31,
+      "inputTokens": 64,
+      "cacheWriteTokens": 58656,
+      "cacheReadTokens": 975834,
+      "totalInputTokens": 1034554,
+      "outputTokens": 10155,
+      "costUsd": 0.026573440000000004,
+      "timings": {
+        "mcpStartupMs": 2009,
+        "cliStartupMs": 5362,
+        "cliExecutionMs": 143939,
+        "cliWallMs": 149301,
+        "verificationMs": 0,
+        "cleanupMs": 10
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/824eb7bb0ef1ce40bfd49c12182d9428_070826--screenshot--1--attempt-1-1792157222952-lage5l.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I added Women's Shaping Strappy One Piece Black (black, $39.20) to the cart in size 38/14. I stopped there and did not check out, log in, or enter any personal ",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 63,
+          "toolCalls": 62,
+          "toolErrors": 0,
+          "observationChars": 5500,
+          "observationImages": 31,
+          "totalInputTokens": 1034554,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 64,
+            "cacheWriteTokens": 58656,
+            "cacheReadTokens": 975834,
+            "outputTokens": 10155,
+            "costUsd": 0.026573440000000004
+          },
+          "timings": {
+            "mcpStartupMs": 2009,
+            "cliStartupMs": 5362,
+            "cliExecutionMs": 143939,
+            "cliWallMs": 149301,
+            "verificationMs": 0,
+            "cleanupMs": 10
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "eb323dc584156d0eb3a2b90bb8c4b791_110325",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/eb323dc584156d0eb3a2b90bb8c4b791_110325--mantis--1--attempt-1-1792157284048-j2imzy.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "The cheapest match I found is **720 West End Avenue, Unit 7H, Upper West Side, Manhattan**, listed at **$13,500/month**. It has 2 bedrooms and 3 bathrooms, 1,47",
+      "turns": 30,
+      "toolCalls": 29,
+      "toolErrors": 2,
+      "observationChars": 36401,
+      "observationImages": 0,
+      "inputTokens": 40,
+      "cacheWriteTokens": 22899,
+      "cacheReadTokens": 314069,
+      "totalInputTokens": 337008,
+      "outputTokens": 3728,
+      "costUsd": 0.00958849,
+      "timings": {
+        "mcpStartupMs": 2042,
+        "cliStartupMs": 4507,
+        "cliExecutionMs": 88682,
+        "cliWallMs": 93189,
+        "verificationMs": 0,
+        "cleanupMs": 6
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/eb323dc584156d0eb3a2b90bb8c4b791_110325--mantis--1--attempt-1-1792157284048-j2imzy.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "The cheapest match I found is **720 West End Avenue, Unit 7H, Upper West Side, Manhattan**, listed at **$13,500/month**. It has 2 bedrooms and 3 bathrooms, 1,47",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 30,
+          "toolCalls": 29,
+          "toolErrors": 2,
+          "observationChars": 36401,
+          "observationImages": 0,
+          "totalInputTokens": 337008,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 40,
+            "cacheWriteTokens": 22899,
+            "cacheReadTokens": 314069,
+            "outputTokens": 3728,
+            "costUsd": 0.00958849
+          },
+          "timings": {
+            "mcpStartupMs": 2042,
+            "cliStartupMs": 4507,
+            "cliExecutionMs": 88682,
+            "cliWallMs": 93189,
+            "verificationMs": 0,
+            "cleanupMs": 6
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "eb323dc584156d0eb3a2b90bb8c4b791_110325",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/eb323dc584156d0eb3a2b90bb8c4b791_110325--tree--1--attempt-1-1792157315133-slrxto.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "The cheapest qualifying rental I found is **2833 Ocean Parkway, Unit 2C, Brighton Beach, Brooklyn, NY 11235**, listed at **$3,395/mo** with 2 beds, 3 baths, 1,4",
+      "turns": 44,
+      "toolCalls": 43,
+      "toolErrors": 3,
+      "observationChars": 164962,
+      "observationImages": 1,
+      "inputTokens": 80,
+      "cacheWriteTokens": 81075,
+      "cacheReadTokens": 1761793,
+      "totalInputTokens": 1842948,
+      "outputTokens": 8122,
+      "costUsd": 0.037901930000000014,
+      "timings": {
+        "mcpStartupMs": 2081,
+        "cliStartupMs": 3304,
+        "cliExecutionMs": 129628,
+        "cliWallMs": 132932,
+        "verificationMs": 0,
+        "cleanupMs": 12
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/eb323dc584156d0eb3a2b90bb8c4b791_110325--tree--1--attempt-1-1792157315133-slrxto.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "The cheapest qualifying rental I found is **2833 Ocean Parkway, Unit 2C, Brighton Beach, Brooklyn, NY 11235**, listed at **$3,395/mo** with 2 beds, 3 baths, 1,4",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 44,
+          "toolCalls": 43,
+          "toolErrors": 3,
+          "observationChars": 164962,
+          "observationImages": 1,
+          "totalInputTokens": 1842948,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 80,
+            "cacheWriteTokens": 81075,
+            "cacheReadTokens": 1761793,
+            "outputTokens": 8122,
+            "costUsd": 0.037901930000000014
+          },
+          "timings": {
+            "mcpStartupMs": 2081,
+            "cliStartupMs": 3304,
+            "cliExecutionMs": 129628,
+            "cliWallMs": 132932,
+            "verificationMs": 0,
+            "cleanupMs": 12
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    },
+    {
+      "task": "eb323dc584156d0eb3a2b90bb8c4b791_110325",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/eb323dc584156d0eb3a2b90bb8c4b791_110325--screenshot--1--attempt-1-1792157374887-3ov29z.final.png",
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "I could not confirm the cheapest 2-bed, 3+-bath rental in New York. The search returned about 13.5K listings, and the price sort did not hold up when I checked ",
+      "turns": 43,
+      "toolCalls": 42,
+      "toolErrors": 1,
+      "observationChars": 3381,
+      "observationImages": 17,
+      "inputTokens": 40,
+      "cacheWriteTokens": 32584,
+      "cacheReadTokens": 343189,
+      "totalInputTokens": 375813,
+      "outputTokens": 5264,
+      "costUsd": 0.012584689999999999,
+      "timings": {
+        "mcpStartupMs": 2012,
+        "cliStartupMs": 3244,
+        "cliExecutionMs": 57485,
+        "cliWallMs": 60729,
+        "verificationMs": 0,
+        "cleanupMs": 2
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": "/home/user/mantis/bench/results/agent-logs/haiku-cloud-5/eb323dc584156d0eb3a2b90bb8c4b791_110325--screenshot--1--attempt-1-1792157374887-3ov29z.final.png",
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "I could not confirm the cheapest 2-bed, 3+-bath rental in New York. The search returned about 13.5K listings, and the price sort did not hold up when I checked ",
+          "initModel": "claude-haiku-5-5",
+          "resolvedModels": [
+            "claude-haiku-5-5"
+          ],
+          "turns": 43,
+          "toolCalls": 42,
+          "toolErrors": 1,
+          "observationChars": 3381,
+          "observationImages": 17,
+          "totalInputTokens": 375813,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 40,
+            "cacheWriteTokens": 32584,
+            "cacheReadTokens": 343189,
+            "outputTokens": 5264,
+            "costUsd": 0.012584689999999999
+          },
+          "timings": {
+            "mcpStartupMs": 2012,
+            "cliStartupMs": 3244,
+            "cliExecutionMs": 57485,
+            "cliWallMs": 60729,
+            "verificationMs": 0,
+            "cleanupMs": 2
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "claude-haiku-5-5"
+      ]
+    }
+  ]
+}

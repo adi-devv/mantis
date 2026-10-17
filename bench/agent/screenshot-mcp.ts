@@ -8,7 +8,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { chromium } from 'playwright';
 import type { Browser, Page } from 'playwright';
 import { z } from 'zod';
-import { userAgentFor } from '../../src/userAgent.js';
+import { chromiumExecutable, userAgentFor } from '../../src/userAgent.js';
 
 const VIEWPORT = { width: 1280, height: 800 };
 let browser: Browser | null = null;
@@ -16,7 +16,7 @@ let page: Page | null = null;
 
 async function current(): Promise<Page> {
   if (!page) {
-    browser = await chromium.launch({ headless: true });
+    browser = await chromium.launch({ headless: true, ...chromiumExecutable() });
     page = await (await browser.newContext({ viewport: VIEWPORT, userAgent: await userAgentFor(browser) })).newPage();
   }
   return page;
@@ -61,10 +61,17 @@ server.registerTool(
 server.registerTool('back', { description: 'Go back one page.', inputSchema: {} }, () =>
   act(async (p) => { await p.goBack(); return `back to ${p.url()}`; }));
 
-server.registerTool('bench_capture', { description: 'Harness-only final viewport capture.', inputSchema: {} }, async () => {
+server.registerTool('bench_capture', { description: 'Harness-only viewport capture; with `evaluate` (source of a function, as in browser_evaluate), also returns its result as text.', inputSchema: { evaluate: z.string().optional() } }, async ({ evaluate }) => {
   if (!page || page.isClosed()) return { ...text('No live page to capture.'), isError: true };
   const png = await page.screenshot({ type: 'png', fullPage: false, scale: 'css' });
-  return { content: [{ type: 'image' as const, data: png.toString('base64'), mimeType: 'image/png' }] };
+  const content: ({ type: 'image'; data: string; mimeType: string } | { type: 'text'; text: string })[] = [{ type: 'image', data: png.toString('base64'), mimeType: 'image/png' }];
+  if (evaluate) {
+    try {
+      const value: unknown = await page.evaluate(`(${evaluate})()`);
+      content.push({ type: 'text', text: typeof value === 'string' ? value : JSON.stringify(value) ?? String(value) });
+    } catch { /* the image alone is still useful */ }
+  }
+  return { content };
 });
 
 const close = (): void => { void browser?.close().finally(() => process.exit(0)); };

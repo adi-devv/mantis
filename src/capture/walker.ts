@@ -610,15 +610,47 @@ export function walker(includeSrOnly = false): WalkResult {
     return false;
   }
 
+  /** Tiny/visually-hidden native controls are operated through their rendered label. */
+  function labelPointerTarget(el: Element, r: DOMRect): { label: HTMLLabelElement; rect: DOMRect } | null {
+    const labels = (el as HTMLInputElement).labels;
+    if (!labels?.length) return null;
+    const cs = getComputedStyle(el);
+    const localOpacity = parseFloat(cs.opacity);
+    // screenReaderOnly also recognizes near-transparent elements; opacity itself needs a hit test.
+    const clippedOrSrOnly = screenReaderOnly(el, cs, r) &&
+      !(Number.isFinite(localOpacity) && localOpacity > 0 && localOpacity < 0.01);
+    const alwaysHidden = r.width <= 4 || r.height <= 4 || clippedOrSrOnly;
+    const transparent = effectiveOpacity(el) < 0.01;
+    if (!alwaysHidden && !transparent) return null;
+    if (!alwaysHidden && inView(r)) {
+      const x = (Math.max(r.left, 0) + Math.min(r.right, vw)) / 2;
+      const y = (Math.max(r.top, 0) + Math.min(r.bottom, vh)) / 2;
+      const root = el.getRootNode();
+      const scope: Document | ShadowRoot = root instanceof ShadowRoot ? root : document;
+      const hit = scope.elementFromPoint(x, y);
+      if (hit === el || !!hit && el.contains(hit)) return null;
+    }
+    for (const label of Array.from(labels)) {
+      const style = getComputedStyle(label);
+      const rect = label.getBoundingClientRect();
+      if (style.display !== 'none' && style.visibility === 'visible' && effectiveOpacity(label) > 0 &&
+          rect.width >= 4 && rect.height >= 4 && inDoc(rect)) return { label, rect };
+    }
+    return null;
+  }
+
   function isCovered(el: Element, r: DOMRect): boolean {
-    if (!inView(r)) return false;
-    const x = (Math.max(r.left, 0) + Math.min(r.right, vw)) / 2;
-    const y = (Math.max(r.top, 0) + Math.min(r.bottom, vh)) / 2;
-    const root = el.getRootNode();
+    const labelTarget = labelPointerTarget(el, r);
+    const hitRect = labelTarget?.rect ?? r;
+    if (!inView(hitRect)) return false;
+    const x = (Math.max(hitRect.left, 0) + Math.min(hitRect.right, vw)) / 2;
+    const y = (Math.max(hitRect.top, 0) + Math.min(hitRect.bottom, vh)) / 2;
+    const root = (labelTarget?.label ?? el).getRootNode();
     const scope: Document | ShadowRoot = root instanceof ShadowRoot ? root : document;
     const hit = scope.elementFromPoint(x, y);
     if (!hit) return false;
     if (composedContains(el, hit) || composedContains(hit, el)) return false;
+    if (labelTarget && composedContains(labelTarget.label, hit)) return false;
     const control = el as HTMLInputElement;
     const labels = control.labels;
     if (labels && Array.from(labels).some((label) => composedContains(label, hit))) return false;
@@ -996,10 +1028,13 @@ export function walker(includeSrOnly = false): WalkResult {
       if (cs.visibility !== 'visible' || cs.pointerEvents === 'none' || cs.display === 'none' || (c !== root && parseFloat(cs.opacity) === 0)) continue;
       const r = c.getBoundingClientRect();
       if (r.width <= 0 || r.height <= 0 || !inDoc(r)) continue;
-      const x = r.left + r.width / 2;
-      const y = r.top + r.height / 2;
+      const labelTarget = labelPointerTarget(c, r);
+      const hitRect = labelTarget?.rect ?? r;
+      const x = hitRect.left + hitRect.width / 2;
+      const y = hitRect.top + hitRect.height / 2;
       if (x >= 0 && y >= 0 && x < vw && y < vh) {
-        const scope: Document | ShadowRoot = c.getRootNode() instanceof ShadowRoot ? (c.getRootNode() as ShadowRoot) : document;
+        const hitRoot = (labelTarget?.label ?? c).getRootNode();
+        const scope: Document | ShadowRoot = hitRoot instanceof ShadowRoot ? hitRoot : document;
         const labels = (c as HTMLInputElement).labels;
         let top: Element | undefined;
         for (const h of scope.elementsFromPoint(x, y)) {
@@ -1008,13 +1043,68 @@ export function walker(includeSrOnly = false): WalkResult {
           break;
         }
         if (!top) continue;
-        if (!composedContains(c, top) && !(labels && Array.from(labels).some((l) => composedContains(l, top!)))) continue;
+        if (!composedContains(c, top) &&
+            !(labelTarget && composedContains(labelTarget.label, top)) &&
+            !(labels && Array.from(labels).some((l) => composedContains(l, top!)))) continue;
       }
       const role = interactiveRole(c, explicitRole(c), cs);
       if (!role) continue;
       rescued.add(c);
       emitInteractive(c, role, parent, depth, r);
     }
+  }
+
+  function createsFixedContainingBlock(cs: CSSStyleDeclaration): boolean {
+    if (cs.transform !== 'none' || cs.perspective !== 'none' || cs.filter !== 'none' || cs.backdropFilter !== 'none') return true;
+    if (/(?:^|\s)(?:paint|layout|strict|content)(?:\s|$)/.test(cs.contain)) return true;
+    if (/(?:^|,)\s*(?:transform|perspective|filter)(?:\s|,|$)/.test(cs.willChange)) return true;
+    return (cs as CSSStyleDeclaration & { containerType?: string }).containerType !== undefined &&
+      (cs as CSSStyleDeclaration & { containerType?: string }).containerType !== 'normal';
+  }
+
+  /**
+   * A zero-sized overflow container normally hides its whole subtree. A fixed or absolutely
+   * positioned descendant can escape when its containing block is outside that clip. Only pay for
+   * this bounded check at the otherwise-pruned container; if it cannot settle the question cheaply,
+   * preserve the prune.
+   */
+  function hasPositionedEscape(root: Element): boolean {
+    const rootStyle = getComputedStyle(root);
+    const rootBlocks = createsFixedContainingBlock(rootStyle);
+    const pending: { el: Element; blockedForFixed: boolean; blockedForAbsolute: boolean }[] = [];
+    for (const child of childrenOf(root)) {
+      if (child.nodeType === 1) pending.push({
+        el: child as Element,
+        blockedForFixed: rootBlocks,
+        blockedForAbsolute: rootBlocks || rootStyle.position !== 'static',
+      });
+    }
+    let scanned = 0;
+    let foundEscape = false;
+    while (pending.length && scanned < 400) {
+      const { el, blockedForFixed, blockedForAbsolute } = pending.shift()!;
+      scanned++;
+      if (SKIP.has(el.localName) || el.getAttribute('aria-hidden') === 'true' || (el as HTMLElement).inert) continue;
+      const cs = getComputedStyle(el);
+      if (cs.display === 'none' || cs.contentVisibility === 'hidden') continue;
+      const r = el.getBoundingClientRect();
+      const escapes = (cs.position === 'fixed' || cs.position === 'absolute') && cs.visibility === 'visible' &&
+        r.width > 0 && r.height > 0 &&
+        ((cs.position === 'fixed' && !blockedForFixed) || (cs.position === 'absolute' && !blockedForAbsolute));
+      if (escapes) {
+        foundEscape = true;
+        continue;
+      }
+      if (cs.visibility === 'visible' && r.width > 0 && r.height > 0) return false;
+      const blocks = createsFixedContainingBlock(cs);
+      for (const child of childrenOf(el)) if (child.nodeType === 1) pending.push({
+        el: child as Element,
+        blockedForFixed: blockedForFixed || blocks,
+        blockedForAbsolute: blockedForAbsolute || blocks || cs.position !== 'static',
+      });
+    }
+    // Reaching the cap with descendants left is deliberately treated as no escape: retain the cheap prune.
+    return pending.length === 0 && foundEscape;
   }
 
   function visit(el: Element, parent: number, depth: number, box: DOMRect, inheritedSr = false): void {
@@ -1030,7 +1120,7 @@ export function walker(includeSrOnly = false): WalkResult {
     const contents = cs.display === 'contents';
     const r = contents ? box : el.getBoundingClientRect();
     const clips = cs.overflowX !== 'visible' || cs.overflowY !== 'visible';
-    if (!includeSrOnly && !contents && (r.width === 0 || r.height === 0) && clips) return; // e.g. collapsed accordion panel
+    if (!includeSrOnly && !contents && (r.width === 0 || r.height === 0) && clips && !hasPositionedEscape(el)) return; // e.g. collapsed accordion panel
     const srOnly = inheritedSr || screenReaderOnly(el, cs, r);
     // A zero-size positioned wrapper can hold a normally rendered absolute child.
     const childSr = inheritedSr || (srOnly && (r.width > 1.5 || r.height > 1.5 ||

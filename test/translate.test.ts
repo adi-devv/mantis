@@ -11,6 +11,9 @@ const text = (name: string, inViewport = true): RawNode => ({
 const prose = (name: string, inViewport = true): RawNode => ({
   kind: 'prose', role: 'text', name, states: [], parent: -1, depth: 0, inViewport, covered: false,
 });
+const region = (role: string, name: string): RawNode => ({
+  kind: 'region', role, name, states: [], parent: -1, depth: 0, inViewport: true, covered: false,
+});
 const snap = (nodes: RawNode[]): Snapshot => ({ url: 'https://x.test/', title: 'T', nodes, truncated: false });
 
 describe('translate', () => {
@@ -69,5 +72,29 @@ describe('translate', () => {
     expect(shown.length).toBe(8);
     expect(shown.every((l) => l.length <= 122 && l.endsWith('…"'))).toBe(true);
     expect(out).toMatch(/\n…32 more paragraphs — find\("text"\) or read\(full=true\)$/);
+  });
+
+  it('matches quoted region labels after their role', () => {
+    const nodes = [region('dialog', 'Preferences'), { ...link(1, 'Apply'), parent: 0, depth: 1 }];
+    const unquoted = translate(snap(nodes), undefined, { region: 'dialog Preferences' });
+    for (const target of ['dialog "Preferences"', "dialog 'Preferences'", 'dialog “Preferences”', 'dialog ‘Preferences’']) {
+      const quoted = translate(snap(nodes), undefined, { region: target });
+      expect(quoted.split('\n').filter((line) => line.startsWith('#'))).toEqual(unquoted.split('\n').filter((line) => line.startsWith('#')));
+    }
+    expect(translate(snap(nodes), undefined, { region: '"Preferences"' })).toContain('#1 link "Apply"');
+  });
+
+  it('leaves inner and mismatched quotes in region labels alone', () => {
+    const nodes = [
+      region('dialog', "Don't save"),
+      { ...link(1, 'Keep changes'), parent: 0, depth: 1 },
+      region('dialog', '5" screen'),
+      { ...link(2, 'Use display'), parent: 2, depth: 1 },
+      region('dialog', '"Preferences\''),
+      { ...link(3, 'Keep literal quotes'), parent: 4, depth: 1 },
+    ];
+    expect(translate(snap(nodes), undefined, { region: "dialog Don't save" })).toContain('#1 link "Keep changes"');
+    expect(translate(snap(nodes), undefined, { region: 'dialog 5" screen' })).toContain('#2 link "Use display"');
+    expect(translate(snap(nodes), undefined, { region: 'dialog "Preferences\'' })).toContain('#3 link "Keep literal quotes"');
   });
 });

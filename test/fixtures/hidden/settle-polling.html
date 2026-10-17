@@ -1,0 +1,21 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Background polling</title>
+<style>body { font: 16px sans-serif; margin: 20px; }</style></head>
+<body>
+<h1>Dashboard</h1>
+<p id="status">idle</p>
+<button id="now" type="button" onclick="document.getElementById('status').textContent = 'Changed now'">Change now</button>
+<button id="save" type="button">Save later</button>
+<script>
+// Polling chain started on load: a timer re-arms itself and each round makes a request.
+function poll() {
+  fetch('data:text/plain,ok').catch(() => {});
+  setTimeout(poll, 200);
+}
+poll();
+// Near miss: the click itself starts a timer whose effect must be waited for.
+document.getElementById('save').addEventListener('click', () => {
+  setTimeout(() => { document.getElementById('status').textContent = 'Saved'; }, 500);
+});
+</script>
+</body></html>

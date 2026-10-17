@@ -1,6 +1,7 @@
 import { chromium } from 'playwright';
 import type { Browser } from 'playwright';
 import type { TextAdapter } from './adapters.js';
+import { chromiumExecutable } from '../src/userAgent.js';
 import { addCost, costOf, imageTokens, pngSize, zeroCost } from './tokens.js';
 import type { Cost } from './tokens.js';
 import type { Elem, Reply, Step, StepResult, Target, Task, TaskRun } from './types.js';
@@ -178,7 +179,7 @@ export async function runTextTask(adapter: TextAdapter, task: Task, base: string
  * screenshot already shows the page).
  */
 export async function runScreenshotTask(task: Task, base: string): Promise<TaskRun> {
-  const browser: Browser = await chromium.launch({ headless: true });
+  const browser: Browser = await chromium.launch({ headless: true, ...chromiumExecutable() });
   const steps: StepResult[] = [];
   try {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });

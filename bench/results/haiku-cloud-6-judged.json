@@ -1,0 +1,303 @@
+{
+  "source": "haiku-cloud-6",
+  "judgeModel": "claude-sonnet-5-5",
+  "runs": [
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://speedo.com/en-us/products/womens-shaping-strappy-swimsuit-black-80037010001?variant=53025010712943",
+      "toolCalls": 16,
+      "totalInputTokens": 249148,
+      "wallS": 105.577,
+      "verdict": "success",
+      "reason": "The final screenshot shows the Women's Shaping Strappy One Piece in Black, size 38/14, at $39.20 in the cart. The agent reached it by filtering the women's black swimsuit collection to size L and sorting by price. The agent's L = 38/14 mapping is inferred rather than stated by the site, but the size filter matched this product under L."
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://speedo.com/en-us/products/womens-endurance-medalist-swimsuit-black-8134710001?variant=53086070210927",
+      "toolCalls": 69,
+      "totalInputTokens": 4147683,
+      "wallS": 314.073,
+      "verdict": "failure",
+      "reason": "The agent added nothing to the cart; it stopped to ask which numeric size matches Large, and its final page is the $72 Endurance+ Medalist, not the $37 Leaderback it named as cheapest."
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://speedo.com/en-us",
+      "toolCalls": 59,
+      "totalInputTokens": 964557,
+      "wallS": 111.345,
+      "verdict": "failure",
+      "reason": "The black swimsuit at $39.20 is in the cart, but the agent never confirmed which size is Large and picked 40/16, which is outside the US 12–14 range it said Large corresponds to, so the size is likely wrong."
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "mantis",
+      "run": 2,
+      "finalUrl": "https://speedo.com/en-us/collections/women-black-swimsuits/products/womens-shaping-strappy-swimsuit-black-80037010001?variant=53025010745711",
+      "toolCalls": 27,
+      "totalInputTokens": 581936,
+      "wallS": 133.945,
+      "verdict": "success",
+      "reason": "The final screenshot shows the Women's Shaping Strappy One Piece in black, size 40/16, at $39.20 and quantity 1 in the cart. The agent says it picked this as the cheapest of 20 in-stock black swimsuits under the site's Large filter, and it stopped before checkout. The one doubt is that the site labels sizes numerically, so I couldn't confirm that 40/16 is Large. The product link did come from the Large-filtered listing."
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "tree",
+      "run": 2,
+      "finalUrl": "https://speedo.com/en-us/products/womens-club-training-leaderback-swimsuit-black-8a000075002?variant=52969684664687",
+      "toolCalls": 66,
+      "totalInputTokens": 3641317,
+      "wallS": 353.273,
+      "verdict": "failure",
+      "reason": "The agent added nothing to the cart and checked only about a dozen of the roughly 77 filtered swimsuits. It never found a size L option, so the task of adding the lowest-priced black women's size L swimsuit to the cart was not done."
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "screenshot",
+      "run": 2,
+      "finalUrl": null,
+      "toolCalls": 114,
+      "totalInputTokens": 3411863,
+      "wallS": 204.189,
+      "verdict": "success",
+      "reason": "The final screenshot shows the Women's Solid Leaderback Swimsuit Black in the cart at $37.00, and the agent filtered for size L, black and in stock and checked all five result pages by hand to find the lowest-priced swimsuit. The remaining doubt is that size 40 is not labelled \"L\" on the product page, so the size mapping relies on the site's L filter matching this product."
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "mantis",
+      "run": 3,
+      "finalUrl": "https://speedo.com/en-us/products/womens-solid-leaderback-swimsuit-black-8005399001?variant=52969702031727",
+      "toolCalls": 38,
+      "totalInputTokens": 869801,
+      "wallS": 167.041,
+      "verdict": "success",
+      "reason": "The cart screenshot shows one Women's Solid Leaderback Swimsuit in Black, size 40, at $37.00. The agent says this was the cheapest item (low-to-high price sort) in the site's own women's, black, size-L filter. It stopped before checkout. The one doubt is that size 40 is the agent's best guess for Large, since the site uses numeric sizes."
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "tree",
+      "run": 3,
+      "finalUrl": "https://speedo.com/en-us/products/womens-solid-high-neck-swimsuit-black-8a000143002?variant=53024993116527",
+      "toolCalls": 34,
+      "totalInputTokens": 741743,
+      "wallS": 164.319,
+      "verdict": "unsure",
+      "reason": "The cart shows the Women's Solid High Neck One Piece in Black, size L, at $58.00, but the agent only checked the Recreation collection and said a cheaper black swimsuit might exist elsewhere, so I can't confirm it was the lowest price."
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "screenshot",
+      "run": 3,
+      "finalUrl": null,
+      "toolCalls": 162,
+      "totalInputTokens": 1293601,
+      "wallS": 145.898,
+      "verdict": "success",
+      "reason": "The cart drawer in the final screenshot shows the Women's Shaping Strappy One Piece Black, size 40/16, quantity 1, at $39.20. The agent says it read all 20 in-stock size-L Women's Black Swimsuits and this was the cheapest, and it stopped before checkout. The one uncertainty is that 40/16 is not labelled \"L\" on the site; the agent chose it because it appeared under the site's size-L filter, which is a reasonable reading."
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://smartasset.com/taxes",
+      "toolCalls": 21,
+      "totalInputTokens": 217368,
+      "wallS": 68.712,
+      "verdict": "failure",
+      "reason": "SmartAsset's calculator showed a client-side application error, so the agent never entered ZIP 97007 or got a SmartAsset estimate. The $30,638 figure it gave came from the agent's own recollection of the 2026 brackets, not from the site. The error page is an ordinary site failure, not an explicit refusal of automation, so this isn't 'blocked'."
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://smartasset.com/taxes/income-taxes",
+      "toolCalls": 63,
+      "totalInputTokens": 2304285,
+      "wallS": 175.766,
+      "verdict": "failure",
+      "reason": "The agent never got a result from the SmartAsset calculator, and the final screenshot shows an application error. It gave a hand-computed figure of about $30,887 using 2025 brackets, and also offered an unverified 2026 figure of about $30,638 from memory, so the answer is hedged and unsupported by the site."
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://smartasset.com/",
+      "toolCalls": 44,
+      "totalInputTokens": 327320,
+      "wallS": 60.942,
+      "verdict": "failure",
+      "reason": "SmartAsset's calculator never returned a result (the final screenshot shows every output as \"$--\" with the button still spinning), so the agent gave a hand-computed figure of about $30,887 rather than the site's estimate. It also entered $174,250 of household income instead of the $158,500 given, and its answer hedges between 2025 and 2026 brackets."
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "mantis",
+      "run": 2,
+      "finalUrl": "https://smartasset.com/taxes/current-federal-income-tax-brackets",
+      "toolCalls": 23,
+      "totalInputTokens": 264194,
+      "wallS": 100.521,
+      "verdict": "failure",
+      "reason": "SmartAsset's calculator and brackets pages showed a client-side application error, so the agent never got a result from the site. The $30,638 figure is its own calculation from remembered 2026 brackets, which it says it did not verify on the site. The final screenshot shows only the error page, so nothing supports the figure."
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "tree",
+      "run": 2,
+      "finalUrl": "https://smartasset.com/taxes/income-taxes",
+      "toolCalls": 53,
+      "totalInputTokens": 1653214,
+      "wallS": 113.036,
+      "verdict": "failure",
+      "reason": "The SmartAsset calculator never produced a result (the screenshot still shows \"$--\"), and the agent gave a hand-calculated $30,887 for 2025 plus an unverified $30,638 for 2026 instead of a site-derived answer."
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "screenshot",
+      "run": 2,
+      "finalUrl": "https://smartasset.com/taxes",
+      "toolCalls": 24,
+      "totalInputTokens": 164336,
+      "wallS": 55.002,
+      "verdict": "failure",
+      "reason": "The agent never got a calculator result because the SmartAsset page crashed with a client-side error. Its rough $31–32k figure was recalled from memory, not taken from the site, and it was not a verified answer. This was a site error rather than an explicit block, so it isn't 'blocked'."
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "mantis",
+      "run": 3,
+      "finalUrl": "https://smartasset.com/taxes/income-taxes",
+      "toolCalls": 33,
+      "totalInputTokens": 539899,
+      "wallS": 102.653,
+      "verdict": "failure",
+      "reason": "The SmartAsset calculator never returned a result (the final screenshot shows \"$--\" everywhere), so the reply is a hedged manual bracket estimate with two figures ($30,600 for 2026, $30,900 for 2025) taken partly from memory rather than from the site."
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "tree",
+      "run": 3,
+      "finalUrl": "https://smartasset.com/taxes/income-taxes",
+      "toolCalls": 48,
+      "totalInputTokens": 1470375,
+      "wallS": 109.625,
+      "verdict": "success",
+      "reason": "The calculator never returned a result (the screenshot shows \"$--\"), but the agent's hand calculation of $30,887 on $158,500 single taxable income with the 2025 brackets is arithmetically correct. The agent also disclosed that the figure did not come from the tool."
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "screenshot",
+      "run": 3,
+      "finalUrl": "https://smartasset.com/taxes/federal-income-tax-brackets",
+      "toolCalls": 29,
+      "totalInputTokens": 199629,
+      "wallS": 48.15,
+      "verdict": "failure",
+      "reason": "SmartAsset's calculator crashed with a client-side error, so the agent never got a site estimate; its $30,638 figure comes from 2026 brackets it recalled from memory and was not checked against the site or any other source."
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://www.google.com/maps/search/gas+station+in+Manhattan+NY",
+      "toolCalls": 38,
+      "totalInputTokens": 397681,
+      "wallS": 94.86,
+      "verdict": "failure",
+      "reason": "The agent said it did not finish: it never opened a verified Manhattan gas station above 4.0 and never sorted the reviews by lowest rating. The screenshot shows only a search results list."
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://www.google.com/maps/search/Sunoco+gas+station+Manhattan+NY",
+      "toolCalls": 39,
+      "totalInputTokens": 522757,
+      "wallS": 112.271,
+      "verdict": "failure",
+      "reason": "The agent never sorted any station's reviews by lowest rating; it reported finding no Manhattan gas station rated above 4.0 and stopped, and its final screenshot shows a loading panel with a Sunoco pin rather than a reviews view."
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://www.google.com/maps/search/gas+station+Manhattan+NY",
+      "toolCalls": 41,
+      "totalInputTokens": 359827,
+      "wallS": 47.027,
+      "verdict": "failure",
+      "reason": "The agent said it did not finish: it found no gas station rated above 4.0, opened no place, and did not sort any reviews, and the site did not refuse automation."
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "mantis",
+      "run": 2,
+      "finalUrl": "https://www.google.com/maps/place/Global+Gas+Station/data=!4m7!3m6!1s0x89c2f680de",
+      "toolCalls": 41,
+      "totalInputTokens": 605710,
+      "wallS": 88.798,
+      "verdict": "failure",
+      "reason": "The agent found Global Gas Station (4.3 stars) but never sorted its reviews by lowest rating. It says so itself, and the final screenshot shows a greyed-out, broken panel with no reviews visible."
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "tree",
+      "run": 2,
+      "finalUrl": "https://www.google.com/maps/place/Global+Gas+Station+89+St+Nicholas+Pl+New+York+NY",
+      "toolCalls": 39,
+      "totalInputTokens": 830221,
+      "wallS": 113.717,
+      "verdict": "failure",
+      "reason": "The agent found a qualifying Manhattan station (Global Gas Station, 4.3) but never reached its reviews, so it never sorted them by lowest rating, and its final screenshot shows an empty place panel."
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "screenshot",
+      "run": 2,
+      "finalUrl": "https://www.google.com/maps/search/gas+stations+in+Manhattan,+New+York/",
+      "toolCalls": 23,
+      "totalInputTokens": 196488,
+      "wallS": 31.593,
+      "verdict": "failure",
+      "reason": "The agent said it did not finish: it never found a gas station rated above 4.0, never opened reviews, and never sorted them by lowest rating."
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "mantis",
+      "run": 3,
+      "finalUrl": "https://www.google.com/maps/search/gas+station+in+Manhattan+NY/",
+      "toolCalls": 48,
+      "totalInputTokens": 632168,
+      "wallS": 87.73,
+      "verdict": "failure",
+      "reason": "The agent admitted it never opened the gas station's page and never sorted the reviews by lowest rating, so the core task was not completed."
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "tree",
+      "run": 3,
+      "finalUrl": "https://www.google.com/maps/place/Global+Gas+Station/data=!4m7!3m6!1s0x89c2f680de149fef:0xd055bad93493bd11!8m2!3d40.8302583!4d-73.9405417!16s%2Fg%2F11bvt5rb_6!19sChIJ758U3oD2wokREb2TNNm6VdA?authuser=0&hl=en&g_ep=EgoyMDI2MTAxMy4wIJJjKgBIAVAD&rclk=1",
+      "toolCalls": 48,
+      "totalInputTokens": 736515,
+      "wallS": 135.86,
+      "verdict": "failure",
+      "reason": "The agent said it could not open the reviews page for Global Gas Station, so it never sorted the reviews by lowest rating, and the final screenshot shows an unrendered place panel."
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "screenshot",
+      "run": 3,
+      "finalUrl": "https://www.google.com/maps/search/gas+station+Manhattan+NY",
+      "toolCalls": 23,
+      "totalInputTokens": 193984,
+      "wallS": 30.493,
+      "verdict": "failure",
+      "reason": "The agent said it did not find a gas station rated above 4.0 and never opened a place page or sorted reviews by lowest rating, so the task was not completed."
+    }
+  ]
+}

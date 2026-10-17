@@ -1,0 +1,13 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Replaced controls</title></head>
+<body>
+<h1>Draft</h1>
+<div id="slot"><button type="button" onclick="document.getElementById('out').textContent = 'Saved'">Save draft</button></div>
+<p id="out"></p>
+<script>
+// Swap the button for `count` fresh identical ones (a framework re-render).
+window.replaceButton = (count) => {
+  document.getElementById('slot').innerHTML = '<button type="button" onclick="document.getElementById(\'out\').textContent = \'Saved\'">Save draft</button>'.repeat(count);
+};
+</script>
+</body></html>

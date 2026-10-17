@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Zero-size modal escape</title>
+  <style>
+    body { font: 16px sans-serif; margin: 24px; }
+    .clipped { position: relative; width: 0; height: 0; overflow: hidden; }
+    #dialog { height: 0; }
+    #scrim { position: fixed; inset: 0; background: rgb(0 0 0 / 45%); }
+    #card { position: fixed; top: 80px; left: 80px; width: 280px; padding: 24px; background: white; border: 2px solid #246; }
+    #dismiss { float: right; cursor: pointer; }
+    .transformed { transform: translateZ(0); }
+    .contained { contain: layout paint; }
+    .accordion, .absolute { position: static; }
+    .accordion #scrim, .absolute #scrim { display: none; }
+    .accordion-content { height: 0; overflow: hidden; }
+    .absolute-box { position: absolute; top: 180px; left: 80px; width: 250px; padding: 20px; background: #efe; }
+    #panel-card { position: relative; width: 320px; height: 100px; }
+    #panel { height: 0; overflow: hidden; }
+    #badge { position: absolute; top: 20px; left: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Reviews</h1>
+  <button id="sort">Sort reviews</button>
+  <p id="result"></p>
+  <div id="clip" class="clipped">
+    <section id="dialog" role="dialog" aria-modal="true" aria-label="Sign in to get more">
+      <div id="scrim">
+        <div id="card">
+        <button id="dismiss" aria-label=""><span>Dismiss</span></button>
+        <h2>Sign in to get more</h2>
+        <p>Save your preferences and continue where you left off.</p>
+        <button id="signin">Sign in</button>
+        </div>
+      </div>
+    </section>
+    <div class="accordion-content">Hidden answer <button>Hidden action</button></div>
+    <div class="absolute-box"><button>Escaped action</button></div>
+  </div>
+  <div id="panel-card">
+    <div id="panel">
+      <button id="badge">Badge action</button>
+      <p>Hidden answer</p>
+    </div>
+  </div>
+  <script>
+    const clip = document.getElementById('clip');
+    const scrim = document.getElementById('scrim');
+    const query = new URLSearchParams(location.search);
+    if (query.has('panel')) {
+      clip.remove();
+    } else if (query.has('accordion')) {
+      clip.classList.add('accordion');
+      document.getElementById('dialog').remove();
+      document.querySelector('.absolute-box').remove();
+    } else if (query.has('absolute')) {
+      clip.classList.add('absolute');
+      document.getElementById('dialog').remove();
+      document.querySelector('.accordion-content').remove();
+    } else {
+      document.querySelector('.accordion-content').remove();
+      document.querySelector('.absolute-box').remove();
+      if (query.has('transformed')) clip.classList.add('transformed');
+      if (query.has('contained')) clip.classList.add('contained');
+    }
+    if (!query.has('panel')) document.getElementById('panel-card').remove();
+    document.getElementById('sort').onclick = () => { document.getElementById('result').textContent = 'Sorted'; };
+    document.getElementById('dismiss').onclick = () => { scrim.style.display = 'none'; };
+  </script>
+</body>
+</html>

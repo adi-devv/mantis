@@ -12,6 +12,7 @@ import path from 'node:path';
 import { chromium } from 'playwright';
 import { REPO, mantisAdapter, playwrightMcpAdapter } from './adapters.js';
 import type { TextAdapter } from './adapters.js';
+import { chromiumExecutable } from '../src/userAgent.js';
 import { startFixtures } from './fixtures.js';
 import { TOOLS, toMarkdown } from './report.js';
 import type { DefSize, Meta, Results, ToolName } from './report.js';
@@ -48,7 +49,7 @@ async function main(): Promise<void> {
   const tasks = only ? TASKS.filter((t) => only.includes(t.id)) : TASKS;
   if (!tasks.length) throw new Error(`no tasks match BENCH_ONLY=${process.env.BENCH_ONLY}`);
 
-  const probe = await chromium.launch({ headless: true });
+  const probe = await chromium.launch({ headless: true, ...chromiumExecutable() });
   const chromiumVersion = probe.version();
   await probe.close();
 

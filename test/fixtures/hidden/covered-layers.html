@@ -1,0 +1,36 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Layers over a control</title>
+<style>
+  body { font: 16px sans-serif; margin: 0; }
+  header { position: sticky; top: 0; height: 200px; z-index: 5; background: #234; color: #fff; padding: 20px; box-sizing: border-box; }
+  .spacer { height: 1500px; }
+  #stage { position: relative; height: 160px; padding: 40px 20px; }
+  #go { position: relative; width: 200px; height: 40px; }
+  #layer { position: absolute; left: 20px; top: 40px; width: 200px; height: 40px; z-index: 3; }
+  #layer.bg { background: #ccc; }
+</style></head>
+<body>
+<header>Site header</header>
+<div class="spacer"></div>
+<button id="target" type="button" onclick="document.getElementById('out').textContent = 'Target clicked'">Pick me</button>
+<div class="spacer"></div>
+<div id="stage">
+  <button id="go" type="button" onclick="document.getElementById('out').textContent = 'Opened result'">Open result</button>
+  <div id="layer"></div>
+</div>
+<p id="out"></p>
+<script>
+// ?text: the layer says something; ?bg: the layer has a background. Default: an empty transparent layer.
+const layer = document.getElementById('layer');
+if (location.search.includes('text')) layer.textContent = 'Sponsored';
+if (location.search.includes('bg')) layer.className = 'bg';
+// ?wrapped: the empty layer sits in a pane that has content elsewhere; ?scrim: that pane is a dim backdrop.
+if (/wrapped|scrim/.test(location.search)) {
+  const pane = document.createElement('div');
+  pane.style.cssText = 'position:absolute;inset:0;z-index:3' + (location.search.includes('scrim') ? ';background:rgba(0,0,0,.4)' : '');
+  pane.innerHTML = '<span style="position:absolute;right:4px;bottom:4px">Map data</span>';
+  layer.parentNode.insertBefore(pane, layer);
+  pane.appendChild(layer);
+}
+</script>
+</body></html>

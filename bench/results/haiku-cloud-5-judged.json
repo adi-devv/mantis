@@ -1,0 +1,171 @@
+{
+  "source": "haiku-cloud-5",
+  "judgeModel": "claude-opus-5-5",
+  "runs": [
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://www.google.com/maps/search/gas+station+in+Manhattan+NY",
+      "toolCalls": 48,
+      "totalInputTokens": 570905,
+      "wallS": 101.691,
+      "verdict": "failure",
+      "reason": "The agent admits it never opened a qualifying station or sorted its reviews by lowest rating, and the final screenshot shows only the search results list, so the task was not completed."
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://www.google.com/maps/search/Sunoco+gas+station+Manhattan+NY",
+      "toolCalls": 20,
+      "totalInputTokens": 207353,
+      "wallS": 63.076,
+      "verdict": "failure",
+      "reason": "The agent never found a Manhattan gas station rated above 4.0 or sorted any reviews by lowest rating; it stopped after two searches, and its final page shows only a Sunoco place still loading, with nothing blocking access."
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://www.google.com/maps/search/gas+station+in+Manhattan,+NY",
+      "toolCalls": 27,
+      "totalInputTokens": 250155,
+      "wallS": 46.035,
+      "verdict": "failure",
+      "reason": "The final screenshot shows only the Manhattan gas station search results, and every visible station is rated 4.0 or lower; the agent admits it never found a station above 4.0 or sorted any reviews, and the evidence shows no bot check or access block."
+    },
+    {
+      "task": "046138801a05ddf56ad94e8672942496_070826",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://discussions.flightaware.com/t/the-banter-thread/4412",
+      "toolCalls": 12,
+      "totalInputTokens": 141469,
+      "wallS": 41.979,
+      "verdict": "success",
+      "reason": "The screenshot shows the agent on FlightAware Discussions with \"The Banter Thread\" open, which has 5519 posts and 2.3M views, and the agent's described method of opening Top for all time and sorting by Replies in descending order would correctly find the thread with the most replies of all time."
+    },
+    {
+      "task": "046138801a05ddf56ad94e8672942496_070826",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://discussions.flightaware.com/t/the-banter-thread/4412",
+      "toolCalls": 11,
+      "totalInputTokens": 204279,
+      "wallS": 54.116,
+      "verdict": "success",
+      "reason": "The screenshot shows 'The Banter Thread' open on FlightAware Discussions with 5,519 posts (about 5,518 replies), and the agent's reply-count sort of all topics backs up its claim that this is the most-replied thread of all time."
+    },
+    {
+      "task": "046138801a05ddf56ad94e8672942496_070826",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://discussions.flightaware.com/",
+      "toolCalls": 47,
+      "totalInputTokens": 512563,
+      "wallS": 81.329,
+      "verdict": "success",
+      "reason": "The screenshot shows The Banter Thread open on FlightAware Discussions with 5519 posts, which is far more than any other topic the agent compared (about 1.4k–1.6k), so it is very likely the thread with the most replies of all time."
+    },
+    {
+      "task": "11857213ca01510f12813740afd59918_110325",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://www.birkenstock.com/us/boston-soft-footbed-suede-leather/boston-suede-suedeleather-softfootbed-eva-u_90.html",
+      "toolCalls": 19,
+      "totalInputTokens": 300553,
+      "wallS": 118.285,
+      "verdict": "success",
+      "reason": "The final screenshot shows an 'Added to your cart' confirmation for the Boston Soft Footbed Suede Leather clog in Mocha (brown), size US men's 10-10.5 (EU 43). This matches the agent's account of picking the top men's clog after sorting by Best Sellers; that sorting step is plausible but the screenshot can't confirm it."
+    },
+    {
+      "task": "11857213ca01510f12813740afd59918_110325",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://www.birkenstock.com/us/boston-soft-footbed-natural-leather-oiled/boston-core-oiledleather-softfootbed-eva-u_5326.html",
+      "toolCalls": 28,
+      "totalInputTokens": 664962,
+      "wallS": 145.292,
+      "verdict": "success",
+      "reason": "The screenshot shows the cart confirming the Boston Soft Footbed, Birkenstock's best-selling clog, in Habana (brown), size US men's 10-10.5 (EU 43), added to the cart, with nothing purchased."
+    },
+    {
+      "task": "11857213ca01510f12813740afd59918_110325",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://www.birkenstock.com/us/boston-natural-leather-oiled/boston-core-oiledleather-0-eva-u_5326.html",
+      "toolCalls": 87,
+      "totalInputTokens": 1968738,
+      "wallS": 208.874,
+      "verdict": "success",
+      "reason": "The screenshot shows 'Added to your cart' for the Boston Oiled Leather clog in Habana (brown), size US 10-10.5 / 12-12.5 / EU 43 (men's 10-10.5), which is Birkenstock's well-known best-selling clog and was the top result under the site's Best Sellers sort."
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://speedo.com/en-us/collections/women-swimwear-all/products/womens-solid-leaderback-swimsuit-black-8005399001?variant=52969702031727",
+      "toolCalls": 48,
+      "totalInputTokens": 2010081,
+      "wallS": 282.34,
+      "verdict": "failure",
+      "reason": "The cart holds a black Speedo women's swimsuit for $37, but it's size 40 (numeric), not a confirmed Large, and the agent admits it skipped pages 7–11 after finding the price sort unreliable, so neither the size nor the lowest price is established."
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://speedo.com/en-us/collections/women-swimwear-all/products/womens-colourblock-muscleback-swimsuit-black-peach-8004248004?variant=53086033248623",
+      "toolCalls": 67,
+      "totalInputTokens": 4172353,
+      "wallS": 332.244,
+      "verdict": "failure",
+      "reason": "The agent added nothing to the cart and stopped to ask which numeric size counts as large, even though the site's Size L filter returned swimwear items such as bikini pieces, so the task was not completed."
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://speedo.com/en-us",
+      "toolCalls": 62,
+      "totalInputTokens": 1034554,
+      "wallS": 149.301,
+      "verdict": "success",
+      "reason": "The final screenshot shows the cart holding the Women's Shaping Strappy One Piece Black in size 38/14 (which matches standard Large) at the sale price of $39.20; the agent found it by filtering black women's swimsuits to size L and sorting by price, low to high."
+    },
+    {
+      "task": "eb323dc584156d0eb3a2b90bb8c4b791_110325",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://www.compass.com/for-rent/new-york-ny/?searchQuery=%7B%22baths%22%3A%7B%22min%22%3A%7B%22num%22%3A3%7D%7D%2C%22beds%22%3A%7B%22min%22%3A%7B%22num%22%3A2%7D%2C%22max%22%3A%7B%22num%22%3A2%7D%7D%2C%22sort%22%3A%7B%22column%22%3A%22price%22%2C%22direction%22%3A%22asc%22%7D%7D",
+      "toolCalls": 29,
+      "totalInputTokens": 337008,
+      "wallS": 93.189,
+      "verdict": "success",
+      "reason": "The final page shows Compass's New York rental search filtered to 2 beds and 3+ baths and sorted by price, and the first result is $13,500 for 720 West End Ave #7H (2 beds, 3 baths), which matches the agent's answer."
+    },
+    {
+      "task": "eb323dc584156d0eb3a2b90bb8c4b791_110325",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://www.compass.com/homedetails/2833-Ocean-Pkwy-Unit-2C-Brooklyn-NY-11235/2109C4_pid/",
+      "toolCalls": 43,
+      "totalInputTokens": 1842948,
+      "wallS": 132.932,
+      "verdict": "unsure",
+      "reason": "The final page shows a real, active 2-bed, 3-bath rental at 2833 Ocean Pkwy Unit 2C, Brooklyn, for $3,395/mo, but the agent says the price sort looked unreliable and it did not check all results, so nothing confirms this is the cheapest qualifying listing."
+    },
+    {
+      "task": "eb323dc584156d0eb3a2b90bb8c4b791_110325",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": null,
+      "toolCalls": 42,
+      "totalInputTokens": 375813,
+      "wallS": 60.729,
+      "verdict": "failure",
+      "reason": "The agent says it could not find the cheapest qualifying listing, and the screenshot shows unsorted results ($13,500 first), so the cheapest 2-bed, 3+-bath rental was never established."
+    }
+  ]
+}

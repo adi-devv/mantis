@@ -1,0 +1,105 @@
+{
+  "source": "luna-fixes-1",
+  "judgeModel": "claude-sonnet-5-5",
+  "runs": [
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://smartasset.com/taxes/income-taxes",
+      "toolCalls": 7,
+      "totalInputTokens": 163305,
+      "wallS": 58.864,
+      "verdict": "success",
+      "reason": "The agent's $30,887 matches the 2025 single-filer bracket math for $158,500 of taxable income. The ZIP code doesn't change federal tax. The calculator in the screenshot shows no result, so the figure is the agent's own calculation, not SmartAsset's output."
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://smartasset.com/taxes/income-taxes",
+      "toolCalls": 21,
+      "totalInputTokens": 808123,
+      "wallS": 94.138,
+      "verdict": "failure",
+      "reason": "The agent's $23,274 matches neither reading of the task. Tax on $158,500 of taxable income (single, 2025 brackets) is about $30,900, and treating it as gross income with the standard deduction gives about $27,100–27,300. The agent also could not set ZIP 97007, and the final screenshot shows no result figure to support its number."
+    },
+    {
+      "task": "bc2ce7f206045dd2d322e5695a947219",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://smartasset.com/taxes/income-taxes",
+      "toolCalls": 39,
+      "totalInputTokens": 385461,
+      "wallS": 114.92,
+      "verdict": "success",
+      "reason": "The calculator showed no result in the final screenshot, but the agent's $30,887 matches my hand calculation of 2025 single-filer brackets on $158,500 of taxable income. Federal tax doesn't depend on ZIP code, and SmartAsset's page labels the calculator 2025. If 2026 brackets were wanted instead, the figure would be about $30,132."
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://speedo.com/en-us/collections/women-new-arrivals/products/womens-muscleback-swimsuit-black-8005285008?variant=52969616015727",
+      "toolCalls": 17,
+      "totalInputTokens": 404474,
+      "wallS": 100.437,
+      "verdict": "unsure",
+      "reason": "The cart shows the black Muscleback One Piece (size 40, $55) added, but the screenshot doesn't show that it is the lowest-priced black women's swimsuit in Large, and size 40 may not correspond to Large."
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://speedo.com/en-us/cart",
+      "toolCalls": 26,
+      "totalInputTokens": 1078745,
+      "wallS": 138.319,
+      "verdict": "unsure",
+      "reason": "The cart shows Women's Solid V-Neck One Piece Black, size L, $58.00, so the add-to-cart step is confirmed. Nothing shows the agent compared prices, and Speedo likely has cheaper black women's swimsuits in size L, so I can't confirm this is the lowest-priced one."
+    },
+    {
+      "task": "824eb7bb0ef1ce40bfd49c12182d9428_070826",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": null,
+      "toolCalls": 41,
+      "totalInputTokens": 864580,
+      "wallS": 113.958,
+      "verdict": "failure",
+      "reason": "The agent said it couldn't add anything to the cart. The final screenshot shows only filtered search results, sorted by relevance rather than price, with no item selected or added."
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "mantis",
+      "run": 1,
+      "finalUrl": "https://www.google.com/maps/place/Global+Gas+Station/@40.8302583,-73.9405417,17z/",
+      "toolCalls": 14,
+      "totalInputTokens": 282037,
+      "wallS": 69.533,
+      "verdict": "failure",
+      "reason": "The agent found a qualifying gas station (Global Gas Station, 4.3 stars), but it never sorted the reviews by lowest rating. The screenshot shows a sign-in popup with a visible \"Dismiss\" button, and sorting reviews on Google Maps doesn't need a login. So the popup wasn't a real blocker, and the agent stopped before completing the task."
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "tree",
+      "run": 1,
+      "finalUrl": "https://www.google.com/maps/place/Global+Gas+Station/@40.8010663,-74.0431203,12z/data=!4m10!1m2!2m1!1sgas+stations+in+Manhattan,+NY!3m6!1s0x89c2f680de149fef:0xd055bad93493bd11!8m2!3d40.8302583!4d-73.9405417!15sCh1nYXMgc3RhdGlvbnMgaW4gTWFuaGF0dGFuLCBOWVoeIhxnYXMgc3RhdGlvbnMgaW4gbWFuaGF0dGFuIG55kgELZ2FzX3N0YXRpb27gAQA!16s%2Fg%2F11bvt5rb_6?entry=ttu&g_ep=EgoyMDI2MTAxMy4wIKXMDSoASAFQAw%3D%3D",
+      "toolCalls": 11,
+      "totalInputTokens": 328910,
+      "wallS": 33.637,
+      "verdict": "failure",
+      "reason": "The agent found a qualifying station (Global Gas Station, 4.3), but it never sorted the reviews by lowest rating. Google Maps normally lets you sort reviews without signing in. The final screenshot shows a generic sign-in modal over the results list, not an open review sort menu, so there is no evidence that sorting required login."
+    },
+    {
+      "task": "0e42c3a73f2aece1f854e0ba55b7c8b0",
+      "approach": "screenshot",
+      "run": 1,
+      "finalUrl": "https://www.google.com/maps/",
+      "toolCalls": 20,
+      "totalInputTokens": 300416,
+      "wallS": 55.451,
+      "verdict": "failure",
+      "reason": "The agent stopped at a Shell station rated 3.7, which doesn't meet the above-4.0 requirement, and it never sorted the reviews by lowest rating. The task was not completed."
+    }
+  ]
+}

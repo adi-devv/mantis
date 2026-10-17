@@ -1,0 +1,34 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Carousel that never stops</title>
+<style>body { font: 16px sans-serif; margin: 20px; } #slide { width: 200px; height: 40px; background: #cde; }</style></head>
+<body>
+<h1>Offers</h1>
+<div id="slide" aria-hidden="true">slide</div>
+<button id="more" type="button">Show details</button>
+<button id="slow" type="button">Load report</button>
+<div id="out"></div>
+<script>
+// An animation that mutates style forever (like a carousel); it never lets the DOM go quiet.
+let x = 0;
+setInterval(() => { x = (x + 7) % 100; document.getElementById('slide').style.transform = 'translateX(' + x + 'px)'; }, 50);
+document.getElementById('more').addEventListener('click', () => {
+  setTimeout(() => {
+    const p = document.createElement('p');
+    p.textContent = 'Details loaded';
+    document.getElementById('out').appendChild(p);
+  }, 400);
+});
+// Near miss: content arrives as a stream of new nodes (childList), then a final line.
+document.getElementById('slow').addEventListener('click', () => {
+  let n = 0;
+  const tick = () => {
+    n++;
+    const p = document.createElement('p');
+    p.textContent = n < 6 ? 'Row ' + n : 'Done';
+    document.getElementById('out').appendChild(p);
+    if (n < 6) setTimeout(tick, 100);
+  };
+  setTimeout(tick, 100);
+});
+</script>
+</body></html>
