@@ -99,7 +99,6 @@ const lockFile = async (sleep: (ms: number) => Promise<void>): Promise<(() => vo
 class SarvamLimiter {
   private active = 0;
   private readonly waiters: (() => void)[] = [];
-  private observedCooldownUntil = 0;
   constructor(private readonly rpm: number, private readonly concurrency: number, private readonly sleep: (ms: number) => Promise<void>) {}
 
   private async processSlot(): Promise<() => void> {
@@ -119,9 +118,8 @@ class SarvamLimiter {
           const now = Date.now();
           const state = readLimitState();
           state.timestamps = state.timestamps.filter((at) => at > now - WINDOW_MS && at <= now + WINDOW_MS);
-          if (state.cooldownUntil > now && state.cooldownUntil > this.observedCooldownUntil && !waitedForCooldown) {
-            wait = state.cooldownUntil - now; waitedForCooldown = true; this.observedCooldownUntil = state.cooldownUntil;
-          }
+          // Each caller waits out a published cooldown once (the wait is real, so it has elapsed on the next pass).
+          if (state.cooldownUntil > now && !waitedForCooldown) { wait = state.cooldownUntil - now; waitedForCooldown = true; }
           else if (state.timestamps.length >= this.rpm) wait = Math.max(1, state.timestamps[0]! + WINDOW_MS - now);
           else {
             state.timestamps.push(now);
@@ -228,11 +226,12 @@ export class SarvamClient {
   private async request(endpoint: string, body?: unknown): Promise<{ data: unknown; stats: SarvamTransportStats }> {
     const requestStats: SarvamTransportStats = { attempts: 0, rateLimits: 0 };
     for (let attempt = 0; ; attempt++) {
+      // Queue behind the shared limiter first: waiting for a slot or cooldown must not eat the request timeout.
+      const release = await this.limiter.acquire();
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), this.timeoutMs);
       try {
         let response: Response;
-        const release = await this.limiter.acquire();
         try {
           requestStats.attempts++; this.stats.attempts++;
           response = await this.fetcher(`${this.baseUrl}${endpoint}`, {

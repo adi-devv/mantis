@@ -7,6 +7,7 @@ Rules for any coding agent working in this repo (Codex reads this file; Claude C
 
 ## Working
 - Do independent light tasks in parallel, not one after another: reads, searches, edits, builds, small test runs. Only steps that need an earlier result wait.
+- Codex jobs: launch via scripts/codex-job.sh with a short label, from Claude Code as a Bash call with run_in_background so it shows in Claude's background tasks; don't poll, read only .codex-jobs/<label>.out.md when it finishes.
 - Run heavy jobs (agent evals, full suites, anything launching many browsers) one at a time, so they don't fight over RAM.
 - Fix bugs that evals expose in general, never around the case that exposed them. No site names, URLs, site class names or task text in `src/`. Reproduce the pattern in a synthetic fixture, then test it with a passing case and a near miss.
 

@@ -10,3 +10,4 @@ bench/agent/.venv/
 bench/results/agent-logs/
 .playwright-mcp/
 bench/agent/realsite-tasks.json
+.codex-jobs/

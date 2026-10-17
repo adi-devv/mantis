@@ -34,8 +34,8 @@ Benchmarks, their settings and how results are graded: [bench/README.md](../benc
 Store `SARVAM_API_KEY` only in gitignored `.env`. Use the scoped scripts:
 
 ```bash
-npm run bench:sarvam-probe
-npm run bench:sarvam-calibrate
+npm --prefix bench/agent run bench:sarvam-probe
+npm --prefix bench/agent run bench:sarvam-calibrate
 ```
 
 Set `AGENT_PROVIDER=sarvam` to run an agent or `JUDGE_PROVIDER=sarvam` to judge. See [bench/README.md](../bench/README.md) for models, limits, and benchmark details.
@@ -49,6 +49,7 @@ To use a local build instead of npm: `claude mcp add mantis -- node /abs/path/to
 | `MANTIS_HEADLESS=0` | Show the browser window |
 | `MANTIS_MEMORY=0` | Turn off site memory (shortening menus already seen on a site) |
 | `MANTIS_MEMORY_DIR` | Where site memory lives (default `~/.cache/mantis/sites`; layout hashes only, never page text) |
+| `MANTIS_CHROMIUM` | Path to an installed Chromium binary, for when Playwright's pinned build isn't installed (the test suite and benchmarks then use it) |
 | `MANTIS_TESSDATA` | OCR language data folder (default `~/.cache/mantis/tessdata`, downloaded on first use) |
 
 ## Tool reference

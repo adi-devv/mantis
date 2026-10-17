@@ -76,7 +76,7 @@ Set `SARVAM_API_KEY` in the environment or the repo's gitignored `.env`; existin
 values take precedence. The client never logs keys or raw API response bodies. Run the capability
 probe first; beta access is granted per API key, so a listed model need not accept requests.
 
-All Sarvam requests (agent, judge, probe, and calibration) share a process and cross-process limiter: `SARVAM_RPM` defaults to 30 requests/minute and `SARVAM_CONCURRENCY` defaults to 2 active requests. A 429 publishes a shared cooldown, and transient requests retry up to six total attempts with jittered exponential backoff (honoring a longer `Retry-After`). `AGENT_CONCURRENCY` and `JUDGE_CONCURRENCY` default to 2 for Sarvam (other providers keep their normal defaults). Raise the Sarvam variables only when the key's actual quota permits it.
+All Sarvam requests (agent, judge, probe, and calibration) share one limiter: `SARVAM_RPM` (default 30 requests/minute) and 429 cooldowns are shared across processes through a small file in the OS temp directory (times only, no keys), while `SARVAM_CONCURRENCY` (default 2 active requests) applies per process. Every worker waits out a published cooldown, and the request timeout starts only after the limiter grants a slot. Transient requests retry up to six total attempts with jittered exponential backoff (honoring a longer `Retry-After`). `AGENT_CONCURRENCY` and `JUDGE_CONCURRENCY` default to 2 for Sarvam (other providers keep their normal defaults). Raise the Sarvam variables only when the key's actual quota permits it.
 
 ```powershell
 npm --prefix bench/agent run bench:sarvam-probe

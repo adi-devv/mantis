@@ -122,7 +122,7 @@ describe('painted non-interactive veils', () => {
     await browser.open(fixture('hidden/panel-veil.html') + '?persistent');
     const id = await idByName('Details');
     const { text, ms } = await timed(() => browser.click(id));
-    expect(text).toMatch(/^error: .*non-interactive overlay/);
+    expect(text).toMatch(/^error: .*non-dismissible layer/);
     expect(text).toContain('nothing to dismiss');
     expect(text).toContain('href file:///');
     expect(text).toContain('direct-destination');
@@ -172,7 +172,7 @@ describe('covered click false positives', () => {
       await browser.open(`${fixture('hidden/covered-layers.html')}?${flag}`);
       const id = await idByName('Open result');
       const res = await browser.click(id);
-      expect(res).toMatch(/^error: .*non-interactive overlay/);
+      expect(res).toMatch(/^error: .*non-dismissible layer/);
       expect(await browser.read()).not.toContain('Opened result');
     }
   });

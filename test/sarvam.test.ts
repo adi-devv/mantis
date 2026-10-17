@@ -39,6 +39,28 @@ describe('SarvamClient', () => {
     expect(sleep.mock.calls[1]?.[0]).toBe(1000);
   });
 
+  it('makes every concurrent worker wait out a shared 429 cooldown', async () => {
+    const fetcher = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response('', { status: 429, headers: { 'Retry-After': '2' } }))
+      .mockResolvedValueOnce(new Response('', { status: 429, headers: { 'Retry-After': '2' } }))
+      .mockImplementation(async () => completion());
+    const sleep = vi.fn<(ms: number) => Promise<void>>().mockResolvedValue();
+    const client = new SarvamClient({ apiKey: key, fetch: fetcher, sleep });
+    await Promise.all([client.complete(request), client.complete(request)]);
+    expect(sleep.mock.calls.filter(([ms]) => ms >= 1_900)).toHaveLength(2);
+  });
+
+  it('does not count limiter queueing against the request timeout', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(async (_url, options) => {
+      if (options?.signal?.aborted) throw new Error('aborted');
+      return fetcher.mock.calls.length === 1 ? new Response('', { status: 429, headers: { 'Retry-After': '0' } }) : completion();
+    });
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, Math.min(ms, 80)));
+    const result = await new SarvamClient({ apiKey: key, fetch: fetcher, sleep, timeoutMs: 40 }).complete(request);
+    expect(result.attempts).toBe(2);
+  });
+
   it('records attempt, token, and 429-safe transport telemetry without response bodies', async () => {
     const fetcher = vi.fn<typeof fetch>()
       .mockResolvedValueOnce(new Response('secret provider body', { status: 429, headers: { 'Retry-After': '0' } }))
