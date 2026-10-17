@@ -1,0 +1,691 @@
+{
+  "metadata": {
+    "schemaVersion": 3,
+    "configFingerprint": "c1666ec80758dd05a9df4b6ebb6134443a2d3dd7b463c7dd30b1e5b2a9696cc1",
+    "settings": {
+      "provider": "sarvam",
+      "tasks": [
+        "form-subscribe",
+        "pricing-team"
+      ],
+      "approaches": [
+        "mantis",
+        "tree",
+        "screenshot"
+      ],
+      "runs": 1,
+      "model": "gemma-4-31b",
+      "reasoning": "max-steps:100",
+      "timeoutMs": 600000,
+      "concurrency": 2,
+      "toolRestrictions": {
+        "builtins": [
+          "Claude built-ins disabled by --tools \"\""
+        ],
+        "approaches": {
+          "mantis": {
+            "allow": [
+              "mcp__mantis"
+            ],
+            "deny": [
+              "mcp__mantis__bench_capture"
+            ]
+          },
+          "tree": {
+            "allow": [
+              "mcp__playwright__browser_navigate",
+              "mcp__playwright__browser_navigate_back",
+              "mcp__playwright__browser_snapshot",
+              "mcp__playwright__browser_click",
+              "mcp__playwright__browser_type",
+              "mcp__playwright__browser_fill_form",
+              "mcp__playwright__browser_select_option",
+              "mcp__playwright__browser_press_key",
+              "mcp__playwright__browser_hover",
+              "mcp__playwright__browser_wait_for",
+              "mcp__playwright__browser_find",
+              "mcp__playwright__browser_tabs",
+              "mcp__playwright__browser_handle_dialog",
+              "mcp__playwright__browser_take_screenshot"
+            ],
+            "deny": [
+              "mcp__playwright__browser_evaluate",
+              "mcp__playwright__browser_run_code_unsafe"
+            ]
+          },
+          "screenshot": {
+            "allow": [
+              "mcp__screenshot"
+            ],
+            "deny": [
+              "mcp__screenshot__bench_capture"
+            ]
+          }
+        }
+      },
+      "runtime": {
+        "nodeVersion": "v20.14.0",
+        "platform": "win32",
+        "arch": "x64"
+      },
+      "environment": {
+        "MANTIS_MEMORY": null,
+        "MANTIS_HEADLESS": null,
+        "BENCH_CHROMIUM": null,
+        "MANTIS_CHROMIUM": null,
+        "PLAYWRIGHT_BROWSERS_PATH": null,
+        "CODEX_BIN": null,
+        "CLAUDE_BIN": null,
+        "resolvedCliCommand": null
+      },
+      "browserPaths": {
+        "chromiumForMcp": "C:\\Users\\aadit\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1248\\chrome-headless-shell-win64\\chrome-headless-shell.exe",
+        "browserUsePlaywrightBrowsersPath": null
+      }
+    },
+    "sourceHashes": {
+      "bench/agent/run.ts": "ffd6ccdc4c3e468d9fd3e6231b889cf268ebe532281b00b32e93999278533edf",
+      "bench/agent/integrity.ts": "e42a6fb08fda9efd6a91288042399fe60be6832e630c888bb57c82a3de0ede1d",
+      "bench/agent/tasks.ts": "752a4fa3da542fbcc72d591e485dbf142154e58be3359fe5aaf0778c03bb6d6b",
+      "bench/agent/bridge.mjs": "b1d42914f2ca2196bf100ffda96fce2e75363fdc53bbeab7f5290d9122b91af2",
+      "bench/agent/codex.ts": "8f9917013ccf495aa1fd0a085d37a7e94540ff04908a3e81a4a2e10c62649baa",
+      "bench/agent/codex-config.ts": "a9436b14f70bcd503a9c63e81bf40927a438863d2dd3f4a814fa55e642e2764a",
+      "bench/agent/sarvam.ts": "1a953660825646fdbf6a46d8c3ad09ddb1215517194346df1b464650928289bd",
+      "bench/agent/sarvam-agent.ts": "47d2a627b7d04105dee39677f8c4b126a050cb6863da151b10a480fe595d1fa1",
+      "bench/agent/realsite.ts": "02e80a72e6df62a51774f7d8895c49f0eb0e076c0af3e71e911e0a4a3b060d65",
+      "bench/agent/evidence.ts": "92a791eba99aeb8712ec8dd823206273305c2c6a04e522960f946860b94ecfb3",
+      "bench/agent/png.ts": "97812fc9ea7c48922fb7146ac4d58bd5ad8261cad4dc078a2ad026bdaab43632",
+      "bench/agent/mcp-proxy.ts": "b13e48df92cb87b4305f4c17bcc38b5fe60b061b3f6e775ded77f6161c45ccc1",
+      "bench/agent/realsite-tasks.json": "4708f318c5c575a80b03601c0524ae9bc25ff5241c3d2d81913c040bbd19c96e",
+      "bench/agent/screenshot-mcp.ts": "5faaeb057f24fddb881b00049fe5ed6617e6e20ff5108f4b84c73a6a605415eb",
+      "bench/fixtures.ts": "9e8f1399b2a19c89566abeacf469a5810ea780a7249536e1a0ac8ab89998d103",
+      "bench/fixtures-more.ts": "c1a15f3e8f4d00366395994a4d81725203c736f25613150f26ca2b7a5006b594",
+      "bench/adapters.ts": "f16af47f036efb1cdcced6d60aad062552736bd192a8dedfc9beed1fcac9c060",
+      "src/browser.ts": "39494863fa9fe041c4c46234eb4361c5466f4f07dd9b86867f336fe2ff22599c",
+      "src/capture/index.ts": "d32bea9c5df0a0f96f57946c636e001f2be099997ab3ad50711320ab4be90595",
+      "src/capture/walker.ts": "05ce80a7b3ba98d777949db46d5d23eb0d40d3eb90632ddbc33566a8aa8a3579",
+      "src/cli.ts": "ed184995d3442c646ad297d0a38edf0f5766d4df613a61bbe06f6f7f103bf64b",
+      "src/diff.ts": "b7daeeb547c59fca821160cd20785f961c2ac8e0b2b332a5cf713fc309e11f94",
+      "src/fallback/askHuman.ts": "b38e1ba18216dfbffc0a837980139c82186da8b6ce86aed5ae8d96a4d267522d",
+      "src/fallback/captcha.ts": "ef23f12d84f1980be79dffbbf0f15a0cf86fb8548537619d12815678973d99cf",
+      "src/fallback/look.ts": "0827a0b888544343999b2acc74b5faae22d4b6c0cdd63250687e0f5d6c9f808e",
+      "src/fallback/media.ts": "52080d40bcaa00d646b1e1d2da3996426c38567472dfa581985b57ef73a729d5",
+      "src/fallback/ocr.ts": "b39d18753f6286877f9f283dadb8723e2fbb52a9d72b7c5acb79cf6a4545e54e",
+      "src/fallback/probe.ts": "aa57b2f89883ba44ec3fd69e8f2c4c0e45004246cea056c3fce232ac42c8ebfd",
+      "src/index.ts": "1bb51b56f839083c7ae3fca4066c48b6e16d2d4830d20d897b5c682366a2a83c",
+      "src/memory.ts": "e2cefbbe80ec33dee5149a238f49e8d57a4a60dcd012a6b47d36e0d09eea0368",
+      "src/server.ts": "377328206af1f94d52f1b45afe58010bba8fad4fea4babbd427dcb92a732656d",
+      "src/translate.ts": "92169f2c19a7754afe5f900ad8ae47ef05d0522e883105a38da17e977b3986f4",
+      "src/userAgent.ts": "826d2e4fc27b83e1e4ebdb0a6c2218e6d75ac20b49e478d639c5115ee555c16a",
+      "dist/browser.d.ts": "92b0cd1002a597c17209a2fe1bbf3233b62ff4815d86189f541022975d26c3c1",
+      "dist/browser.js": "e7a30e7eee69e100bff9d2171b28ed9ea872c7fd1751f5bbc6a7818463d6ccee",
+      "dist/browser.js.map": "0acf8bd83d43bbc22fef35a9b3afcb8ec01ae71ec505a2f6020339a8fa87a86e",
+      "dist/capture/index.d.ts": "bc2d046a0485ecd3eda82fb8b371dea7ff3f1a103905fe83ad97e876ecde9dd5",
+      "dist/capture/index.js": "06217ca6bf33b1778d30796255e08d36ff74ac3e9f03a8c934241d7a84fd5603",
+      "dist/capture/index.js.map": "2322d3ed4d5c9f8dc57e4c27d3ad12d8b39baee3d7c945199409dad57edb9c44",
+      "dist/capture/walker.d.ts": "92de4bff4286fa8c705bb3cd971dd1c5a4cbcd17b8dcfa2ddc4c14bce206a2fb",
+      "dist/capture/walker.js": "f21c467c32fb40462c439355a0d1cf6ca0366bed41d4433992664c036a309bd4",
+      "dist/capture/walker.js.map": "9649659a322f99ce3dd22346e83190a551392902c968eb58ec22e54976d144a7",
+      "dist/cli.d.ts": "43e818adf60173644896298637f47b01d5819b17eda46eaa32d0c7d64724d012",
+      "dist/cli.js": "36e9fec642fcd7d90930ad09516177874d681c627c964c5dc4fa5d205cc70a57",
+      "dist/cli.js.map": "29fc6fc6b9714a98392362f9582c81dcf5d1a3218353b3acd51978a9036f61f9",
+      "dist/diff.d.ts": "fc4194a9d2263adad0053ecea46f96b917b63c73f649f1069fa45ca1714c4a43",
+      "dist/diff.js": "1fd5e47b4dc023af815bd3d5494724607f5a78ef87ee37b2dabdfc2d5021862e",
+      "dist/diff.js.map": "5e3c8e7bfeb9427da6d42e013e7b8466ca5ec28fb7757fec63ab62869b01a6a0",
+      "dist/fallback/askHuman.d.ts": "cce5053ca7a8ad7fd21ec8d4cf3e69c11cb8fe817d34fa746eba144f1420acfd",
+      "dist/fallback/askHuman.js": "f479ea63e519fd3ce76d2059f6f1740c4fd86d0d74d1efe7b7e371b8f07caa6f",
+      "dist/fallback/askHuman.js.map": "f791903345c7ab1e479e9b76859c9fbda207a5a04baef33a606fa76b306533fc",
+      "dist/fallback/captcha.d.ts": "955f78313568c5b87874348e6b8b9a27047a9b299635518ea0ffbb324039eac5",
+      "dist/fallback/captcha.js": "5bf1da6bed04183ac7eb4935044e2bf6612d925582c1f873f94c6d11a8c8dbee",
+      "dist/fallback/captcha.js.map": "ef69099fde766b303c152b21a458fb4b1653179caab958dbc66a74e887801fa9",
+      "dist/fallback/look.d.ts": "955e64af5f409d668fdf46d9fdd877ae012f8d246caedeadfb313e0247ecd6af",
+      "dist/fallback/look.js": "8c33ec0526efad8885fad941d332472cd58115e417cb4f3ca9fb8e1f27329a30",
+      "dist/fallback/look.js.map": "9bcc391e5c964b1920fe5101c3fadcc40e053b5447b5e45ff4dff83e9692e805",
+      "dist/fallback/media.d.ts": "2b0f628dba91f7d9da7cb4ee08b102037cb165448c18fa8e0c7cabf05918a749",
+      "dist/fallback/media.js": "95418d2cccfd71a0cc99f2372d5c7c118225cd00b959762aff6c51aad83d3f60",
+      "dist/fallback/media.js.map": "a874dd40b02371490bb8ec7c5baca66d7333d7f0405a7349a5ade2f5e3c09e31",
+      "dist/fallback/ocr.d.ts": "5f5cb0e04091187d8989520626a8266349b9c1c5c1f934f66c6583f26db5267f",
+      "dist/fallback/ocr.js": "ffe361929c3cd290645f89f70f5dff46828b14136cc54297501478171fcb5b2c",
+      "dist/fallback/ocr.js.map": "a74d12f44c709a8313382da19857b5cb2c7c30162f9ce11b8bae27cd632a3b12",
+      "dist/fallback/probe.d.ts": "d171fbde232b1d41fe67faf83168d57023a66068c69c0aed976d5e0f068cd597",
+      "dist/fallback/probe.js": "2453d56f097a5cb087cbd62b3f82b5c9474128463a73d3a586cf99579f73e876",
+      "dist/fallback/probe.js.map": "8d2441a4855ff20a6b31761476d2a437798e4441ea4ecb5092882fd44b2b6176",
+      "dist/index.d.ts": "1bb51b56f839083c7ae3fca4066c48b6e16d2d4830d20d897b5c682366a2a83c",
+      "dist/index.js": "cf623ed316f23cd356ce68b741e8192234de378587c880d11ce7448692e37ae7",
+      "dist/index.js.map": "ab61ed5039b37dfd5cc78232ec20f2737a407ad3124e87f4b9c2e02d43904127",
+      "dist/memory.d.ts": "15258ea9433619fed0f2c921a8b4a584a79d7603acd26e4954cc535232668e46",
+      "dist/memory.js": "d886daad0a558521e4f0952ddb3a8e4fa0cc5a0b5830379d06d474014e44e65e",
+      "dist/memory.js.map": "092966360dd28b5acccbc1b2a5992d3fa8c4e7c6217e73219829e62535390481",
+      "dist/server.d.ts": "1933eeb4ddcdfff3b415d8bec8a674c31447a294cfdc77d1e5046bdbddae2bc0",
+      "dist/server.js": "a77039cf588d0436ef5e9b8b7df2bb4da4cf127b14b6d688125520081ee84170",
+      "dist/server.js.map": "f7c6a9b6be169838af674532d53cfe987e70955e2d0e5a8c3c9b2ffd4792bd7a",
+      "dist/translate.d.ts": "62b37d24579c352c4c1db1eef67bec92cb153121c89b0e5ba914f5dbffb84ecb",
+      "dist/translate.js": "05e8ed21ca92b1bcff3d5968ba99d01765c29bb571d754490a4d54bbbbef4718",
+      "dist/translate.js.map": "541635241b619dca164cf7c3d2269318f6b528d5023388a09820ac65260d496f",
+      "dist/userAgent.d.ts": "efd6325cdcf78c8168c1fa0f9cf6a0df2cbf0f4ad21d0a7e0cf338700f02d1b8",
+      "dist/userAgent.js": "a5cf7d8e013b2da7125fa2027b4fe9753200329d481f87fad9f42d73033c1546",
+      "dist/userAgent.js.map": "6123149683ba8eeb24f7fcdeefd62c455251268a3774606e5ea2c1ab86736b9d",
+      "package-lock.json": "99a83003014f16494a40c78a18b1e1ca9a50fffc71c05bbca42c5adcbdb23b8e"
+    },
+    "cliVersion": "Sarvam V2 API"
+  },
+  "model": "gemma-4-31b",
+  "runs": 1,
+  "results": [
+    {
+      "task": "form-subscribe",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": null,
+      "evidencePath": null,
+      "evidenceFrames": [],
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Subscribed from Canada (weekly: yes).",
+      "turns": 4,
+      "toolCalls": 3,
+      "toolErrors": 0,
+      "observationChars": 624,
+      "observationImages": 0,
+      "inputTokens": 1742,
+      "cacheWriteTokens": 0,
+      "cacheReadTokens": 4128,
+      "totalInputTokens": 5870,
+      "outputTokens": 139,
+      "costUsd": null,
+      "costInr": 0.11476,
+      "timings": {
+        "mcpStartupMs": 2022,
+        "cliStartupMs": 0,
+        "cliExecutionMs": 2516,
+        "cliWallMs": 2516,
+        "verificationMs": 0,
+        "cleanupMs": 137,
+        "captureMs": 505
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": null,
+          "evidencePath": null,
+          "evidenceFrames": [],
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Subscribed from Canada (weekly: yes).",
+          "initModel": "gemma4",
+          "resolvedModels": [
+            "gemma4"
+          ],
+          "turns": 4,
+          "toolCalls": 3,
+          "toolErrors": 0,
+          "observationChars": 624,
+          "observationImages": 0,
+          "totalInputTokens": 5870,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 1742,
+            "cacheWriteTokens": 0,
+            "cacheReadTokens": 4128,
+            "outputTokens": 139,
+            "costUsd": null
+          },
+          "costInr": 0.11476,
+          "apiAttempts": 4,
+          "rateLimits": 0,
+          "timings": {
+            "mcpStartupMs": 2022,
+            "cliStartupMs": 0,
+            "cliExecutionMs": 2516,
+            "cliWallMs": 2516,
+            "verificationMs": 0,
+            "cleanupMs": 137,
+            "captureMs": 505
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "gemma4"
+      ]
+    },
+    {
+      "task": "form-subscribe",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": null,
+      "evidencePath": null,
+      "evidenceFrames": [],
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "Subscribed from Canada (weekly: yes).",
+      "turns": 5,
+      "toolCalls": 6,
+      "toolErrors": 0,
+      "observationChars": 2710,
+      "observationImages": 0,
+      "inputTokens": 3668,
+      "cacheWriteTokens": 0,
+      "cacheReadTokens": 10240,
+      "totalInputTokens": 13908,
+      "outputTokens": 199,
+      "costUsd": null,
+      "costInr": 0.24869,
+      "timings": {
+        "mcpStartupMs": 2017,
+        "cliStartupMs": 0,
+        "cliExecutionMs": 4174,
+        "cliWallMs": 4174,
+        "verificationMs": 0,
+        "cleanupMs": 130,
+        "captureMs": 2822
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": null,
+          "evidencePath": null,
+          "evidenceFrames": [],
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "Subscribed from Canada (weekly: yes).",
+          "initModel": "gemma4",
+          "resolvedModels": [
+            "gemma4"
+          ],
+          "turns": 5,
+          "toolCalls": 6,
+          "toolErrors": 0,
+          "observationChars": 2710,
+          "observationImages": 0,
+          "totalInputTokens": 13908,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 3668,
+            "cacheWriteTokens": 0,
+            "cacheReadTokens": 10240,
+            "outputTokens": 199,
+            "costUsd": null
+          },
+          "costInr": 0.24869,
+          "apiAttempts": 5,
+          "rateLimits": 0,
+          "timings": {
+            "mcpStartupMs": 2017,
+            "cliStartupMs": 0,
+            "cliExecutionMs": 4174,
+            "cliWallMs": 4174,
+            "verificationMs": 0,
+            "cleanupMs": 130,
+            "captureMs": 2822
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "gemma4"
+      ]
+    },
+    {
+      "task": "form-subscribe",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "crash",
+      "finalScreenshotPath": null,
+      "evidencePath": null,
+      "evidenceFrames": [],
+      "valid": true,
+      "ok": false,
+      "error": "Sarvam HTTP 400",
+      "answer": "",
+      "turns": null,
+      "toolCalls": 0,
+      "toolErrors": 0,
+      "observationChars": 0,
+      "observationImages": 0,
+      "inputTokens": null,
+      "cacheWriteTokens": null,
+      "cacheReadTokens": null,
+      "totalInputTokens": null,
+      "outputTokens": null,
+      "costUsd": null,
+      "costInr": null,
+      "timings": {
+        "mcpStartupMs": 2018,
+        "cliStartupMs": null,
+        "cliExecutionMs": null,
+        "cliWallMs": null,
+        "verificationMs": 0,
+        "cleanupMs": 126,
+        "captureMs": 2589
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": null,
+          "evidencePath": null,
+          "evidenceFrames": [],
+          "status": "crash",
+          "connected": false,
+          "connectionState": "unknown",
+          "error": "Sarvam HTTP 400",
+          "answer": "",
+          "initModel": null,
+          "resolvedModels": [],
+          "turns": null,
+          "toolCalls": 0,
+          "toolErrors": 0,
+          "observationChars": 0,
+          "observationImages": 0,
+          "usageComplete": false,
+          "usage": {
+            "inputTokens": null,
+            "cacheWriteTokens": null,
+            "cacheReadTokens": null,
+            "outputTokens": null,
+            "costUsd": null
+          },
+          "costInr": null,
+          "apiAttempts": 0,
+          "rateLimits": 0,
+          "timings": {
+            "mcpStartupMs": 2018,
+            "cliStartupMs": null,
+            "cliExecutionMs": null,
+            "cliWallMs": null,
+            "verificationMs": 0,
+            "cleanupMs": 126,
+            "captureMs": 2589
+          },
+          "exitCode": null,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": null,
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": []
+    },
+    {
+      "task": "pricing-team",
+      "approach": "mantis",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": null,
+      "evidencePath": null,
+      "evidenceFrames": [],
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "$29 per month",
+      "turns": 3,
+      "toolCalls": 2,
+      "toolErrors": 0,
+      "observationChars": 794,
+      "observationImages": 0,
+      "inputTokens": 1755,
+      "cacheWriteTokens": 0,
+      "cacheReadTokens": 2656,
+      "totalInputTokens": 4411,
+      "outputTokens": 101,
+      "costUsd": null,
+      "costInr": 0.097075,
+      "timings": {
+        "mcpStartupMs": 2011,
+        "cliStartupMs": 0,
+        "cliExecutionMs": 3228,
+        "cliWallMs": 3228,
+        "verificationMs": 0,
+        "cleanupMs": 124,
+        "captureMs": 421
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": null,
+          "evidencePath": null,
+          "evidenceFrames": [],
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "$29 per month",
+          "initModel": "gemma4",
+          "resolvedModels": [
+            "gemma4"
+          ],
+          "turns": 3,
+          "toolCalls": 2,
+          "toolErrors": 0,
+          "observationChars": 794,
+          "observationImages": 0,
+          "totalInputTokens": 4411,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 1755,
+            "cacheWriteTokens": 0,
+            "cacheReadTokens": 2656,
+            "outputTokens": 101,
+            "costUsd": null
+          },
+          "costInr": 0.097075,
+          "apiAttempts": 3,
+          "rateLimits": 0,
+          "timings": {
+            "mcpStartupMs": 2011,
+            "cliStartupMs": 0,
+            "cliExecutionMs": 3228,
+            "cliWallMs": 3228,
+            "verificationMs": 0,
+            "cleanupMs": 124,
+            "captureMs": 421
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "gemma4"
+      ]
+    },
+    {
+      "task": "pricing-team",
+      "approach": "tree",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": null,
+      "evidencePath": null,
+      "evidenceFrames": [],
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "$29 per month",
+      "turns": 5,
+      "toolCalls": 4,
+      "toolErrors": 0,
+      "observationChars": 2305,
+      "observationImages": 0,
+      "inputTokens": 6271,
+      "cacheWriteTokens": 0,
+      "cacheReadTokens": 7168,
+      "totalInputTokens": 13439,
+      "outputTokens": 140,
+      "costUsd": null,
+      "costInr": 0.303765,
+      "timings": {
+        "mcpStartupMs": 2015,
+        "cliStartupMs": 0,
+        "cliExecutionMs": 38493,
+        "cliWallMs": 38493,
+        "verificationMs": 0,
+        "cleanupMs": 128,
+        "captureMs": 3175
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": null,
+          "evidencePath": null,
+          "evidenceFrames": [],
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "$29 per month",
+          "initModel": "gemma4",
+          "resolvedModels": [
+            "gemma4"
+          ],
+          "turns": 5,
+          "toolCalls": 4,
+          "toolErrors": 0,
+          "observationChars": 2305,
+          "observationImages": 0,
+          "totalInputTokens": 13439,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 6271,
+            "cacheWriteTokens": 0,
+            "cacheReadTokens": 7168,
+            "outputTokens": 140,
+            "costUsd": null
+          },
+          "costInr": 0.303765,
+          "apiAttempts": 5,
+          "rateLimits": 0,
+          "timings": {
+            "mcpStartupMs": 2015,
+            "cliStartupMs": 0,
+            "cliExecutionMs": 38493,
+            "cliWallMs": 38493,
+            "verificationMs": 0,
+            "cleanupMs": 128,
+            "captureMs": 3175
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "gemma4"
+      ]
+    },
+    {
+      "task": "pricing-team",
+      "approach": "screenshot",
+      "run": 1,
+      "status": "success",
+      "finalScreenshotPath": null,
+      "evidencePath": null,
+      "evidenceFrames": [],
+      "valid": true,
+      "ok": true,
+      "error": "",
+      "answer": "$29 per month",
+      "turns": 5,
+      "toolCalls": 4,
+      "toolErrors": 0,
+      "observationChars": 116,
+      "observationImages": 2,
+      "inputTokens": 2145,
+      "cacheWriteTokens": 0,
+      "cacheReadTokens": 1792,
+      "totalInputTokens": 3937,
+      "outputTokens": 120,
+      "costUsd": null,
+      "costInr": 0.103795,
+      "timings": {
+        "mcpStartupMs": 2021,
+        "cliStartupMs": 0,
+        "cliExecutionMs": 10319,
+        "cliWallMs": 10319,
+        "verificationMs": 0,
+        "cleanupMs": 126,
+        "captureMs": 379
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "finalScreenshotPath": null,
+          "evidencePath": null,
+          "evidenceFrames": [],
+          "status": "success",
+          "connected": true,
+          "connectionState": "connected",
+          "error": "",
+          "answer": "$29 per month",
+          "initModel": "gemma4",
+          "resolvedModels": [
+            "gemma4"
+          ],
+          "turns": 5,
+          "toolCalls": 4,
+          "toolErrors": 0,
+          "observationChars": 116,
+          "observationImages": 2,
+          "totalInputTokens": 3937,
+          "usageComplete": true,
+          "usage": {
+            "inputTokens": 2145,
+            "cacheWriteTokens": 0,
+            "cacheReadTokens": 1792,
+            "outputTokens": 120,
+            "costUsd": null
+          },
+          "costInr": 0.103795,
+          "apiAttempts": 5,
+          "rateLimits": 0,
+          "timings": {
+            "mcpStartupMs": 2021,
+            "cliStartupMs": 0,
+            "cliExecutionMs": 10319,
+            "cliWallMs": 10319,
+            "verificationMs": 0,
+            "cleanupMs": 126,
+            "captureMs": 379
+          },
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "fixtureCheck": {
+            "ok": true
+          },
+          "diagnostics": []
+        }
+      ],
+      "resolvedModels": [
+        "gemma4"
+      ]
+    }
+  ]
+}

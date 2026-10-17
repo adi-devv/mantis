@@ -1,0 +1,64 @@
+{
+  "runs": [
+    {
+      "run": "pilot2-deepseek-v4.1-flash\\form-subscribe--mantis--1--attempt-1-1792248710115-nh9xkt.jsonl",
+      "approach": "mantis",
+      "stepsToFinish": 5,
+      "stepsAfterLastUsefulObservation": 0,
+      "repeatedIdenticalActions": 0,
+      "coveredOrBlockedClickLoops": 0,
+      "toolErrors": {},
+      "suspectedMisleadingHints": []
+    },
+    {
+      "run": "pilot2-deepseek-v4.1-flash\\form-subscribe--screenshot--1--attempt-1-1792248720710-8y4tyt.jsonl",
+      "approach": "screenshot",
+      "stepsToFinish": 18,
+      "stepsAfterLastUsefulObservation": 0,
+      "repeatedIdenticalActions": 1,
+      "coveredOrBlockedClickLoops": 0,
+      "toolErrors": {},
+      "suspectedMisleadingHints": []
+    },
+    {
+      "run": "pilot2-deepseek-v4.1-flash\\form-subscribe--tree--1--attempt-1-1792248710123-vrkgji.jsonl",
+      "approach": "tree",
+      "stepsToFinish": 6,
+      "stepsAfterLastUsefulObservation": 0,
+      "repeatedIdenticalActions": 0,
+      "coveredOrBlockedClickLoops": 0,
+      "toolErrors": {},
+      "suspectedMisleadingHints": []
+    },
+    {
+      "run": "pilot2-deepseek-v4.1-flash\\pricing-team--mantis--1--attempt-1-1792248720868-fokgl1.jsonl",
+      "approach": "mantis",
+      "stepsToFinish": 2,
+      "stepsAfterLastUsefulObservation": 0,
+      "repeatedIdenticalActions": 0,
+      "coveredOrBlockedClickLoops": 0,
+      "toolErrors": {},
+      "suspectedMisleadingHints": []
+    },
+    {
+      "run": "pilot2-deepseek-v4.1-flash\\pricing-team--screenshot--1--attempt-1-1792248733723-5g396p.jsonl",
+      "approach": "screenshot",
+      "stepsToFinish": 4,
+      "stepsAfterLastUsefulObservation": 0,
+      "repeatedIdenticalActions": 0,
+      "coveredOrBlockedClickLoops": 0,
+      "toolErrors": {},
+      "suspectedMisleadingHints": []
+    },
+    {
+      "run": "pilot2-deepseek-v4.1-flash\\pricing-team--tree--1--attempt-1-1792248726182-k88n2b.jsonl",
+      "approach": "tree",
+      "stepsToFinish": 4,
+      "stepsAfterLastUsefulObservation": 0,
+      "repeatedIdenticalActions": 0,
+      "coveredOrBlockedClickLoops": 0,
+      "toolErrors": {},
+      "suspectedMisleadingHints": []
+    }
+  ]
+}

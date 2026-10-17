@@ -1,0 +1,64 @@
+{
+  "runs": [
+    {
+      "run": "reviewfix-gemma-4-31b\\form-subscribe--mantis--1--attempt-1-1792244570425-hif5wm.jsonl",
+      "approach": "mantis",
+      "stepsToFinish": 3,
+      "stepsAfterLastUsefulObservation": 0,
+      "repeatedIdenticalActions": 0,
+      "coveredOrBlockedClickLoops": 0,
+      "toolErrors": {},
+      "suspectedMisleadingHints": []
+    },
+    {
+      "run": "reviewfix-gemma-4-31b\\form-subscribe--screenshot--1--attempt-1-1792244575104-lr2ot3.jsonl",
+      "approach": "screenshot",
+      "stepsToFinish": 65,
+      "stepsAfterLastUsefulObservation": 0,
+      "repeatedIdenticalActions": 0,
+      "coveredOrBlockedClickLoops": 0,
+      "toolErrors": {},
+      "suspectedMisleadingHints": []
+    },
+    {
+      "run": "reviewfix-gemma-4-31b\\form-subscribe--tree--1--attempt-1-1792244570433-72aaxz.jsonl",
+      "approach": "tree",
+      "stepsToFinish": 6,
+      "stepsAfterLastUsefulObservation": 0,
+      "repeatedIdenticalActions": 0,
+      "coveredOrBlockedClickLoops": 0,
+      "toolErrors": {},
+      "suspectedMisleadingHints": []
+    },
+    {
+      "run": "reviewfix-gemma-4-31b\\pricing-team--mantis--1--attempt-1-1792244576755-r2ttey.jsonl",
+      "approach": "mantis",
+      "stepsToFinish": 2,
+      "stepsAfterLastUsefulObservation": 0,
+      "repeatedIdenticalActions": 0,
+      "coveredOrBlockedClickLoops": 0,
+      "toolErrors": {},
+      "suspectedMisleadingHints": []
+    },
+    {
+      "run": "reviewfix-gemma-4-31b\\pricing-team--screenshot--1--attempt-1-1792244622757-0k5dh5.jsonl",
+      "approach": "screenshot",
+      "stepsToFinish": 4,
+      "stepsAfterLastUsefulObservation": 0,
+      "repeatedIdenticalActions": 0,
+      "coveredOrBlockedClickLoops": 0,
+      "toolErrors": {},
+      "suspectedMisleadingHints": []
+    },
+    {
+      "run": "reviewfix-gemma-4-31b\\pricing-team--tree--1--attempt-1-1792244582120-v4997t.jsonl",
+      "approach": "tree",
+      "stepsToFinish": 4,
+      "stepsAfterLastUsefulObservation": 0,
+      "repeatedIdenticalActions": 0,
+      "coveredOrBlockedClickLoops": 0,
+      "toolErrors": {},
+      "suspectedMisleadingHints": []
+    }
+  ]
+}
