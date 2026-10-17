@@ -1,0 +1,58 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Panel veil</title>
+<style>
+  body { font: 16px sans-serif; margin: 24px; }
+  #panel { position: relative; width: 320px; min-height: 130px; padding: 20px; border: 1px solid #999; }
+  .veil { position: absolute; inset: 0; background: rgba(20, 30, 50, .35); z-index: 2; }
+  .hidden-controls { display: none; }
+  .modal { position: absolute; inset: 0; z-index: 2; background: rgba(20, 30, 50, .35); }
+  .modal section { width: 220px; margin: 25px auto; padding: 16px; background: white; }
+</style></head>
+<body>
+<div id="panel" aria-busy="false">
+  <button id="continue" type="button" onclick="document.getElementById('out').textContent = 'Continued'">Continue</button>
+  <a id="details" href="/direct-destination">Details</a>
+  <p id="out"></p>
+</div>
+<script>
+const panel = document.getElementById('panel');
+const mode = location.search.slice(1) || 'clears';
+function veil(tag = 'div') {
+  const node = document.createElement(tag);
+  node.className = 'veil';
+  if (tag === 'div') node.setAttribute('aria-hidden', 'true');
+  panel.appendChild(node);
+  return node;
+}
+window.armClearingVeil = () => {
+  panel.setAttribute('aria-busy', 'true');
+  const node = veil();
+  setTimeout(() => { node.remove(); panel.setAttribute('aria-busy', 'false'); }, 1100);
+};
+if (mode === 'persistent') {
+  veil();
+} else if (mode === 'invisible') {
+  panel.setAttribute('aria-busy', 'true');
+  const node = veil();
+  setTimeout(() => { node.style.background = 'transparent'; panel.setAttribute('aria-busy', 'false'); }, 100);
+} else if (mode === 'hidden-control' || mode === 'hidden-persistent') {
+  panel.setAttribute('aria-busy', 'true');
+  const node = veil();
+  node.innerHTML = '<span class="hidden-controls"><button type="button">Dismiss</button></span>';
+  if (mode === 'hidden-control') setTimeout(() => { node.remove(); panel.setAttribute('aria-busy', 'false'); }, 300);
+} else if (mode === 'dismiss') {
+  const node = veil('button');
+  node.type = 'button';
+  node.setAttribute('aria-label', 'Dismiss');
+  node.addEventListener('click', () => node.remove());
+} else if (mode === 'dialog') {
+  const node = document.createElement('div');
+  node.className = 'modal';
+  node.setAttribute('role', 'dialog');
+  node.setAttribute('aria-modal', 'true');
+  node.innerHTML = '<section><p>Confirm first</p><button id="dismiss" type="button">Dismiss</button><button type="button">Keep browsing</button></section>';
+  node.querySelector('button').addEventListener('click', () => node.remove());
+  panel.appendChild(node);
+}
+</script>
+</body></html>

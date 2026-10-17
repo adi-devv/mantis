@@ -105,6 +105,46 @@ describe('covered clicks fail fast', () => {
   });
 });
 
+describe('painted non-interactive veils', () => {
+  it('waits briefly for a busy panel veil to clear, then clicks normally', async () => {
+    await browser.open(fixture('hidden/panel-veil.html'));
+    const id = await idByName('Continue');
+    const page = await pageOf();
+    await page.evaluate(() => (window as unknown as { armClearingVeil(): void }).armClearingVeil());
+    const { text, ms } = await timed(() => browser.click(id));
+    expect(text).toMatch(/^clicked/);
+    expect(ms).toBeGreaterThanOrEqual(900);
+    expect(ms).toBeLessThan(1900);
+    expect(await browser.read()).toContain('Continued');
+  });
+
+  it('explains a persistent veil and gives a link destination without dismissal advice', async () => {
+    await browser.open(fixture('hidden/panel-veil.html') + '?persistent');
+    const id = await idByName('Details');
+    const { text, ms } = await timed(() => browser.click(id));
+    expect(text).toMatch(/^error: .*non-interactive overlay/);
+    expect(text).toContain('nothing to dismiss');
+    expect(text).toContain('href file:///');
+    expect(text).toContain('direct-destination');
+    expect(text).toContain('open("file:///');
+    expect(text).not.toContain('dismiss that first');
+    expect(ms).toBeGreaterThanOrEqual(1200);
+    expect(ms).toBeLessThan(2000);
+  });
+
+  it('still blocks a dialog and names its Dismiss control (near miss)', async () => {
+    await browser.open(fixture('hidden/panel-veil.html') + '?dialog');
+    const id = await idByName('Continue');
+    const dismiss = await idByName('Dismiss');
+    const { text, ms } = await timed(() => browser.click(id));
+    expect(text).toMatch(/^error: .*covered/);
+    expect(text).toContain(`try #${dismiss} "Dismiss"`);
+    expect(text).toContain('dismiss that first');
+    expect(ms).toBeLessThan(1500);
+    expect(await browser.read()).not.toContain('Continued');
+  });
+});
+
 describe('covered click false positives', () => {
   it('does not call a control under a sticky header covered; it scrolls it clear', async () => {
     await browser.open(fixture('hidden/covered-layers.html'));
@@ -127,12 +167,12 @@ describe('covered click false positives', () => {
     }
   });
 
-  it('still reports a layer that shows text or a background (near miss)', async () => {
+  it('does not click through a persistent painted layer (near miss)', async () => {
     for (const flag of ['text', 'bg', 'scrim']) {
       await browser.open(`${fixture('hidden/covered-layers.html')}?${flag}`);
       const id = await idByName('Open result');
       const res = await browser.click(id);
-      expect(res).toMatch(/^error: .*is covered by another element/);
+      expect(res).toMatch(/^error: .*non-interactive overlay/);
       expect(await browser.read()).not.toContain('Opened result');
     }
   });

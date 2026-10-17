@@ -122,11 +122,41 @@ function brief(e: unknown): string {
   return first.replace(/^[\w.]+: /, '').trim().slice(0, 200) || 'unknown error';
 }
 
-/** Playwright errors for a control that is hidden, off-screen or covered: the cases the click fallbacks handle. */
-const NOT_CLICKABLE = /element is not visible|waiting for element to be visible|outside of the viewport|intercepts pointer events/;
+/** The final actionability state reported by Playwright for a failed click. */
+export type ClickFailure = 'not-visible' | 'outside-viewport' | 'intercepted';
+
+/**
+ * Read Playwright's final actionability state rather than its retry log preamble.
+ * "waiting for element to be visible" is emitted for every click attempt, including
+ * ones that did become visible and later timed out waiting for navigation.
+ */
+export function classifyClickError(e: unknown): ClickFailure | null {
+  const message = String(e instanceof Error ? e.message : e);
+  const states: Array<{ at: number; failure: ClickFailure | null }> = [];
+  const add = (pattern: RegExp, failure: ClickFailure | null): void => {
+    for (const match of message.matchAll(pattern)) states.push({ at: match.index ?? -1, failure });
+  };
+  add(/element is not visible/gi, 'not-visible');
+  add(/(?:element is )?outside of the viewport/gi, 'outside-viewport');
+  add(/intercepts pointer events/gi, 'intercepted');
+  // These are successful later states, not failures. Keep them in the sequence so
+  // a retry-log preamble cannot outweigh a click that reached navigation waiting.
+  add(/element is visible, enabled and stable/gi, null);
+  add(/waiting for scheduled navigations/gi, null);
+  states.sort((a, b) => a.at - b.at);
+  return states.at(-1)?.failure ?? null;
+}
 
 /** How long Playwright keeps retrying a click on an element something else is covering. */
 const COVERED_CLICK_TIMEOUT = 600;
+
+/** Navigation gets its own budget after a click has dispatched. */
+const NAVIGATION_TIMEOUT = 5000;
+/** A main-frame request starts immediately for ordinary document navigations. */
+const NAVIGATION_START_TIMEOUT = 250;
+/** A brief, bounded chance for a non-interactive painted veil to finish clearing. */
+const VEIL_CLEAR_TIMEOUT = 1500;
+const VEIL_RECHECK_MS = 100;
 
 /**
  * Page-side predicate for a visually hidden labelable control and its rendered label.
@@ -181,6 +211,11 @@ interface Cover {
   desc: string;
   hitId?: number;
   close?: { id: number; name: string };
+  controls: { id: number; name: string }[];
+  /** A dialog, or a layer that offers a numbered control the agent can use. */
+  interactive: boolean;
+  /** A nearby loading signal makes the short recheck especially likely to help. */
+  busy: boolean;
   /** Nothing visible in the overlay (no text, background, border, shadow or content): a real pointer is blocked but a user would not see why. */
   invisible: boolean;
 }
@@ -313,24 +348,50 @@ export class MantisBrowser {
     return this.act(async (page) => {
       const { el, label } = await this.target(page, id);
       const associatedLabel = await this.renderedAssociatedLabel(el);
-      // An element under an overlay will not become clickable by waiting: give Playwright a short
-      // window (the overlay may be about to close), then fail fast and name what covers it.
-      const cover = await this.coveredBy(el, associatedLabel);
+      let cover = await this.coveredBy(el, associatedLabel);
+      let navigation: ReturnType<MantisBrowser['watchNavigation']> | null = null;
+      let dispatched = false;
       try {
-        if (associatedLabel && !cover) await associatedLabel.click({ timeout: this.actionTimeout });
-        else await el.click({ timeout: cover ? COVERED_CLICK_TIMEOUT : this.actionTimeout });
+        // A painted layer with no dialog or controls is often a loading veil. Re-hit-test it for a
+        // short, fixed interval instead of spending the normal click timeout on something nobody can dismiss.
+        if (cover && !cover.interactive && !cover.invisible) {
+          cover = await this.waitForVeilToClear(el, associatedLabel, cover);
+          // An empty layer still intercepts a real pointer, but has nothing an agent could dismiss.
+          // Let the normal click path reach its existing click-through fallback.
+          if (cover && !cover.invisible) throw new ActionError(this.coveredMessage(label, cover, await this.linkHref(el)));
+        }
+        const clickTarget = associatedLabel && !cover ? associatedLabel : el;
+        const clickTimeout = cover ? COVERED_CLICK_TIMEOUT : this.actionTimeout;
+        navigation = this.watchNavigation(page);
+        // The watcher is installed first so a navigation from this dispatch is not missed.
+        // Its detection and completion budgets begin only after Playwright has dispatched.
+        await clickTarget.click({ timeout: clickTimeout, noWaitAfter: true });
+        dispatched = true;
       } catch (e) {
+        if (e instanceof ActionError) throw e;
         const msg = String(e instanceof Error ? e.message : e);
-        if (!(await this.clickFallback(page, el, id, msg, associatedLabel))) {
+        // ElementHandle's noWaitAfter is deprecated in recent Playwright releases and may still
+        // surface its timeout after the click has already dispatched. Playwright's own navigation
+        // wait is the proof the action fired; an unrelated main-frame navigation is not.
+        if (/waiting for scheduled navigations to finish/i.test(msg)) {
+          dispatched = true;
+        } else if (!(dispatched = await this.clickFallback(page, el, id, msg, associatedLabel))) {
           const blocked = cover && /intercepts pointer events|Timeout/.test(msg) ? cover : null;
           // An empty transparent layer is nothing the agent could dismiss: click the element itself.
-          if (blocked?.invisible) await el.evaluate((n) => n instanceof HTMLElement ? n.click() : n.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })));
-          else throw new ActionError(blocked ? this.coveredMessage(label, blocked) : this.explain(e, label));
+          if (blocked?.invisible) {
+            await el.evaluate((n) => n instanceof HTMLElement ? n.click() : n.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })));
+            dispatched = true;
+          } else {
+            navigation?.cancel();
+            throw new ActionError(blocked ? this.coveredMessage(label, blocked) : this.explain(e, label));
+          }
         }
       } finally {
         await associatedLabel?.dispose().catch(() => undefined);
         await el.dispose();
       }
+      if (dispatched && navigation) await this.waitForTriggeredNavigation(navigation);
+      else navigation?.cancel();
       return `clicked ${label}`;
     });
   }
@@ -862,7 +923,10 @@ export class MantisBrowser {
       }
       const reg = (window as unknown as { __mantis?: { ids: WeakMap<Element, number> } }).__mantis;
       const idOfNode = (node: Element): number | undefined => reg?.ids.get(node);
-      const text = (node: Element): string => (node.getAttribute('aria-label') || (node.textContent ?? '')).replace(/\s+/g, ' ').trim();
+      const text = (node: Element): string => {
+        const renderedText = node instanceof HTMLElement ? node.innerText : node.textContent;
+        return (node.getAttribute('aria-label') || renderedText || '').replace(/\s+/g, ' ').trim();
+      };
       const describe = (node: Element): string => {
         const attrs: string[] = [];
         const cls = (node.getAttribute('class') ?? '').split(/\s+/).filter(Boolean).slice(0, 2).join('.');
@@ -877,13 +941,39 @@ export class MantisBrowser {
       const CLOSE = /^(close|dismiss|cancel|no thanks|not now|decline|reject|[x×✕✖])$/i;
       let close: { id: number; name: string } | undefined;
       let hitId: number | undefined;
-      for (let n: Element | null = hit; n && n !== document.documentElement && !n.contains(pointerTarget) && !close; n = parent(n)) {
+      // A label associated with the target is a legitimate pointer proxy, not a loading veil.
+      let interactive = false;
+      for (let n: Element | null = hit; n; n = parent(n)) {
+        if (n instanceof HTMLLabelElement && n.control === target) { interactive = true; break; }
+      }
+      const controls: { id: number; name: string }[] = [];
+      const seenControls = new Set<number>();
+      let busy = !!hit.closest('[aria-busy="true"]') || !!document.querySelector('[role="progressbar"], progress');
+      const focusable = 'a[href], button, input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"]), [contenteditable="true"], [role="button"], [role="link"], [role="menuitem"]';
+      const rendered = (node: Element): boolean => {
+        if (!node.getClientRects().length) return false;
+        for (let ancestor: Element | null = node; ancestor; ancestor = parent(ancestor)) {
+          const style = getComputedStyle(ancestor);
+          if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') return false;
+        }
+        return true;
+      };
+      for (let n: Element | null = hit; n && n !== document.documentElement && !n.contains(pointerTarget); n = parent(n)) {
         hitId ??= idOfNode(n);
+        if (n.matches('dialog, [role="dialog"], [role="alertdialog"], [aria-modal="true"]')) interactive = true;
+        if (n.getAttribute('aria-busy') === 'true' || n.querySelector('[role="progressbar"], progress, [aria-busy="true"]')) busy = true;
         const scope: ParentNode = n.parentElement ? n : (n.getRootNode() as ParentNode); // top of a shadow tree: search the whole tree
-        for (const b of Array.from(scope.querySelectorAll('button, [role="button"], a'))) {
+        const candidates = n.matches(focusable)
+          ? [n, ...Array.from(scope.querySelectorAll(focusable)).filter((b) => b !== n)]
+          : Array.from(scope.querySelectorAll(focusable));
+        for (const b of candidates) {
+          if (b !== n && !n.contains(b)) continue;
+          if (!rendered(b) || (b as HTMLButtonElement).disabled || b.getAttribute('aria-disabled') === 'true') continue;
+          interactive = true;
           const name = (b.getAttribute('aria-label') || b.getAttribute('title') || b.textContent || '').replace(/\s+/g, ' ').trim();
           const id = idOfNode(b);
-          if (id !== undefined && CLOSE.test(name)) { close = { id, name }; break; }
+          if (id !== undefined && !seenControls.has(id)) { seenControls.add(id); controls.push({ id, name: name || b.localName }); }
+          if (!close && id !== undefined && CLOSE.test(name)) close = { id, name };
         }
       }
       // Visually empty: the hit element has no text, content, background, border or shadow, and no layer above
@@ -904,24 +994,49 @@ export class MantisBrowser {
       };
       let invisible = empty(hit);
       for (let n: Element | null = parent(hit); invisible && n && n !== document.documentElement && !n.contains(pointerTarget); n = parent(n)) if (paints(n)) invisible = false;
-      return { desc: describe(hit), hitId, close, invisible };
+      return { desc: describe(hit), hitId, close, controls, interactive, busy, invisible };
     }, label).catch(() => null);
   }
 
-  private coveredMessage(label: string, cover: Cover): string {
+  /** Re-hit-test a painted, control-free layer for a bounded period, then return the blocker that remains. */
+  private async waitForVeilToClear(el: ElementHandle<Element>, label: ElementHandle<Element> | null, initial: Cover): Promise<Cover | null> {
+    const deadline = Date.now() + VEIL_CLEAR_TIMEOUT;
+    let cover: Cover | null = initial;
+    while (Date.now() < deadline) {
+      // Prefer checking sooner when a region advertises loading, but always give painted veils this bounded chance.
+      await sleep(Math.min(cover?.busy ? VEIL_RECHECK_MS / 2 : VEIL_RECHECK_MS, deadline - Date.now()));
+      cover = await this.coveredBy(el, label);
+      if (!cover || cover.interactive || cover.invisible) return cover;
+    }
+    return cover;
+  }
+
+  /** An anchor's resolved destination is useful when a non-interactive veil makes its link unreachable. */
+  private async linkHref(el: ElementHandle<Element>): Promise<string | null> {
+    return el.evaluate((node) => node instanceof HTMLAnchorElement && node.href ? node.href : null).catch(() => null);
+  }
+
+  private coveredMessage(label: string, cover: Cover, href: string | null = null): string {
     const plain = label.replace(' (password)', '');
     const by = cover.hitId !== undefined ? `${cover.desc} (#${cover.hitId})` : cover.desc;
     const close = cover.close ? ` (try #${cover.close.id} "${cover.close.name}")` : '';
-    return `${plain} is covered by another element, ${by}; dismiss that first${close}`;
+    if (!cover.interactive && !cover.invisible) {
+      const direct = href ? `; href ${href}; try open("${href}")` : '';
+      return `${plain} is covered by another element, a non-interactive overlay, ${by}; nothing to dismiss (the page may be loading or the region is inactive)${direct}`;
+    }
+    const controls = cover.controls.filter((control) => control.id !== cover.close?.id).slice(0, 3)
+      .map((control) => `#${control.id} "${control.name}"`).join(', ');
+    return `${plain} is covered by another element, ${by}; dismiss that first${close}${controls ? ` (controls: ${controls})` : ''}`;
   }
 
   private explain(e: unknown, label: string): string {
     const msg = String(e instanceof Error ? e.message : e);
     const plain = label.replace(' (password)', '');
-    if (/intercepts pointer events/.test(msg)) {
+    const clickFailure = classifyClickError(e);
+    if (clickFailure === 'intercepted') {
       return `${plain} is covered by another element (an overlay or dialog); dismiss that first`;
     }
-    if (/element is not visible|waiting for element to be visible/.test(msg)) {
+    if (clickFailure === 'not-visible') {
       return `${plain} is not visible; try scroll(#id) or read() again`;
     }
     if (/not enabled|disabled/.test(msg) && /Timeout/.test(msg)) return `${plain} is disabled`;
@@ -931,15 +1046,51 @@ export class MantisBrowser {
     return `${plain}: ${brief(e)}`;
   }
 
+  /** Observe before dispatch without spending either navigation budget until dispatch has happened. */
+  private watchNavigation(page: Page): { started: Promise<boolean>; finished: Promise<'finished' | 'aborted'>; cancel: () => void } {
+    const controller = new AbortController();
+    const started = page.waitForRequest(
+      (request) => request.isNavigationRequest() && request.frame() === page.mainFrame(),
+      { timeout: 0, signal: controller.signal },
+    ).then(() => true, () => false);
+    // A rejected navigation is still a terminal outcome: Chromium may have committed its
+    // error document (or another document) by the time act() observes the page.
+    const finished = page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 0, signal: controller.signal })
+      .then(() => 'finished' as const, () => 'aborted' as const);
+    return { started, finished, cancel: () => controller.abort() };
+  }
+
+  private async waitForTriggeredNavigation(navigation: { started: Promise<boolean>; finished: Promise<'finished' | 'aborted'>; cancel: () => void }): Promise<void> {
+    let startTimer: ReturnType<typeof setTimeout> | undefined;
+    const started = await Promise.race([
+      navigation.started,
+      new Promise<false>((resolve) => { startTimer = setTimeout(() => resolve(false), NAVIGATION_START_TIMEOUT); }),
+    ]);
+    if (startTimer) clearTimeout(startTimer);
+    if (!started) {
+      navigation.cancel();
+      return;
+    }
+    let finishTimer: ReturnType<typeof setTimeout> | undefined;
+    const outcome = await Promise.race([
+      navigation.finished,
+      new Promise<'timed-out'>((resolve) => { finishTimer = setTimeout(() => resolve('timed-out'), NAVIGATION_TIMEOUT); }),
+    ]);
+    if (finishTimer) clearTimeout(finishTimer);
+    navigation.cancel();
+    if (outcome === 'timed-out') throw new ActionError('click was dispatched, but the navigation did not finish in time');
+  }
+
   /**
    * Fallbacks for a control Playwright could not click: a visible label that owns it, then a
    * snapshot-verified screen-reader-only control. True when one of them fired.
    */
   private async clickFallback(page: Page, el: ElementHandle<Element>, id: number, msg: string, associatedLabel: ElementHandle<Element> | null = null): Promise<boolean> {
+    const failure = classifyClickError(msg);
     // A visible label can legitimately receive the pointer for its control.
-    if (/intercepts pointer events/.test(msg) && await this.clickAssociatedLabel(el, associatedLabel)) return true;
+    if (failure === 'intercepted' && await this.clickAssociatedLabel(el, associatedLabel)) return true;
     // The snapshot verified a screen-reader-only control.
-    return NOT_CLICKABLE.test(msg) && await this.clickSrOnly(page, el, id);
+    return failure !== null && await this.clickSrOnly(page, el, id);
   }
 
   /**
@@ -970,7 +1121,7 @@ export class MantisBrowser {
       if (e instanceof ActionError) throw e;
       const msg = String(e instanceof Error ? e.message : e);
       if (cover && /intercepts pointer events|Timeout/.test(msg)) throw new ActionError(this.coveredMessage(label, cover));
-      if (!NOT_CLICKABLE.test(msg)) throw e;
+      if (classifyClickError(msg) === null) throw e;
       const cur = await state();
       if (!cur || cur.disabled) throw e;
       if (cur.checked === on) return;

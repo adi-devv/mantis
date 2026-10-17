@@ -2,22 +2,63 @@ import { afterAll, beforeAll, expect, it } from 'vitest';
 import { chromium } from 'playwright';
 import type { Browser, Page } from 'playwright';
 import { chromiumExecutable } from '../src/userAgent.js';
+import { MantisBrowser } from '../src/index.js';
 import { startFixtures } from '../bench/fixtures.js';
 import { TASKS } from '../bench/agent/tasks.js';
 import { LONG_EXPECT } from '../bench/fixtures-long.js';
 import { spawn } from 'node:child_process';
 import net from 'node:net';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { deflateSync } from 'node:zlib';
 import { FINAL_TEXT_CAP, PAGE_STATE_FUNCTION, STEP_TEXT_CAP, packEvidence, parsePageState, selectFrames, toCapturedFrame } from '../bench/agent/evidence.js';
 import type { CapturedFrame } from '../bench/agent/evidence.js';
 import { createMcpProxy } from '../bench/agent/mcp-proxy.js';
 import { decodePng, encodePng, fitWithin, grayThumb, resizeImage, thumbDiff } from '../bench/agent/png.js';
+import { classifyClickError } from '../src/browser.js';
+import { fixture, idOf } from './helpers.js';
 
 const crc32 = (buf: Uint8Array): number => {
   let c = ~0;
   for (const b of buf) { c ^= b; for (let k = 0; k < 8; k++) c = (c >>> 1) ^ (0xedb88320 & -(c & 1)); }
   return ~c >>> 0;
 };
+
+it('Mantis follows a verified label but rejects a covered control', async () => {
+  const mantis = new MantisBrowser({ actionTimeoutMs: 300 });
+  try {
+    const view = await mantis.open(fixture('generic-browser-pointer.html'));
+    expect(await mantis.click(idOf(view, 'radio "Valid radio"'))).toContain('radio selected');
+
+    const covered = await mantis.click(idOf(view, 'button "Covered button"'));
+    expect(covered).toMatch(/^error:.*covered by another element/);
+    expect(await mantis.read()).not.toContain('covered clicked');
+  } finally {
+    await mantis.close();
+  }
+});
+
+it('keeps navigation waits distinct from final actionability failures', () => {
+  const navigationWait = 'waiting for element to be visible\n  element is visible, enabled and stable\n  waiting for scheduled navigations to finish';
+  expect(classifyClickError(navigationWait)).toBeNull();
+  // Near miss: a final hidden state is still classified as hidden.
+  expect(classifyClickError('waiting for element to be visible\n  element is not visible')).toBe('not-visible');
+});
+
+it('reports a failed dispatched navigation from its final document', async () => {
+  const mantis = new MantisBrowser({ actionTimeoutMs: 1500 });
+  try {
+    let view = await mantis.open(fixture('nav.html'));
+    const failed = await mantis.click(idOf(view, 'link "Broken link"'));
+    expect(failed).toContain('the page failed to load');
+
+    // Near miss: a completed navigation still reports the destination document.
+    view = await mantis.open(fixture('nav.html'));
+    expect(await mantis.click(idOf(view, 'link "Go to login"'))).toContain('Sign in');
+  } finally {
+    await mantis.close();
+  }
+});
 
 const task = TASKS.find((entry) => entry.id === 'form-subscribe')!;
 let browser: Browser;
@@ -46,6 +87,35 @@ async function verify(taskId: string, attemptId: string, expected: boolean): Pro
   await page.waitForFunction(() => (window as unknown as { __fixturePending: number }).__fixturePending === 0);
   expect((await fixtures.verify(taskId, attemptId))?.ok).toBe(expected);
 }
+
+it('panel-veil covers Mantis click-through, controls, and hidden-control near misses', async () => {
+  const panelVeil = pathToFileURL(resolve(import.meta.dirname, 'fixtures/hidden/panel-veil.html')).href;
+  const mantis = new MantisBrowser({ actionTimeoutMs: 300 });
+  try {
+    let view = await mantis.open(`${panelVeil}?invisible`);
+    expect(await mantis.click(idOf(view, 'button "Continue"'))).toContain('Continued');
+
+    view = await mantis.open(`${panelVeil}?dismiss`);
+    const blocked = await mantis.click(idOf(view, 'button "Continue"'));
+    expect(blocked).toMatch(/try #\d+ "Dismiss"/);
+    expect(await mantis.click(idOf(view, 'button "Dismiss"'))).toContain('clicked');
+    expect(await mantis.click(idOf(await mantis.read(), 'button "Continue"'))).toContain('Continued');
+
+    view = await mantis.open(`${panelVeil}?dialog`);
+    const dialogBlocked = await mantis.click(idOf(view, 'button "Continue"'));
+    expect(dialogBlocked).toMatch(/controls: #\d+ "Keep browsing"/);
+
+    view = await mantis.open(`${panelVeil}?hidden-control`);
+    expect(await mantis.click(idOf(view, 'button "Continue"'))).toContain('Continued');
+
+    view = await mantis.open(`${panelVeil}?hidden-persistent`);
+    const hiddenNearMiss = await mantis.click(idOf(view, 'button "Continue"'));
+    expect(hiddenNearMiss).toContain('nothing to dismiss');
+    expect(hiddenNearMiss).not.toContain('Dismiss');
+  } finally {
+    await mantis.close();
+  }
+});
 
 it('rejects answer-only runs and wrong form inputs, and accepts the requested subscription', async () => {
   await openAttempt(task.id, 'no-action', '/form');
