@@ -828,6 +828,10 @@ export function walker(includeSrOnly = false): WalkResult {
       const root = node.getRootNode();
       return node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
     };
+    const rootOf = (node: Element): Document | ShadowRoot => {
+      const root = node.getRootNode();
+      return root instanceof ShadowRoot ? root : document;
+    };
     const idOf = (node: Element): number => {
       let id = reg.ids.get(node);
       if (id === undefined) {
@@ -842,14 +846,10 @@ export function walker(includeSrOnly = false): WalkResult {
       if (!role || !node.getClientRects().length) return undefined;
       return { id: idOf(node), name: cap(accName(node, role) || collapse(node.textContent || '') || role, 60) };
     };
-    for (let node: Element | null = el.parentElement; node; node = parent(node)) {
-      if (node.getAttribute('aria-expanded') === 'false') {
-        const found = describe(node);
-        if (found) return found;
-      }
+    for (let node: Element | null = parent(el); node; node = parent(node)) {
       if (node instanceof HTMLDetailsElement && !node.open) {
         const summary = Array.from(childrenOf(node)).find((child): child is HTMLElement => child instanceof HTMLElement && child.localName === 'summary');
-        if (summary) {
+        if (summary && summary !== el) {
           const found = describe(summary);
           if (found) return found;
         }
@@ -858,7 +858,9 @@ export function walker(includeSrOnly = false): WalkResult {
     const ids = new Set<string>();
     for (let node: Element | null = el; node; node = parent(node)) if (node.id) ids.add(node.id);
     if (!ids.size) return undefined;
-    for (const trigger of Array.from(document.querySelectorAll('[aria-expanded="false"][aria-controls]'))) {
+    // `aria-controls` does not cross a shadow boundary. Requiring this explicit
+    // relationship avoids labelling arbitrary nearby or ancestor controls as a filter.
+    for (const trigger of Array.from(rootOf(el).querySelectorAll('[aria-expanded="false"][aria-controls]'))) {
       if ((trigger.getAttribute('aria-controls') || '').split(/\s+/).some((id) => ids.has(id))) {
         const found = describe(trigger);
         if (found) return found;
@@ -1010,9 +1012,15 @@ export function walker(includeSrOnly = false): WalkResult {
     if (cs.display === 'none' || cs.visibility !== 'visible' || parseFloat(cs.opacity) === 0) return;
     const r = el.getBoundingClientRect();
     if (r.width < 80 || r.height < 40 || !inDoc(r)) return;
+    let id = reg.ids.get(el);
+    if (id === undefined) {
+      id = reg.next++;
+      reg.ids.set(el, id);
+      reg.byId.set(id, new WeakRef(el));
+    }
     const label = collapse(el.getAttribute('aria-label') || el.getAttribute('title') || '');
-    const name = `[canvas${label ? ` "${label}"` : ''} ${Math.round(r.width)}×${Math.round(r.height)}: chart or drawing; media() and data() read it]`;
-    nodes.push(stamp({ kind: 'text', role: 'text', name, states: [], parent, depth, inViewport: inView(r), covered: false }, r));
+    const name = `${label ? ` "${label}"` : ''} ${Math.round(r.width)}×${Math.round(r.height)}: chart or drawing; data({id: ${id}})`;
+    nodes.push(stamp({ kind: 'text', id, role: 'canvas', name, states: [], parent, depth, inViewport: inView(r), covered: false }, r));
   }
 
   /** A visible iframe becomes a region placeholder; capture() fills it with the frame's own nodes. */

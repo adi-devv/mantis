@@ -96,6 +96,7 @@ export function interactiveLine(n: RawNode, o: LineOpts = {}): string {
 
 /** Plain text line; live messages (alerts, toasts) are flagged. */
 export function textLine(n: RawNode): string {
+  if (n.role === 'canvas' && n.id !== undefined) return `#${n.id} canvas${n.name}`;
   const mark = n.live === 'alert' ? '⚠ ' : n.live === 'status' ? 'ℹ ' : '';
   const open = n.requiresOpen ? ` (open #${n.requiresOpen.id} "${quote(n.requiresOpen.name)}" first)` : '';
   return `${mark}"${quote(n.name)}"${open}`;
@@ -471,7 +472,7 @@ function renderBody(nodes: RawNode[], lvl: Level, ctx: Ctx): { lines: string[]; 
           m?.kind === 'interactive' && (norm(m.name) === norm(n.name) || (!!m.errorText && norm(m.errorText) === norm(n.name)));
         if (dup(next) || dup(prev)) {
           k++;
-        } else if (n.live || n.requiresOpen) {
+        } else if (n.live || n.requiresOpen || n.role === 'canvas') {
           out.push(`${pad}${textLine(n)}`);
           k++;
         } else if (next?.kind === 'interactive' && !next.inline && runEnd(items, k + 1) - k <= lvl.over) {

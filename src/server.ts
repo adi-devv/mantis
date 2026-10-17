@@ -117,7 +117,7 @@ export function createServer(browser: MantisBrowser = new MantisBrowser()): McpS
     'data',
     {
       description:
-        'Prefer; text only. Hidden text behind an image/SVG/chart: alt, caption, SVG text, Chart.js/ECharts/Highcharts values. id or selector.',
+        'Prefer; text only. Hidden text behind an image/SVG/chart: alt, caption, SVG text, Chart.js/ECharts/Highcharts values. Use data({id: N}) with a number from read()/media(), or data({selector: "..."}).',
       inputSchema: visual,
     },
     async ({ id, selector }) => reply(await browser.data({ id, selector })),

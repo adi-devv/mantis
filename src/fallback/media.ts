@@ -21,7 +21,7 @@ export async function listMedia(page: Page): Promise<string> {
   if (!res.entries.length) return 'no images, canvases or charts on this page';
   const lines = res.entries.map((e) => `#${e.id} ${e.kind} ${e.text}`);
   if (res.more) lines.push(`…and ${res.more} more`);
-  lines.push('use data(id) for hidden text, ocr(id) for text in pixels, look(id) only as a last resort');
+  lines.push('use data({id: N}) for hidden text, ocr({id: N}) for text in pixels, look({id: N}) only as a last resort');
   return lines.join('\n');
 }
 
@@ -57,7 +57,7 @@ export function formatData(label: string, items: DataItem[]): string {
   const found = items.some((it) => it.charts.length > 0 || it.lines.some((l) => DESCRIPTIVE.test(l)));
   if (!found) {
     const facts = items.flatMap((it) => it.lines.filter((l) => /^(file|alt|size): /.test(l)));
-    return `${label}: no hidden text or chart data found${facts.length ? ` (${facts.join('; ')})` : ''}. Try ocr(id) for text drawn in pixels, or look(id) as a last resort.`;
+    return `${label}: no hidden text or chart data found${facts.length ? ` (${facts.join('; ')})` : ''}. Try ocr({id: N}) for text drawn in pixels, or look({id: N}) as a last resort.`;
   }
   const multi = items.length > 1;
   const budget = Math.max(400, Math.floor(DATA_CHARS / items.length));

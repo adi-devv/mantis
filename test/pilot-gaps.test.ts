@@ -57,4 +57,33 @@ describe('generic pilot gaps', () => {
     expect(result).toMatch(/^error: no element #9999/);
     expect(result).not.toContain('data({id:');
   });
+
+  it('opens ARIA and native filter groups before selecting their real control ids', async () => {
+    let view = await browser.open(fixture('generic-browser-collapsed-options.html'));
+    const colour = idOf(view, 'button "Colour"');
+    expect(view).toContain(`"Black (414 products)" (open #${colour} "Colour" first)`);
+    expect(view).not.toMatch(/Black ink is archival\." \(open #/); // near miss: prose is not an option
+    await browser.click(colour);
+    view = await browser.read();
+    expect(view).not.toContain(`open #${colour} "Colour" first`);
+    expect(await browser.click(idOf(view, 'checkbox "Black (414 products)"'))).toContain('Black (414 products) selected');
+
+    view = await browser.open(fixture('generic-browser-collapsed-options.html'));
+    const material = idOf(view, 'button "Material"');
+    await browser.click(material);
+    view = await browser.read();
+    expect(await browser.click(idOf(view, 'checkbox "Cotton"'))).toContain('Cotton selected');
+  });
+
+  it('advertises canvas data targets in read and keeps series scoped to the selected canvas', async () => {
+    const view = await browser.open(fixture('generic-data-hint.html'));
+    const trend = Number(view.match(/^\s*#(\d+) canvas "Monthly trend"/m)?.[1]);
+    const comparison = Number(view.match(/^\s*#(\d+) canvas "Comparison trend"/m)?.[1]);
+    expect(trend).toBeGreaterThan(0);
+    expect(view).toContain(`data({id: ${trend}})`);
+    expect((await browser.media())).toMatch(new RegExp(`^#${trend} canvas .*Monthly trend`, 'm'));
+    expect(await browser.data({ id: trend })).toContain('Monthly series');
+    expect(await browser.data({ id: comparison })).toContain('Comparison series');
+    expect(await browser.data({ id: comparison })).not.toContain('Monthly series'); // near miss: another chart is not the requested one
+  });
 });

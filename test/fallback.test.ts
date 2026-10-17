@@ -126,8 +126,8 @@ describe('data()', () => {
     await b.open(fixture('bigcanvas.html'));
     const out = await b.data({ selector: '#small' });
     expect(out).toContain('no hidden text or chart data found');
-    expect(out).toContain('ocr(id)');
-    expect(out).toContain('look(id)');
+    expect(out).toContain('ocr({id: N})');
+    expect(out).toContain('look({id: N})');
   });
 
   it('gives plain errors for bad targets', async () => {

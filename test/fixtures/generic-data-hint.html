@@ -1,10 +1,16 @@
 <!doctype html>
 <html><head><title>Data hint</title><style>body.empty canvas { display: none; }</style></head><body>
-<main><canvas id="trend" width="320" height="160" aria-label="Monthly trend"></canvas></main>
+<main><canvas id="trend" width="320" height="160" aria-label="Monthly trend"></canvas><canvas id="comparison" width="320" height="160" aria-label="Comparison trend"></canvas></main>
 <script>
   if (new URLSearchParams(location.search).has('empty')) document.body.classList.add('empty');
-  const canvas = document.querySelector('canvas');
-  const context = canvas.getContext('2d');
-  context.fillStyle = '#369'; context.fillRect(0, 0, 320, 160);
+  const charts = new Map();
+  window.Chart = { getChart: (canvas) => charts.get(canvas) };
+  const addChart = (canvas, label, values) => {
+    const context = canvas.getContext('2d');
+    context.fillStyle = '#369'; context.fillRect(0, 0, 320, 160);
+    charts.set(canvas, { config: { type: 'line' }, data: { labels: ['Jan', 'Feb'], datasets: [{ label, data: values }] }, options: { plugins: { title: { text: label } } } });
+  };
+  addChart(document.querySelector('#trend'), 'Monthly series', [12, 18]);
+  addChart(document.querySelector('#comparison'), 'Comparison series', [3, 5]);
 </script>
 </body></html>

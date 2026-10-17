@@ -896,6 +896,10 @@ export class MantisBrowser {
         const root = node.getRootNode();
         return node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
       };
+      const rootOf = (node: Element): Document | ShadowRoot => {
+        const root = node.getRootNode();
+        return root instanceof ShadowRoot ? root : document;
+      };
       const registry = (window as unknown as { __mantis?: { ids: WeakMap<Element, number> } }).__mantis;
       const describe = (node: Element): { id: number; name: string } | null => {
         const id = registry?.ids.get(node);
@@ -906,20 +910,19 @@ export class MantisBrowser {
         return { id, name: name || node.localName };
       };
       for (let node: Element | null = parent(target); node; node = parent(node)) {
-        if (node.getAttribute('aria-expanded') === 'false') {
-          const found = describe(node);
-          if (found) return found;
-        }
         if (node instanceof HTMLDetailsElement && !node.open) {
           const summary = Array.from(node.children).find((child): child is HTMLElement => child instanceof HTMLElement && child.localName === 'summary');
-          const found = summary ? describe(summary) : null;
+          // The summary is the opener itself, never an inactive child of its own details.
+          const found = summary && summary !== target ? describe(summary) : null;
           if (found) return found;
         }
       }
       const ids = new Set<string>();
       for (let node: Element | null = target; node; node = parent(node)) if (node.id) ids.add(node.id);
       if (!ids.size) return null;
-      for (const trigger of Array.from(document.querySelectorAll('[aria-expanded="false"][aria-controls]'))) {
+      // ARIA disclosure relationships are document/shadow-root local. Do not infer a
+      // controller from an unrelated expanded-looking ancestor or another component.
+      for (const trigger of Array.from(rootOf(target).querySelectorAll('[aria-expanded="false"][aria-controls]'))) {
         if ((trigger.getAttribute('aria-controls') || '').split(/\s+/).some((id) => ids.has(id))) {
           const found = describe(trigger);
           if (found) return found;

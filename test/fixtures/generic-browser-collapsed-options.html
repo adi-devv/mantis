@@ -1,13 +1,24 @@
 <!doctype html>
-<html><head><title>Collapsed options</title></head><body>
+<html><head><title>Collapsed options</title><style>
+  #native-options:not([open]) input, #colour-options:not(.open) input { display: none; }
+</style></head><body>
 <main>
-  <button id="colour-trigger" aria-expanded="false" aria-controls="colour-options">Colour</button>
+  <details id="native-options"><summary>Material</summary><label><input id="cotton" type="checkbox"> Cotton</label></details>
+  <button id="colour-trigger" aria-expanded="false" aria-controls="colour-options" onclick="this.setAttribute('aria-expanded', 'true'); document.querySelector('#colour-options').classList.add('open')">Colour</button>
   <div id="colour-options">
-    <label>Black (414 products)<input type="checkbox" style="display:none"></label>
-    <label>Blue (108 products)<input type="checkbox" style="display:none"></label>
+    <label>Black (414 products)<input type="checkbox"></label>
+    <label>Blue (108 products)<input type="checkbox"></label>
   </div>
   <button id="size-trigger" aria-expanded="true" aria-controls="size-options">Size</button>
   <div id="size-options"><label><input type="checkbox"> Small</label></div>
   <p>Black ink is archival.</p>
+  <p id="filter-result"></p>
 </main>
+<script>
+  document.querySelectorAll('#colour-options input, #native-options input').forEach((input) => {
+    input.addEventListener('change', () => {
+      document.querySelector('#filter-result').textContent = input.checked ? `${input.parentElement.textContent.trim()} selected` : '';
+    });
+  });
+</script>
 </body></html>
