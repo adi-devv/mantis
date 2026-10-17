@@ -1,0 +1,10 @@
+<!doctype html>
+<html><head><title>Data hint</title><style>body.empty canvas { display: none; }</style></head><body>
+<main><canvas id="trend" width="320" height="160" aria-label="Monthly trend"></canvas></main>
+<script>
+  if (new URLSearchParams(location.search).has('empty')) document.body.classList.add('empty');
+  const canvas = document.querySelector('canvas');
+  const context = canvas.getContext('2d');
+  context.fillStyle = '#369'; context.fillRect(0, 0, 320, 160);
+</script>
+</body></html>

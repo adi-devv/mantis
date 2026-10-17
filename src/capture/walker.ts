@@ -58,6 +58,8 @@ export interface RawNode {
   focused?: boolean;
   /** Control found only by the empty-page screen-reader-content pass. */
   srOnly?: boolean;
+  /** This content belongs to a closed disclosure whose trigger must be opened first. */
+  requiresOpen?: { id: number; name: string };
   /** Bounding box in document coordinates: [x, y, width, height], rounded. */
   box?: [number, number, number, number];
 }
@@ -817,7 +819,55 @@ export function walker(includeSrOnly = false): WalkResult {
 
   const buttonish: { node: RawNode; el: Element; r: DOMRect; cs: CSSStyleDeclaration }[] = [];
 
-  function emitInteractive(el: Element, role: string, parent: number, depth: number, r: DOMRect, srOnly = false): void {
+  /**
+   * A visible panel can retain text while its native controls are hidden. Preserve the text, but
+   * identify the collapsed trigger that controls the panel so it is not mistaken for an action.
+   */
+  function closedControllerFor(el: Element): { id: number; name: string } | undefined {
+    const parent = (node: Element): Element | null => {
+      const root = node.getRootNode();
+      return node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
+    };
+    const idOf = (node: Element): number => {
+      let id = reg.ids.get(node);
+      if (id === undefined) {
+        id = reg.next++;
+        reg.ids.set(node, id);
+        reg.byId.set(id, new WeakRef(node));
+      }
+      return id;
+    };
+    const describe = (node: Element): { id: number; name: string } | undefined => {
+      const role = interactiveRole(node, explicitRole(node), getComputedStyle(node));
+      if (!role || !node.getClientRects().length) return undefined;
+      return { id: idOf(node), name: cap(accName(node, role) || collapse(node.textContent || '') || role, 60) };
+    };
+    for (let node: Element | null = el.parentElement; node; node = parent(node)) {
+      if (node.getAttribute('aria-expanded') === 'false') {
+        const found = describe(node);
+        if (found) return found;
+      }
+      if (node instanceof HTMLDetailsElement && !node.open) {
+        const summary = Array.from(childrenOf(node)).find((child): child is HTMLElement => child instanceof HTMLElement && child.localName === 'summary');
+        if (summary) {
+          const found = describe(summary);
+          if (found) return found;
+        }
+      }
+    }
+    const ids = new Set<string>();
+    for (let node: Element | null = el; node; node = parent(node)) if (node.id) ids.add(node.id);
+    if (!ids.size) return undefined;
+    for (const trigger of Array.from(document.querySelectorAll('[aria-expanded="false"][aria-controls]'))) {
+      if ((trigger.getAttribute('aria-controls') || '').split(/\s+/).some((id) => ids.has(id))) {
+        const found = describe(trigger);
+        if (found) return found;
+      }
+    }
+    return undefined;
+  }
+
+  function emitInteractive(el: Element, role: string, parent: number, depth: number, r: DOMRect, srOnly = false, requiresOpen?: { id: number; name: string }): void {
     const t = el.localName;
     const states: string[] = [];
     let ownName = accName(el, role);
@@ -827,6 +877,7 @@ export function walker(includeSrOnly = false): WalkResult {
       inViewport: inView(r), covered: isCovered(el, r),
     };
     if (srOnly) node.srOnly = true;
+    if (requiresOpen) node.requiresOpen = requiresOpen;
     if (!node.name) {
       const guess = cap(inferName(el, role), 40);
       if (guess) { node.name = guess; node.inferred = true; }
@@ -1107,7 +1158,7 @@ export function walker(includeSrOnly = false): WalkResult {
     return pending.length === 0 && foundEscape;
   }
 
-  function visit(el: Element, parent: number, depth: number, box: DOMRect, inheritedSr = false): void {
+  function visit(el: Element, parent: number, depth: number, box: DOMRect, inheritedSr = false, inheritedOpen?: { id: number; name: string }): void {
     if (nodes.length >= MAX_NODES) { truncated = true; return; }
     if (el.localName === 'canvas') { canvasMark(el, parent, depth); return; }
     if (SKIP.has(el.localName)) return;
@@ -1119,6 +1170,7 @@ export function walker(includeSrOnly = false): WalkResult {
 
     const contents = cs.display === 'contents';
     const r = contents ? box : el.getBoundingClientRect();
+    const requiresOpen = inheritedOpen ?? closedControllerFor(el);
     const clips = cs.overflowX !== 'visible' || cs.overflowY !== 'visible';
     if (!includeSrOnly && !contents && (r.width === 0 || r.height === 0) && clips && !hasPositionedEscape(el)) return; // e.g. collapsed accordion panel
     const srOnly = inheritedSr || screenReaderOnly(el, cs, r);
@@ -1131,7 +1183,7 @@ export function walker(includeSrOnly = false): WalkResult {
     const explicit = explicitRole(el);
     const role = interactiveRole(el, explicit, cs);
     if (role) {
-      if (shown) emitInteractive(el, role, parent, depth, r, srOnly);
+      if (shown) emitInteractive(el, role, parent, depth, r, srOnly, requiresOpen);
       return;
     }
 
@@ -1139,14 +1191,18 @@ export function walker(includeSrOnly = false): WalkResult {
     if (shown && explicit && LABELLED_ROLES.has(explicit)) {
       const label = collapse(el.getAttribute('aria-label') || el.getAttribute('title') || '');
       if (label && !suppressText) {
-        nodes.push(stamp({ kind: 'text', role: 'text', name: cap(label, 120), states: [], parent, depth, inViewport: inView(r), covered: false }, r));
+        const node = stamp({ kind: 'text', role: 'text', name: cap(label, 120), states: [], parent, depth, inViewport: inView(r), covered: false }, r);
+        if (requiresOpen) node.requiresOpen = requiresOpen;
+        nodes.push(node);
         if (!el.querySelector(INTERACTIVE_SEL)) return;
       }
     }
     if (shown && !suppressText && !LABELLED_ROLES.has(explicit)) {
       const rating = ratingText(el);
       if (rating) {
-        nodes.push(stamp({ kind: 'text', role: 'text', name: cap(rating, 120), states: [], parent, depth, inViewport: inView(r), covered: false }, r));
+        const node = stamp({ kind: 'text', role: 'text', name: cap(rating, 120), states: [], parent, depth, inViewport: inView(r), covered: false }, r);
+        if (requiresOpen) node.requiresOpen = requiresOpen;
+        nodes.push(node);
         if (!el.querySelector(INTERACTIVE_SEL)) return;
       }
     }
@@ -1155,7 +1211,9 @@ export function walker(includeSrOnly = false): WalkResult {
         const name = cap(deepText(el, 200), 80);
         const lvl = tag.length === 2 && tag[0] === 'h' ? Number(tag[1]) : Number(el.getAttribute('aria-level')) || 2;
         if (name) {
-          nodes.push(stamp({ kind: 'heading', role: 'heading', name, level: lvl, states: [], parent, depth, inViewport: inView(r), covered: false }, r));
+          const node = stamp({ kind: 'heading', role: 'heading', name, level: lvl, states: [], parent, depth, inViewport: inView(r), covered: false }, r);
+          if (requiresOpen) node.requiresOpen = requiresOpen;
+          nodes.push(node);
         }
       }
       // Links inside headings (article cards) still need to be emitted.
@@ -1173,7 +1231,9 @@ export function walker(includeSrOnly = false): WalkResult {
     if (live && shown && !suppressText && !COMPOSITE_ROLES.has(explicit)) {
       const msg = cap(deepText(el, 200), 120);
       if (msg && /[\p{L}\p{N}]/u.test(msg)) {
-        nodes.push(stamp({ kind: 'text', role: 'text', name: msg, live, states: [], parent, depth, inViewport: inView(r), covered: false }, r));
+        const node = stamp({ kind: 'text', role: 'text', name: msg, live, states: [], parent, depth, inViewport: inView(r), covered: false }, r);
+        if (requiresOpen) node.requiresOpen = requiresOpen;
+        nodes.push(node);
         if (!el.querySelector(INTERACTIVE_SEL)) return;
         const prev = suppressText;
         suppressText = true;
@@ -1198,8 +1258,14 @@ export function walker(includeSrOnly = false): WalkResult {
     } else if (shown && !suppressText) {
       const t = deepText(el, 81);
       const isProseTag = PROSE_TAGS.has(tag);
-      if (t && t.length <= 80 && !el.shadowRoot && !el.querySelector(LEAF_BLOCKER)) {
-        nodes.push(stamp({ kind: isProseTag && t.length >= 40 ? 'prose' : 'text', role: 'text', name: t, states: [], parent, depth, inViewport: inView(r), covered: false }, r));
+      // A visually present label can be the only useful representation of an option whose
+      // native control is hidden until its closed group is opened. Keep that text with the
+      // controller guidance instead of letting the hidden descendant suppress it.
+      const collapsedHiddenLabel = !!requiresOpen && tag === 'label';
+      if (t && t.length <= 80 && !el.shadowRoot && (!el.querySelector(LEAF_BLOCKER) || collapsedHiddenLabel)) {
+        const node = stamp({ kind: isProseTag && t.length >= 40 ? 'prose' : 'text', role: 'text', name: t, states: [], parent, depth, inViewport: inView(r), covered: false }, r);
+        if (requiresOpen) node.requiresOpen = requiresOpen;
+        nodes.push(node);
         return;
       }
       if ((t.length > 80 || (isProseTag && t.length >= 40)) && !el.shadowRoot && !el.querySelector(BLOCK_SEL)) {
@@ -1210,7 +1276,9 @@ export function walker(includeSrOnly = false): WalkResult {
         for (const a of Array.from(el.querySelectorAll('a,button')).slice(0, 60)) linkLen += deepText(a, 200).length;
         const plain = full.length - linkLen;
         if (plain >= 40 && plain >= full.length * 0.5) {
-          nodes.push(stamp({ kind: 'prose', role: 'text', name: cap(full, 1200), states: [], parent, depth, inViewport: inView(r), covered: false }, r));
+          const node = stamp({ kind: 'prose', role: 'text', name: cap(full, 1200), states: [], parent, depth, inViewport: inView(r), covered: false }, r);
+          if (requiresOpen) node.requiresOpen = requiresOpen;
+          nodes.push(node);
           proseHere = true;
         }
       }
@@ -1219,30 +1287,32 @@ export function walker(includeSrOnly = false): WalkResult {
     const prevProse = inProse;
     const prevSuppress = suppressText;
     if (proseHere) { inProse = true; suppressText = true; }
-    visitChildren(el, childParent, childDepth, r, shown, childSr);
+    visitChildren(el, childParent, childDepth, r, shown, childSr, requiresOpen);
     inProse = prevProse;
     suppressText = prevSuppress;
   }
 
   /** Visit child nodes of `el`, tagging repeated sibling rows; text nodes become `text` nodes. */
-  function visitChildren(el: Element, parent: number, depth: number, r: DOMRect, textShown = false, inheritedSr = false): void {
+  function visitChildren(el: Element, parent: number, depth: number, r: DOMRect, textShown = false, inheritedSr = false, inheritedOpen?: { id: number; name: string }): void {
     const kids = childrenOf(el);
     const rows = curRow < 0 ? detectRows(kids.filter((c): c is Element => c.nodeType === 1)) : null;
     for (const c of kids) {
       if (c.nodeType === 3) {
         const t = collapse(c.nodeValue ?? '');
         if (textShown && !suppressText && t.length <= 80 && /[\p{L}\p{N}]/u.test(t)) {
-          nodes.push(stamp({ kind: 'text', role: 'text', name: t, states: [], parent, depth, inViewport: inView(r), covered: false }, r));
+          const node = stamp({ kind: 'text', role: 'text', name: t, states: [], parent, depth, inViewport: inView(r), covered: false }, r);
+          if (inheritedOpen) node.requiresOpen = inheritedOpen;
+          nodes.push(node);
         }
       } else if (c.nodeType === 1) {
         const info = rows?.get(c as Element);
         if (info) {
           curRow = info.row;
           curGroup = info.group;
-          visit(c as Element, parent, depth, r, inheritedSr);
+          visit(c as Element, parent, depth, r, inheritedSr, inheritedOpen);
           curRow = curGroup = -1;
         } else {
-          visit(c as Element, parent, depth, r, inheritedSr);
+          visit(c as Element, parent, depth, r, inheritedSr, inheritedOpen);
         }
       }
     }

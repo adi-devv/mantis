@@ -65,18 +65,27 @@ landmarks and dialogs; headings as `#`-prefixed text without an id; other text o
    the tool vs the agent. Mostly deterministic (before/after evidence frames per action); the LLM part uses a
    fixed rubric. It can't be blind, because tool output reveals the tool. Needs the tool-call traces saved
    next to the results; cloud runs don't push them yet.
-2. **Click blocked by a dimmed panel.** In `haiku-evidence-1`, Mantis found a qualifying result on a map site
-   but couldn't open it: a dimmed side panel blocked clicks (runs 2 and 3, 9–11 tool errors). Fix generically,
-   with a synthetic fixture (a passing case and a near miss).
+2. **Click blocked by a dimmed panel.** Done (dimmed panel waits; blocker diagnosis now tells inactive/collapsed
+   menus from dismissible overlays; collapsed filter options say "open first"; `data()` hint names the canvas id).
+   Pilot (luna, Mantis only, 4 real-site tasks) found no silent Mantis failures; 3 of 4 non-clean runs were agent
+   early stopping or a site sign-in prompt.
 3. **Outcome judge.** Keep the per-step evidence frames; the headline judge moves to a stronger model later.
    - Add a "site broken" status: a site that errors for every approach should be excluded like "blocked",
      not counted as a failure (the tax task in `haiku-evidence-1`).
    - The judged `.md` header still describes the old packet (final reply + final screenshot).
    - Cloud briefs must carry each task's `checks` (the swimsuit row had none).
-4. Unbiased eval on a frozen version: ~50 tasks from WebVoyager or Online-Mind2Web on real sites. Mantis vs
+4. **Sarvam credits (INR 2,00,702).** Move spend off Claude/Codex onto Sarvam's API.
+   - Probe first (`bench/agent/sarvam-probe.ts`): which models answer on the key, tool calling, image input, JSON
+     reliability, latency, cost. Docs conflict on pricing and on tool calling; beta models roll out gradually.
+   - Judge: `JUDGE_PROVIDER=sarvam` (Gemma 4 31B with screenshots, DeepSeek V4.1 Flash for text-only and the
+     tool judge, sarvam-105b fallback). Calibrate against the existing sol verdicts before it becomes the default.
+   - Agent under test: a Sarvam provider (own tool loop over Mantis's MCP tools; GLM-5.3 / DeepSeek V4.1 Flash)
+     run beside luna and Haiku. It becomes the default for routine cases only if within a few points of luna.
+   - Bulk trace and log analysis on the 1M-context models. Planning and review stay on sol.
+5. Unbiased eval on a frozen version: ~50 tasks from WebVoyager or Online-Mind2Web on real sites. Mantis vs
    Playwright MCP vs each agent's native browser tool (Claude in Chrome or computer use; Codex's built-in
    browser). Outcome judge and tool judge, 3 runs, report per task.
-5. A GitHub release with the real-site numbers.
+6. A GitHub release with the real-site numbers.
 
 Later: fallback tools inside iframes; add Chrome DevTools MCP and browser-use to the token replay.
 
@@ -167,3 +176,5 @@ Later: fallback tools inside iframes; add Chrome DevTools MCP and browser-use to
   verdicts right; the drop is Haiku's run-to-run variance plus a tax site that was broken in the cloud. Most
   failures were the model: every approach failed the map task, and swimsuit runs stalled on size mapping.
   One Mantis bug: next step 2.
+- 2026-10-17: Pilot on luna (Mantis only): no silent tool failures. Fixed the three generic gaps it exposed (blocker
+  diagnosis, collapsed filter options, canvas `data()` hint). Added Sarvam credits plan (next steps 4).

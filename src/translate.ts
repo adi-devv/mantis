@@ -84,6 +84,7 @@ interface LineOpts {
 /** One control as a line: `#14 button "Save" (primary)`; guessed names are marked `~"name"`. */
 export function interactiveLine(n: RawNode, o: LineOpts = {}): string {
   const parts = n.states.map((s) => (s === 'error' && n.errorText ? `error: "${quote(clip(n.errorText, 60))}"` : s));
+  if (n.requiresOpen) parts.push(`open #${n.requiresOpen.id} "${quote(n.requiresOpen.name)}" first`);
   if (n.value) parts.push(`value "${quote(n.value)}"`);
   if (n.options?.length) parts.push(`options: ${n.options.map(quote).join(' | ')}`);
   if (n.href && o.showHref) parts.push(`href ${n.href}`);
@@ -96,7 +97,8 @@ export function interactiveLine(n: RawNode, o: LineOpts = {}): string {
 /** Plain text line; live messages (alerts, toasts) are flagged. */
 export function textLine(n: RawNode): string {
   const mark = n.live === 'alert' ? '⚠ ' : n.live === 'status' ? 'ℹ ' : '';
-  return `${mark}"${quote(n.name)}"`;
+  const open = n.requiresOpen ? ` (open #${n.requiresOpen.id} "${quote(n.requiresOpen.name)}" first)` : '';
+  return `${mark}"${quote(n.name)}"${open}`;
 }
 
 function regionLine(n: RawNode): string {
@@ -469,7 +471,7 @@ function renderBody(nodes: RawNode[], lvl: Level, ctx: Ctx): { lines: string[]; 
           m?.kind === 'interactive' && (norm(m.name) === norm(n.name) || (!!m.errorText && norm(m.errorText) === norm(n.name)));
         if (dup(next) || dup(prev)) {
           k++;
-        } else if (n.live) {
+        } else if (n.live || n.requiresOpen) {
           out.push(`${pad}${textLine(n)}`);
           k++;
         } else if (next?.kind === 'interactive' && !next.inline && runEnd(items, k + 1) - k <= lvl.over) {

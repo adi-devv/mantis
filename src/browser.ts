@@ -347,6 +347,11 @@ export class MantisBrowser {
   async click(id: number): Promise<string> {
     return this.act(async (page) => {
       const { el, label } = await this.target(page, id);
+      const inactive = await this.inactiveController(el);
+      if (inactive) {
+        await el.dispose();
+        throw new ActionError(this.inactiveMessage(label, inactive));
+      }
       const associatedLabel = await this.renderedAssociatedLabel(el);
       let cover = await this.coveredBy(el, associatedLabel);
       let navigation: ReturnType<MantisBrowser['watchNavigation']> | null = null;
@@ -603,7 +608,17 @@ export class MantisBrowser {
   async data(target: Target): Promise<string> {
     return this.guard(async () => {
       const page = await this.activePage();
-      const { el, label } = await this.visualTarget(page, target);
+      let resolved: { el: ElementHandle<Element>; label: string };
+      try {
+        resolved = await this.visualTarget(page, target);
+      } catch (e) {
+        if (!(e instanceof ActionError)) throw e;
+        const media = await listMedia(page).catch(() => '');
+        const canvas = media.match(/^#(\d+) canvas\b/m);
+        const hint = canvas ? `; a canvas is available — try data({id: ${canvas[1]}})` : '';
+        throw new ActionError(`${e.message}${hint}`);
+      }
+      const { el, label } = resolved;
       try {
         return formatData(label, await describeElement(el));
       } finally {
@@ -874,6 +889,46 @@ export class MantisBrowser {
     return { el: found.el, label: this.labels.get(id) ?? `#${id}` };
   }
 
+  /** A target may still have a box while its disclosure is logically closed. */
+  private async inactiveController(el: ElementHandle<Element>): Promise<{ id: number; name: string } | null> {
+    return el.evaluate((target) => {
+      const parent = (node: Element): Element | null => {
+        const root = node.getRootNode();
+        return node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
+      };
+      const registry = (window as unknown as { __mantis?: { ids: WeakMap<Element, number> } }).__mantis;
+      const describe = (node: Element): { id: number; name: string } | null => {
+        const id = registry?.ids.get(node);
+        if (id === undefined || !node.getClientRects().length) return null;
+        const name = (node.getAttribute('aria-label') || node.getAttribute('title') ||
+          (node instanceof HTMLElement ? node.innerText : node.textContent) || node.localName)
+          .replace(/\s+/g, ' ').trim().slice(0, 60);
+        return { id, name: name || node.localName };
+      };
+      for (let node: Element | null = parent(target); node; node = parent(node)) {
+        if (node.getAttribute('aria-expanded') === 'false') {
+          const found = describe(node);
+          if (found) return found;
+        }
+        if (node instanceof HTMLDetailsElement && !node.open) {
+          const summary = Array.from(node.children).find((child): child is HTMLElement => child instanceof HTMLElement && child.localName === 'summary');
+          const found = summary ? describe(summary) : null;
+          if (found) return found;
+        }
+      }
+      const ids = new Set<string>();
+      for (let node: Element | null = target; node; node = parent(node)) if (node.id) ids.add(node.id);
+      if (!ids.size) return null;
+      for (const trigger of Array.from(document.querySelectorAll('[aria-expanded="false"][aria-controls]'))) {
+        if ((trigger.getAttribute('aria-controls') || '').split(/\s+/).some((id) => ids.has(id))) {
+          const found = describe(trigger);
+          if (found) return found;
+        }
+      }
+      return null;
+    }).catch(() => null);
+  }
+
   /**
    * What sits on top of the element's center, if it is something unrelated to the element (an overlay).
    * Hit-tests through open shadow roots. A descendant, an ancestor and an associated label all
@@ -969,13 +1024,15 @@ export class MantisBrowser {
         for (const b of candidates) {
           if (b !== n && !n.contains(b)) continue;
           if (!rendered(b) || (b as HTMLButtonElement).disabled || b.getAttribute('aria-disabled') === 'true') continue;
-          interactive = true;
           const name = (b.getAttribute('aria-label') || b.getAttribute('title') || b.textContent || '').replace(/\s+/g, ' ').trim();
           const id = idOfNode(b);
           if (id !== undefined && !seenControls.has(id)) { seenControls.add(id); controls.push({ id, name: name || b.localName }); }
           if (!close && id !== undefined && CLOSE.test(name)) close = { id, name };
         }
       }
+       // Arbitrary links/buttons in page content do not make a layer dismissible. A semantic modal
+       // or an explicitly named close control does; those are safe, actionable dismissal advice.
+       if (close) interactive = true;
       // Visually empty: the hit element has no text, content, background, border or shadow, and no layer above
       // it (up to the one that holds the target) paints over the center. Ancestors' content elsewhere does not matter.
       const clear = (c: string): boolean => c === 'transparent' || /^rgba\(.*,\s*0\)$/.test(c) || /\/\s*0(\.0+)?%?\s*\)$/.test(c);
@@ -1022,11 +1079,15 @@ export class MantisBrowser {
     const close = cover.close ? ` (try #${cover.close.id} "${cover.close.name}")` : '';
     if (!cover.interactive && !cover.invisible) {
       const direct = href ? `; href ${href}; try open("${href}")` : '';
-      return `${plain} is covered by another element, a non-interactive overlay, ${by}; nothing to dismiss (the page may be loading or the region is inactive)${direct}`;
+      return `${plain} is covered by another element, a non-dismissible layer, ${by}; nothing to dismiss (the page may be loading or the region is inactive)${direct}`;
     }
     const controls = cover.controls.filter((control) => control.id !== cover.close?.id).slice(0, 3)
       .map((control) => `#${control.id} "${control.name}"`).join(', ');
     return `${plain} is covered by another element, ${by}; dismiss that first${close}${controls ? ` (controls: ${controls})` : ''}`;
+  }
+
+  private inactiveMessage(label: string, controller: { id: number; name: string }): string {
+    return `${label.replace(' (password)', '')} is inside a collapsed or inactive section; open #${controller.id} "${controller.name}" first`;
   }
 
   private explain(e: unknown, label: string): string {
@@ -1034,7 +1095,7 @@ export class MantisBrowser {
     const plain = label.replace(' (password)', '');
     const clickFailure = classifyClickError(e);
     if (clickFailure === 'intercepted') {
-      return `${plain} is covered by another element (an overlay or dialog); dismiss that first`;
+      return `${plain} is covered by another element; call read() to inspect what is blocking it`;
     }
     if (clickFailure === 'not-visible') {
       return `${plain} is not visible; try scroll(#id) or read() again`;
@@ -1111,6 +1172,8 @@ export class MantisBrowser {
     if (current.checked === on) return;
     // A radio cannot be unchecked by clicking it.
     if (current.radio && !on) throw new ActionError(`${label} is a radio; select another option instead`);
+    const inactive = await this.inactiveController(el);
+    if (inactive) throw new ActionError(this.inactiveMessage(label, inactive));
     const associatedLabel = await this.renderedAssociatedLabel(el);
     const cover = await this.coveredBy(el, associatedLabel);
     try {
