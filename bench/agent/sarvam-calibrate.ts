@@ -21,6 +21,8 @@ export interface CalibrationDisagreement {
 export interface CalibrationReport {
   final: Agreement; raw: Agreement; rawProxyPairs: number; independentRawPairs: number;
   disagreements: CalibrationDisagreement[]; issues: CalibrationIssue[]; sources: string[];
+  /** Routing-policy outcomes are reported separately; they are not model verdict agreement. */
+  routing: { deterministic: number; status: number; mixed: number };
 }
 export interface CalibrationOptions {
   resultsDir?: string; names?: string[]; rows?: RealsiteRow[];
@@ -29,7 +31,7 @@ export interface CalibrationOptions {
 }
 
 const emptyAgreement = (): Agreement => ({ total: 0, matches: 0, matrix: CALIBRATION_VERDICTS.map(() => CALIBRATION_VERDICTS.map(() => 0)) });
-export const createCalibrationReport = (): CalibrationReport => ({ final: emptyAgreement(), raw: emptyAgreement(), rawProxyPairs: 0, independentRawPairs: 0, disagreements: [], issues: [], sources: [] });
+export const createCalibrationReport = (): CalibrationReport => ({ final: emptyAgreement(), raw: emptyAgreement(), rawProxyPairs: 0, independentRawPairs: 0, disagreements: [], issues: [], sources: [], routing: { deterministic: 0, status: 0, mixed: 0 } });
 const identity = (r: Pick<JudgedRun, 'task' | 'approach' | 'run'>): string => runKey(r.task, r.approach, r.run);
 function countAgreement(stats: Agreement, old: Verdict, current: Verdict): void {
   stats.total++;
@@ -53,6 +55,14 @@ export function compareCalibration(source: string, baseline: JudgedRun[], curren
     if (run.judgeError || old.judgeError || /^judge error:|^unparseable judge reply:/i.test(old.reason)) { report.issues.push({ source, identity: key, kind: 'error', reason: run.judgeError ?? old.judgeError ?? 'Sol baseline has a judge error, not a verdict.' }); continue; }
     if (!CALIBRATION_VERDICTS.includes(old.verdict) || !CALIBRATION_VERDICTS.includes(run.verdict)) {
       report.issues.push({ source, identity: key, kind: 'error', reason: 'Invalid verdict in calibration input.' }); continue;
+    }
+    const oldRouting = old.grading === 'deterministic' || old.grading === 'status';
+    const newRouting = run.grading === 'deterministic' || run.grading === 'status';
+    if (oldRouting || newRouting) {
+      if (old.grading === 'deterministic' && run.grading === 'deterministic') report.routing.deterministic++;
+      else if (old.grading === 'status' && run.grading === 'status') report.routing.status++;
+      else report.routing.mixed++;
+      continue;
     }
     const oldRaw = old.judgeVerdict ?? old.verdict;
     const newRaw = run.judgeVerdict ?? run.verdict;
@@ -126,7 +136,7 @@ export function renderCalibration(report: CalibrationReport): string {
   lines.push('', `Raw comparison: ${report.independentRawPairs} pairs have independent judgeVerdict values; ${report.rawProxyPairs} use a final-verdict proxy where judgeVerdict was not saved.`, '', 'Per-task disagreements:');
   if (!report.disagreements.length) lines.push('None.');
   for (const d of report.disagreements) lines.push(`- ${d.source}: ${d.task} / ${d.approach} / run ${d.run}: final ${d.old} -> ${d.new}; raw ${d.oldRaw} -> ${d.newRaw}${d.rawProxy ? ' (final proxy)' : ''}`, `  Sol: ${d.oldReason}`, `  Sarvam: ${d.newReason}`);
-  lines.push('', 'Skipped / unmatched / errors (excluded from agreement):');
+  lines.push('', `Routing outcomes excluded from model agreement: ${report.routing.deterministic} deterministic pairs, ${report.routing.status} status pairs, ${report.routing.mixed} mixed-routing pairs.`, '', 'Skipped / unmatched / errors (excluded from agreement):');
   if (!report.issues.length) lines.push('None.');
   for (const issue of report.issues) lines.push(`- ${issue.kind}: ${issue.source}${issue.identity ? ` / ${issue.identity}` : ''}: ${issue.reason}`);
   return lines.join('\n') + '\n';

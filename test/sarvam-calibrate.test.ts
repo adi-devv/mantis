@@ -41,6 +41,15 @@ describe('Sarvam calibration agreement', () => {
     expect(invalid.final.total).toBe(0);
     expect(invalid.issues[0]?.reason).toContain('Invalid raw');
   });
+
+  it('reports deterministic and status routing separately from model agreement', () => {
+    const baseline = [{ ...run('mantis', 'success'), grading: 'deterministic' as const }, { ...run('tree', 'failure'), grading: 'status' as const }];
+    const current = report([{ ...run('mantis', 'success'), grading: 'deterministic' as const }, { ...run('tree', 'failure'), grading: 'judge' as const }]);
+    const calibration = compareCalibration('synthetic', baseline, current);
+    expect(calibration.final.total).toBe(0);
+    expect(calibration.routing).toEqual({ deterministic: 1, status: 0, mixed: 1 });
+    expect(renderCalibration(calibration)).toContain('Routing outcomes excluded from model agreement');
+  });
 });
 
 describe('Sarvam calibration saved-source pipeline', () => {

@@ -28,7 +28,7 @@ targets in each tool's own output, so no model is involved. The method is at the
 
 ## Real-agent eval
 
-Needs a logged-in Codex CLI (`codex login`) by default. `AGENT_PROVIDER=claude` uses Claude Code instead; `AGENT_PROVIDER=sarvam` calls Sarvam V2 directly (set `SARVAM_API_KEY` in the environment or ignored `.env`).
+Needs a logged-in Codex CLI (`codex login`) by default. `AGENT_PROVIDER=claude` uses Claude Code instead; `AGENT_PROVIDER=sarvam` calls Sarvam V2 directly (store `SARVAM_API_KEY` only in gitignored `.env`).
 
 ```bash
 npm run bench:agent                                                                   # pilot: 2 tasks x 3 approaches
@@ -56,7 +56,11 @@ AGENT_OUT=my-subset AGENT_APPROACHES=mantis,tree npm run bench:agent            
 Categories: `forms`, `reading`, `lists`, `overlays`, `navigation`, `dynamic`, `visual`, and `long`
 (multi-step tasks of 15 to 27 actions).
 
-Sarvam agent models are `gemma-4-31b`, `deepseek-v4.1-flash`, `glm-5.3`, and `sarvam-105b` (the first two can receive image tool results). The harness converts the selected MCP server's tool schemas to OpenAI-style function tools, writes the usual per-attempt JSONL trace/evidence packets, retries malformed tool arguments once, and uses Sarvam's shared retry/backoff client. Sarvam costs in result JSON/Markdown are INR estimates from published token pricing; USD remains unknown. Sarvam result/trace summaries include API attempts, response tokens, and HTTP 429 counts.
+Sarvam agent models are `gemma-4-31b`, `deepseek-v4.1-flash`, `glm-5.3`, and `sarvam-105b` (the first two can receive image tool results). Use Sarvam primarily as the agent under test on fixture tasks with deterministic graders. Match task rows, repetitions, budgets and approaches on one model per table; Luna/Haiku remain headline numbers, with consequential findings confirmed on those models. Start with repaired live protocol pilots; promote triage to regression screening only after repeated held-out rankings reproduce Luna/Haiku beyond measured noise. Do not use text-only models for visual tasks or Sarvam as sole authority for benchmark claims.
+
+The harness converts MCP schemas to function tools, writes per-attempt JSONL traces/evidence, retries malformed tool arguments once, and uses Sarvam's retry/backoff client. Traces now retain full replies, tool arguments and result text; the judge parses Sarvam traces for the full reply and `FINAL_URL`. Sarvam costs are published-rate INR estimates; USD remains unknown. Summaries include API attempts, response tokens and HTTP 429 counts.
+
+Trace/log analysis and doc summaries are trials: require source references (file/step/frame), with sol sampling for omissions and invented claims. DeepSeek can trial structured extraction, failure clustering and candidate answer-key annotations; sol verifies keys against sources and passing/near-miss graders. `sarvam-105b` drafts summaries with reasoning off. Before relying on analysis, audit flagged and unflagged traces for attribution precision/recall; measure summary omissions, unsupported claims and net reviewer usage/time saved. Outcome-judge calibration does not validate these uses.
 
 ### Real-site tasks (blind judge)
 
@@ -67,16 +71,20 @@ The agent ends with a `FINAL_URL:` line, so the usual grading only checks that i
 
 - **Evidence frames.** For Mantis, tree and screenshot runs the harness (not the agent) also captures a 1280x800 viewport frame plus page state (URL, visible text, rendered form values) after each agent tool result, in the background through its own channel on the same MCP server (`agent/mcp-proxy.ts`; it adds nothing to the agent's tool calls, turns or CLI timings). Near-duplicates are dropped and at most 12 frames are kept, always including the first and the final one. They are saved beside the run log as `<run>.step-NN.png`, `<run>.final.png` and a sidecar `<run>.evidence.json`; the result row gets `evidencePath`, `evidenceFrames` and `timings.captureMs` (summary row "Harness capture"). For the tree, the page state comes from the evaluate tool, which the agent cannot use; pages whose CSP forbids `eval` give that frame no text.
 - **Judge packet.** Runs with `evidenceFrames` are judged on a chronological packet: each frame's URL, image and page text (earlier frames downscaled to about 640x400 and cut to ~1,200 characters of text; the final frame full size, with its form values), with no step numbers or tool names. The judge replies with `evidence` frame IDs it relied on. Older rows without `evidenceFrames` are judged exactly as before. The judged report ends with an "Evidence and checks" section.
-- **Answer-key checks.** Every evaluated row should carry `"checks": {"answerIncludes": [...], "evidenceIncludes": [...]}` (case-insensitive, whitespace collapsed; at least one non-empty list is required). Every `answerIncludes` string must be in the agent's full reply and every `evidenceIncludes` string in some frame's page text. If any check fails the verdict becomes failure (`Checks failed: ...`); `judgeVerdict` keeps the judge's own verdict, and the report lists runs where check and judge disagree. Loading a task file flags every row whose checks are missing or malformed.
+- **Answer-key checks.** Every evaluated row should carry `"checks": {"answerIncludes": ["..."], "evidenceIncludes": ["..."]}` (at least one list required; every supplied list must be nonempty with nonblank strings). Matching ignores case and collapses whitespace. Every answer string must be in the full reply and every evidence string in some frame's page text; URLs and structured form values are not checked. On evidence-format runs, checks run after the model: a failure overrides its verdict (`Checks failed: ...`), while `judgeVerdict` retains the original. Passing checks do not establish success or avoid a judge call.
+
+The "298 rows missing answer-key checks" warning is an annotation gap: the local catalog has 300 rows, only two with checks. The loader warns across the whole catalog before sampling and still loads the rows; `checks` is a repo extension, not supplied by the imported dataset.
+
+Plan ([answer-key review](../.codex-jobs/answerkey-mantis-sol.out.md)): freeze about 30 explicit tasks (target 8 easy / 14 medium / 8 hard), aiming for about 20 fully verifiable and 10 live/ambiguous tasks. Add reviewed keys for stable facts, fixed references and verified outputs; retain sol judging against saved evidence for changing or ambiguous answers. Stateful tasks need final URL/form/result predicates together, not scattered matching labels. Complete deterministic validators are implemented as an opt-in: a captured final state can pass or fail them before paid judging; missing final evidence falls back to the judge, and explicit access blocks remain blocked adjudications. Require successful runs, captured evidence and passing/near-miss grader tests in `test/fixture-verification.test.ts`. Keep identical rows/repetitions for Mantis/tree/screenshot, separately for Luna and Haiku.
 
 ### Sarvam judge and capability probe
 
-`JUDGE_PROVIDER=sarvam` uses Sarvam credits instead of the Codex or Claude judge.
-Set `SARVAM_API_KEY` in the environment or the repo's gitignored `.env`; existing environment
+Keep `gpt-6.1-sol`, high reasoning, as the default judge; Sonnet covers cloud sessions where Codex is unavailable. `JUDGE_PROVIDER=sarvam` is for calibration/shadow trials until the gate passes: at least 100 packets across 30 tasks, 95% agreement and no more than 2% false successes. A judge never grades its own model's runs, including aliases/resolved IDs.
+Store `SARVAM_API_KEY` only in the repo's gitignored `.env`; existing environment
 values take precedence. The client never logs keys or raw API response bodies. Run the capability
 probe first; beta access is granted per API key, so a listed model need not accept requests.
 
-All Sarvam requests (agent, judge, probe, and calibration) share one limiter: `SARVAM_RPM` (default 30 requests/minute) and 429 cooldowns are shared across processes through a small file in the OS temp directory (times only, no keys), while `SARVAM_CONCURRENCY` (default 2 active requests) applies per process. Every worker waits out a published cooldown, and the request timeout starts only after the limiter grants a slot. Transient requests retry up to six total attempts with jittered exponential backoff (honoring a longer `Retry-After`). `AGENT_CONCURRENCY` and `JUDGE_CONCURRENCY` default to 2 for Sarvam (other providers keep their normal defaults). Raise the Sarvam variables only when the key's actual quota permits it.
+`SARVAM_RPM` (default 30 requests/minute) and 429 cooldowns are shared across agent, judge, probe and calibration processes through a small file in the OS temp directory (times only, no keys). `SARVAM_CONCURRENCY` (default 2 active requests) applies per process, so run one Sarvam job at a time. Every worker waits out a published cooldown; request timeout starts only after a slot is granted. Transient requests retry up to six total attempts with jittered exponential backoff (honoring a longer `Retry-After`). `AGENT_CONCURRENCY` and `JUDGE_CONCURRENCY` default to 2 for Sarvam. Raise limits only when the key's actual quota permits it.
 
 ```powershell
 npm --prefix bench/agent run bench:sarvam-probe
@@ -107,19 +115,14 @@ The supplied model names are accepted as aliases for the current API IDs:
 | `glm-5.3` | `glm5.3` |
 
 With no `JUDGE_MODEL`, each packet containing screenshots selects `gemma-4-31b`; a text-only
-packet selects `deepseek-v4.1-flash`. Screenshots are sent inline in chronological order,
-with the existing blind prompt, frame IDs, verdict schema and deterministic checks. JSON judge
+packet selects `deepseek-v4.1-flash`. Vision models receive screenshots inline in chronological order.
+Explicit text-only models (`glm-5.3`, `sarvam-105b`) now omit images and retain chronological frame text, URLs, form values and evidence IDs, with images marked unavailable. This mode needs separate recalibration; escalate decisions that depend on images to sol. The blind verdict schema and deterministic checks remain. JSON judge
 calls prefer the API JSON-object format and fall back to the strict prompt-only JSON contract if
 that beta route does not support it. `sarvam-105b` tool/JSON/judge calls use `max_tokens: 2048`
 and `reasoning_effort: null`; DeepSeek/GLM use the same explicit output budget with low reasoning,
 so thinking cannot consume the completion allowance.
 Transient failures and invalid judge JSON are retried with backoff. The judge must differ
 from the saved agent model, including resolved model IDs and aliases.
-
-Sarvam evaluations are replications of the Luna/Haiku comparison, not pooled replacements for
-them: report matched approach tables separately for each agent model and keep the same task rows,
-runs, and approaches in each table. The blind judge must always be a different model from the
-agent under test, including aliases/resolved IDs.
 
 Calibrate against existing `gpt-6.1-sol` judgments before relying on Sarvam verdicts:
 
@@ -140,6 +143,19 @@ state may have changed. The task file and saved evidence must be available local
 
 ### Measured Sarvam snapshot (2026-10-17)
 
+Saved-evidence calibration against sol ([local logs](../.codex-jobs/)):
+
+| Judge model | Agreement | Notes |
+|---|---:|---|
+| `deepseek-v4.1-flash` | 79/99 (79.8%) | 31 tasks; 4/41 false successes (9.8% of sol failures); 5 malformed-JSON errors excluded |
+| `gemma-4-31b` | 79/104 (76.0%) | Below the calibration gate |
+| `glm-5.3` | 0/0 | HTTP 400 with images; text-only model, no comparable verdicts |
+| `sarvam-105b` | 0/0 | HTTP 400 with images; text-only model, no comparable verdicts |
+
+Both text-only models need recalibration using terra's new text-only evidence mode; transport fixes do not establish judge quality. Raw comparisons use final-verdict proxies (independent `judgeVerdict` values were not saved). Sources: `.codex-jobs/cal-{deepseek,gemma,glm-5.3,sarvam-105b}.log`.
+
+A first-pass filter was evaluated and rejected: escalating only DeepSeek `unsure` sends 5/99 packets to sol but leaves 16 wrong decisions, for 83/99 (83.8%) combined agreement. Sol remains the default; see the [offline analysis](../.codex-jobs/sarvam-plan-sol.out.md).
+
 The capability probe used five samples per JSON contract. `sarvam-105b` returned valid
 prompt-only JSON 5/5 and JSON-mode output 5/5, made the validated function call, and had
 a 701 ms median response time. It observed 363 input / 1,005 output tokens and an estimated
@@ -159,11 +175,19 @@ verdict. Tokens are total input including cache / output; costs are published-ra
 | deepseek-v4.1-flash | Tree | 1/2 | 0/2 (Gemma judge) | 1,102,818 / 9,828 | 2.626902 | 0 |
 | deepseek-v4.1-flash | Screenshot | 2/2 | 0/2 (Gemma judge) | 74,161 / 1,191 | 0.442440 | 0 |
 
-Gemma's screenshot form run failed before any completion with HTTP 400, so its aggregate usage
-and cost are incomplete. DeepSeek's tree form run exhausted the 100-step budget (100 MCP errors,
-not a rate limit); Gemma's tree form run made no fixture observation. Blind judgments of the
-local/live pilot are exploratory: the local fallback catalog has no deterministic answer key and
-the live reading verdicts were commonly `unsure`.
+These pilots predate terra's harness repairs. Gemma's screenshot form run failed with HTTP 400, leaving usage/cost incomplete; DeepSeek's tree form run exhausted 100 steps with 100 MCP errors, and Gemma's tree form run made no fixture observation. Across both tasks DeepSeek had 108/108 tree calls error. These are harness/protocol diagnostics, not established tool-quality differences.
+
+Terra sanitized function schemas (stripping `$schema`/`$id`) and fixed screenshot transport: tool replies stay text, with supported images in a separate user turn. Full-reply/argument/result persistence and judge parsing are also repaired. Focused synthetic tests pass per the [repair report](../.codex-jobs/sarvam-fix-terra.out.md); live pilots still need rerunning. Earlier missing trace content cannot be recovered. Pilot blind verdicts remain exploratory: the local fallback catalog lacks an answer key and live reading verdicts were often `unsure`.
+
+### Tool diagnostics
+
+```bash
+npm --prefix bench/agent run bench:tool-diagnostics -- <result-name>
+```
+
+`bench/agent/tool-diagnostics.ts` deterministically reads saved Codex/Sarvam JSONL offline (also accepts a trace path/directory or `TOOL_DIAGNOSTICS_IN`). It writes `bench/results/<result-name>-tool-diagnostics.{json,md}`; `TOOL_DIAGNOSTICS_OUT` overrides the output stem. Reports count errors by type with recovered/unresolved totals, repeated identical actions, covered/blocked click loops, tool steps, steps after the last useful observation and suspected misleading recovery hints, with per-run/approach tables. Recovery and useful observations are heuristics, not outcome verdicts. Sarvam diagnostics consume persisted arguments and result text; a failed click is recovered only by a successful retry on the same known target.
+
+Sarvam semantic review of flagged steps is planned: cite source steps, separate agent mistakes from tool defects, and have sol validate a sample before accepting labels. Keep tool diagnostics separate from blinded outcome judging.
 
 ### Running in the cloud
 

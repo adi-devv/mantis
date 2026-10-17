@@ -5,7 +5,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { applyRunStatus, buildEvidencePacket, buildEvidencePrompt, buildJudgePrompt, isEvidenceRun, parseJudgeOutput, prepareFrameImage, renderJudgedMarkdown, selectJudgeScreenshot, shouldJudgeNonSuccess, universallyBlockedTasks } from '../bench/agent/judge.js';
+import { applyRunStatus, buildEvidencePacket, buildEvidencePrompt, buildJudgePrompt, deterministicGradeForRun, isEvidenceRun, parseJudgeOutput, prepareFrameImage, renderJudgedMarkdown, selectJudgeScreenshot, shouldJudgeNonSuccess, universallyBlockedTasks } from '../bench/agent/judge.js';
 import type { JudgedRun, PacketFrame } from '../bench/agent/judge.js';
 import { decodePng, encodePng } from '../bench/agent/png.js';
 import { PAGE_STATE_FUNCTION, parsePageState } from '../bench/agent/evidence.js';
@@ -19,6 +19,11 @@ const run = (task: string, approach: string, verdict: JudgedRun['verdict'], n = 
 });
 
 describe('final-page screenshot evidence', () => {
+  it('falls back when terminal evidence is unavailable and leaves access blocks for adjudication', () => {
+    const row = { task_id: 'synthetic', website: 'https://example.test/', task: 'Find 18', level: 'easy', deterministic: { kind: 'fact' as const, answerIncludes: [{ type: 'number' as const, value: 18 }], final: { url: { origin: 'https://example.test', path: '/done' }, textIncludes: [{ type: 'number' as const, value: 18 }] } } };
+    expect(deterministicGradeForRun(row, 'success', true, '18', [])).toBeNull();
+    expect(deterministicGradeForRun(row, 'success', true, '18', [{ id: 'F1', image: 'f.png', final: true, url: 'https://example.test/done', text: 'CAPTCHA: verify you are human' }])).toBeNull();
+  });
   it('prefers the saved live capture and keeps the identifying filename out of the judge prompt', async () => {
     const folder = dir();
     const saved = path.join(folder, 'task--mantis--1.final.png');

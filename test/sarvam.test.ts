@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { SarvamClient, estimateSarvamCost, loadSarvamEnv, resetSarvamLimiterForTests, resolveSarvamModel } from '../bench/agent/sarvam.js';
+import { abortableSleep, SarvamClient, estimateSarvamCost, loadSarvamEnv, resetSarvamLimiterForTests, resolveSarvamModel, sleepFor } from '../bench/agent/sarvam.js';
 
 const key = 'test-only-secret';
 const completion = (extra: Record<string, unknown> = {}) => Response.json({
@@ -31,7 +31,9 @@ describe('SarvamClient', () => {
       .mockResolvedValueOnce(new Response('do not log', { status: 429, headers: { 'Retry-After': '2' } }))
       .mockResolvedValueOnce(new Response('do not log', { status: 503 }))
       .mockResolvedValueOnce(completion());
-    const sleep = vi.fn<(ms: number) => Promise<void>>().mockResolvedValue();
+    let now = 0;
+    vi.spyOn(Date, 'now').mockImplementation(() => now);
+    const sleep = vi.fn<(ms: number) => Promise<void>>().mockImplementation(async (ms) => { now += ms; });
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
     await expect(new SarvamClient({ apiKey: key, fetch: fetcher, sleep }).complete(request)).resolves.toMatchObject({ content: '{"value":7}' });
     expect(fetcher).toHaveBeenCalledTimes(3);
@@ -44,10 +46,30 @@ describe('SarvamClient', () => {
       .mockResolvedValueOnce(new Response('', { status: 429, headers: { 'Retry-After': '2' } }))
       .mockResolvedValueOnce(new Response('', { status: 429, headers: { 'Retry-After': '2' } }))
       .mockImplementation(async () => completion());
-    const sleep = vi.fn<(ms: number) => Promise<void>>().mockResolvedValue();
+    let now = 0;
+    vi.spyOn(Date, 'now').mockImplementation(() => now);
+    const sleep = vi.fn<(ms: number) => Promise<void>>().mockImplementation(async (ms) => { now += ms; });
     const client = new SarvamClient({ apiKey: key, fetch: fetcher, sleep });
     await Promise.all([client.complete(request), client.complete(request)]);
     expect(sleep.mock.calls.filter(([ms]) => ms >= 1_900)).toHaveLength(2);
+  });
+
+  it('rechecks a cooldown extended while a worker is waiting', async () => {
+    let now = 0;
+    vi.spyOn(Date, 'now').mockImplementation(() => now);
+    let extended = false;
+    const sleep = vi.fn<(ms: number) => Promise<void>>().mockImplementation(async (ms) => {
+      now += ms;
+      if (!extended) {
+        extended = true;
+        // The next acquire reads the shared deadline again instead of admitting early.
+        const fetcher = vi.fn<typeof fetch>().mockResolvedValue(completion());
+        await new SarvamClient({ apiKey: key, fetch: fetcher, sleep }).complete(request);
+      }
+    });
+    const first = vi.fn<typeof fetch>().mockResolvedValueOnce(new Response('', { status: 429, headers: { 'Retry-After': '1' } })).mockResolvedValue(completion());
+    await new SarvamClient({ apiKey: key, fetch: first, sleep }).complete(request);
+    expect(sleep).toHaveBeenCalled();
   });
 
   it('does not count limiter queueing against the request timeout', async () => {
@@ -89,6 +111,30 @@ describe('SarvamClient', () => {
     const client = new SarvamClient({ apiKey: key, fetch: fetcher });
     await expect(client.complete(request)).rejects.toThrow('Sarvam completion had an invalid schema');
     await expect(client.complete(request)).rejects.toThrow(/^Sarvam HTTP 401$/);
+  });
+
+  it('includes the provider validation body for an HTTP 400', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response('{"error":"too many images"}', { status: 400 }));
+    await expect(new SarvamClient({ apiKey: key, fetch: fetcher }).complete(request)).rejects.toThrow('Sarvam HTTP 400: {"error":"too many images"}');
+  });
+
+  it('removes an abort listener after each completed limiter wait', async () => {
+    const controller = new AbortController();
+    const add = vi.spyOn(controller.signal, 'addEventListener');
+    const remove = vi.spyOn(controller.signal, 'removeEventListener');
+    for (let index = 0; index < 11; index++) await abortableSleep(async () => {}, 1, controller.signal);
+    expect(add).toHaveBeenCalledTimes(11);
+    expect(remove).toHaveBeenCalledTimes(11);
+  });
+
+  it('clears the default sleep timer when its wait is aborted', async () => {
+    vi.useFakeTimers();
+    const controller = new AbortController();
+    const pending = abortableSleep(sleepFor, 60_000, controller.signal);
+    controller.abort(new Error('stop'));
+    await expect(pending).rejects.toThrow('stop');
+    expect(vi.getTimerCount()).toBe(0);
+    vi.useRealTimers();
   });
 
   it('requires a key before making any request', () => {

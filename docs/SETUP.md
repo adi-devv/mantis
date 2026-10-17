@@ -36,9 +36,12 @@ Store `SARVAM_API_KEY` only in gitignored `.env`. Use the scoped scripts:
 ```bash
 npm --prefix bench/agent run bench:sarvam-probe
 npm --prefix bench/agent run bench:sarvam-calibrate
+npm --prefix bench/agent run bench:tool-diagnostics -- <result-name>
 ```
 
-Set `AGENT_PROVIDER=sarvam` to run an agent or `JUDGE_PROVIDER=sarvam` to judge. See [bench/README.md](../bench/README.md) for models, limits, and benchmark details.
+Use `AGENT_PROVIDER=sarvam` primarily for fixture agents with deterministic graders; match all approaches on one model. Luna/Haiku remain headline numbers. Trial trace/log analysis and doc summaries with source references and sol sampling; text-only models cannot do visual tasks.
+
+Keep sol as the default judge: measured Sarvam calibration and the first-pass filter failed. `JUDGE_PROVIDER=sarvam` is for calibration/shadow trials, always on another model's runs. Run one Sarvam job at a time: 30 RPM is shared across processes, concurrency 2 is per process. Diagnostics write `bench/results/<result-name>-tool-diagnostics.{json,md}` offline; Sarvam semantic review of flagged steps is planned, with sol sampling. See [bench/README.md](../bench/README.md) for calibration, repairs and the planned ~30-task real-site set with stable answer keys.
 
 To use a local build instead of npm: `claude mcp add mantis -- node /abs/path/to/mantis/dist/server.js`.
 

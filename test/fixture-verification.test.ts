@@ -15,9 +15,9 @@ import { pathToFileURL } from 'node:url';
 import { deflateSync } from 'node:zlib';
 import { evidenceShowsOnlySiteErrors, FINAL_TEXT_CAP, PAGE_STATE_FUNCTION, STEP_TEXT_CAP, packEvidence, parsePageState, selectFrames, toCapturedFrame } from '../bench/agent/evidence.js';
 import type { CapturedFrame } from '../bench/agent/evidence.js';
-import { finalizeSiteBrokenVerdicts, parseJudgeOutput, renderJudgedMarkdown, universallySiteBrokenTasks } from '../bench/agent/judge.js';
+import { deterministicGradeForRun, finalizeSiteBrokenVerdicts, parseJudgeOutput, renderJudgedMarkdown, universallySiteBrokenTasks } from '../bench/agent/judge.js';
 import type { JudgedRun } from '../bench/agent/judge.js';
-import { loadRealsiteRows, validateChecks } from '../bench/agent/realsite.js';
+import { evaluateDeterministicGrader, loadRealsiteRows, validateChecks, validateDeterministicGrader } from '../bench/agent/realsite.js';
 import { createMcpProxy } from '../bench/agent/mcp-proxy.js';
 import { decodePng, encodePng, fitWithin, grayThumb, resizeImage, thumbDiff } from '../bench/agent/png.js';
 import { classifyClickError } from '../src/browser.js';
@@ -81,8 +81,60 @@ it('describes the current judge packet and flags missing answer-key checks', () 
   const run: JudgedRun = { task: 't', approach: 'mantis', run: 1, verdict: 'success', reason: '', finalUrl: null, toolCalls: 1, totalInputTokens: 1, wallS: 1, frameCount: 2, checks: { pass: true, failed: [] } };
   const report = renderJudgedMarkdown('packet', [run], new Map(), 'judge-model');
   expect(report).toContain('judge evidence packet of per-step harness frames');
-  expect(report).toContain('deterministic task checks can override the judge');
+  expect(report).toContain('complete deterministic grader decided it first');
   expect(report).not.toContain("Each run's final reply and screenshot were graded");
+});
+
+it('grades complete opted-in real-site validators against one final captured state', () => {
+  const fact = {
+    kind: 'fact' as const, answerIncludes: [{ type: 'entity' as const, value: 'Cedar' }],
+    final: { url: { origin: 'https://fixture.test', path: '/reference' }, textIncludes: [{ type: 'entity' as const, value: 'Cedar is available' }] },
+  };
+  const form = {
+    kind: 'form' as const, answerIncludes: [{ type: 'number' as const, value: 18 }],
+    final: {
+      url: { origin: 'https://fixture.test', path: '/quote' }, textIncludes: [{ type: 'number' as const, value: 18 }],
+      formValues: [{ label: 'Origin', value: 'North' }, { label: 'Destination', value: 'South' }],
+    },
+  };
+  const state = {
+    kind: 'state' as const, answerIncludes: [{ type: 'entity' as const, value: 'Blue collection' }],
+    final: {
+      url: { origin: 'https://fixture.test', path: '/catalog', query: { colour: 'blue' } }, textIncludes: [{ type: 'number' as const, value: 12 }],
+      formValues: [{ label: 'Blue', value: 'checked' }, { label: 'Collection', value: 'Blue' }],
+    },
+  };
+  for (const grader of [fact, form, state]) expect(validateDeterministicGrader(grader)).toBeNull();
+
+  // Passing fixtures: fact + evidence, submitted inputs + site result, and selected final state.
+  expect(evaluateDeterministicGrader(fact, 'The answer is Cedar.', [{ final: true, url: 'https://fixture.test/reference', text: 'Cedar is available.' }])?.pass).toBe(true);
+  expect(evaluateDeterministicGrader(form, 'The site shows 18 credits.', [{ final: true, url: 'https://fixture.test/quote', text: 'Site total: 18 credits', forms: [{ label: 'Origin', value: 'North' }, { label: 'Destination', value: 'South' }] }])?.pass).toBe(true);
+  expect(evaluateDeterministicGrader(state, 'The Blue collection is selected.', [{ final: true, url: 'https://fixture.test/catalog?colour=blue', text: '12 blue items', forms: [{ label: 'Blue', value: 'checked' }, { label: 'Collection', value: 'Blue' }] }])?.pass).toBe(true);
+
+  // Near misses: wrong entity/value, one wrong submitted input, and labels visible without selection.
+  expect(evaluateDeterministicGrader(fact, 'The answer is Pine.', [{ final: true, url: 'https://fixture.test/reference', text: 'Pine is available.' }])?.pass).toBe(false);
+  expect(evaluateDeterministicGrader(form, 'The site shows 18 credits.', [{ final: true, url: 'https://fixture.test/quote', text: 'Site total: 18 credits', forms: [{ label: 'Origin', value: 'West' }, { label: 'Destination', value: 'South' }] }])?.pass).toBe(false);
+  expect(evaluateDeterministicGrader(state, 'The Blue collection is selected.', [{ final: true, url: 'https://fixture.test/catalog?colour=blue', text: '12 blue items; Blue', forms: [{ label: 'Blue', value: 'unchecked' }, { label: 'Collection', value: 'Blue' }] }])?.pass).toBe(false);
+
+  // A reply alone, an earlier matching state, and incomplete evidence cannot establish deterministic success.
+  expect(evaluateDeterministicGrader(fact, 'The answer is Cedar.', [{ final: true, url: 'https://fixture.test/reference', text: 'No matching entry' }])?.pass).toBe(false);
+  expect(evaluateDeterministicGrader(state, 'The Blue collection is selected.', [
+    { url: 'https://fixture.test/catalog?colour=blue', text: '12 blue items', forms: [{ label: 'Blue', value: 'checked' }, { label: 'Collection', value: 'Blue' }] },
+    { final: true, url: 'https://fixture.test/catalog', text: 'Choose a colour', forms: [{ label: 'Blue', value: 'unchecked' }, { label: 'Collection', value: 'All' }] },
+  ])?.pass).toBe(false);
+  expect(evaluateDeterministicGrader(form, 'The site shows 18 credits.', [{ url: 'https://fixture.test/quote', text: 'Site total: 18 credits', forms: [{ label: 'Origin', value: 'North' }, { label: 'Destination', value: 'South' }] }])?.failed).toContain('no final captured evidence frame');
+  expect(evaluateDeterministicGrader(fact, 'The answer is Cedar.', [
+    { final: true, url: 'https://fixture.test/reference', text: 'Cedar is available.' },
+    { final: true, url: 'https://fixture.test/reference', text: 'Cedar is available.' },
+  ])?.failed).toContain('multiple final captured evidence frames');
+
+  // Routing only opts in after a successful run with a captured evidence packet;
+  // otherwise the normal judge can retain blocked/site-broken decisions.
+  const row = { task_id: 'synthetic', website: 'https://fixture.test/', task: 'Select Blue', level: 'easy', deterministic: state };
+  const frames = [{ id: 'F1', image: 'f1.png', final: true, url: 'https://fixture.test/catalog?colour=blue', text: '12 blue items', forms: [{ label: 'Blue', value: 'checked' }, { label: 'Collection', value: 'Blue' }] }];
+  expect(deterministicGradeForRun(row, 'success', true, 'The Blue collection is selected.', frames)?.pass).toBe(true);
+  expect(deterministicGradeForRun(row, 'timeout', true, 'The Blue collection is selected.', frames)).toBeNull();
+  expect(deterministicGradeForRun(row, 'success', false, 'The Blue collection is selected.', frames)).toBeNull();
 });
 
 it('Mantis follows a verified label but rejects a covered control', async () => {
@@ -120,6 +172,81 @@ it('grounds pilot diagnostics in a numbered closed trigger or a real visual targ
     const canvas = (await mantis.media()).match(/^#(\d+) canvas/m)?.[1];
     expect(await mantis.data({ id: 9999 })).toContain(`data({id: ${canvas}})`);
     await mantis.open(`${fixture('generic-data-hint.html')}?empty=1`);
+    expect(await mantis.data({ id: 9999 })).not.toContain('data({id:');
+  } finally {
+    await mantis.close();
+  }
+});
+
+it('opens verified disclosures before actions, without treating content controls as dismissible', async () => {
+  const mantis = new MantisBrowser({ actionTimeoutMs: 300 });
+  try {
+    let view = await mantis.open(fixture('generic-browser-cover-diagnosis.html'));
+    const filters = idOf(view, 'button "Filters"');
+    expect(await mantis.click(idOf(view, 'button "Apply filters"'))).toContain(`open #${filters} "Filters" first`);
+    await mantis.click(filters);
+    view = await mantis.read();
+    expect(await mantis.click(idOf(view, 'button "Apply filters"'))).toContain('Filters applied');
+
+    // Near miss: painted content with ordinary controls does not establish a dismissible overlay.
+    view = await mantis.open(fixture('generic-browser-cover-diagnosis.html'));
+    const covered = await mantis.click(idOf(view, 'button "Continue"'));
+    expect(covered).toContain('nothing to dismiss');
+    expect(covered).not.toContain('dismiss that first');
+
+    view = await mantis.open(`${fixture('generic-browser-cover-diagnosis.html')}?dialog=1`);
+    const blocked = await mantis.click(idOf(view, 'button "Continue"'));
+    expect(blocked).toMatch(/dismiss that first.*try #\d+ "Dismiss"/);
+    await mantis.click(idOf(view, 'button "Dismiss"'));
+    view = await mantis.read();
+    expect(await mantis.click(idOf(view, 'button "Filters"'))).not.toMatch(/^error:/);
+  } finally {
+    await mantis.close();
+  }
+});
+
+it('makes collapsed options actionable only after their numbered trigger is opened', async () => {
+  const mantis = new MantisBrowser({ actionTimeoutMs: 300 });
+  try {
+    let view = await mantis.open(fixture('generic-browser-collapsed-options.html'));
+    const colour = idOf(view, 'button "Colour"');
+    expect(view).toContain(`"Black (414 products)" (open #${colour} "Colour" first)`);
+    expect(view).not.toMatch(/Black ink is archival\." \(open #/); // near miss: matching prose is not an option
+    const small = view.split('\n').find((line) => line.includes('checkbox "Small"'));
+    expect(small).toBeTruthy();
+    expect(small).not.toContain('open #'); // near miss: an expanded sibling is not part of the closed group
+    const material = idOf(view, 'button "Material"');
+    // The complete ARIA and native disclosure action flows are exercised in pilot-gaps;
+    // this verifier guards the capture contract that makes those controls discoverable.
+    expect(view).not.toContain('checkbox "Black (414 products)"');
+    expect(view).toContain(`#${material} button "Material" (collapsed)`);
+  } finally {
+    await mantis.close();
+  }
+});
+
+it('advertises a concrete canvas target in read and keeps chart data bound to that canvas', async () => {
+  const mantis = new MantisBrowser({ actionTimeoutMs: 300 });
+  try {
+    const view = await mantis.open(fixture('generic-data-hint.html'));
+    const trend = Number(view.match(/^\s*#(\d+) canvas "Monthly trend"/m)?.[1]);
+    expect(trend).toBeGreaterThan(0);
+    const media = await mantis.media();
+    expect(media).toMatch(new RegExp(`^#${trend} canvas .*Monthly trend`, 'm'));
+    expect(media).toContain('data({id: N})');
+    expect(media).toContain('ocr({id: N})');
+    expect(media).toContain('look({id: N})');
+    expect(await mantis.data({ id: trend })).toContain('Monthly series');
+
+    // Near miss: another visible canvas cannot satisfy the expected series.
+    const comparison = Number(view.match(/^\s*#(\d+) canvas "Comparison trend"/m)?.[1]);
+    expect(await mantis.data({ id: comparison })).toContain('Comparison series');
+    expect(await mantis.data({ id: comparison })).not.toContain('Monthly series');
+    const missing = await mantis.data({ id: 9999 });
+    expect(missing).toContain(`data({id: ${trend}})`);
+
+    await mantis.open(`${fixture('generic-data-hint.html')}?empty=1`);
+    expect(await mantis.read()).not.toContain('canvas');
     expect(await mantis.data({ id: 9999 })).not.toContain('data({id:');
   } finally {
     await mantis.close();
@@ -174,6 +301,12 @@ async function verify(taskId: string, attemptId: string, expected: boolean): Pro
   await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 0)));
   await page.waitForFunction(() => (window as unknown as { __fixturePending: number }).__fixturePending === 0);
   expect((await fixtures.verify(taskId, attemptId))?.ok).toBe(expected);
+}
+
+function expectAnswer(taskId: string, correct: string, nearMiss: string): void {
+  const entry = TASKS.find((candidate) => candidate.id === taskId)!;
+  expect(entry.expect.test(correct)).toBe(true);
+  expect(entry.expect.test(nearMiss)).toBe(false);
 }
 
 it('panel-veil covers Mantis click-through, controls, and hidden-control near misses', async () => {
@@ -328,6 +461,80 @@ it('smokes the remaining local interaction checks', async () => {
     await openAttempt(taskId, `read-${taskId}`, path);
     await verify(taskId, `read-${taskId}`, true);
   }
+});
+
+it('rejects close answers and near-miss flows for every remaining local task', async () => {
+  // Answer checks must reject adjacent values, larger numbers, and plausible-but-wrong entities.
+  expectAnswer('login', 'The page heading is Signed in.', 'The page heading is Not signed in.');
+  expectAnswer('cookie-cart', 'Added to cart.', 'Added to cart (2 items).');
+  expectAnswer('longlist-item', 'Detail for item 150', 'Detail for item 1500');
+  expectAnswer('pricing-team', 'The Team plan is $29 per month.', 'The Team plan is $290 per month.');
+  expectAnswer('dashboard-refresh', 'Last updated: just now. Initech 3: $4,218.', 'Last updated: just now. Initech 3: $4,2180.');
+  expectAnswer('booking-date', 'Booked for 2026-12-24 at 19:00, 3 guests.', 'Booked for 2026-12-24 at 19:000, 3 guests.');
+  expectAnswer('article-deep-fact', 'The harbour light was first lit in 1874.', 'The harbour light was first lit in 18740.');
+  expectAnswer('inventory-lookup', 'Widget 30 is W-1203 with 113 in stock.', 'Widget 30 is W-12030 with 113 in stock.');
+  expectAnswer('churned-max', 'Acme 6 has the highest amount: $9,950.', 'Acme 60 has the highest amount: $9,950.');
+  expectAnswer('search-pagination', 'It was written by dana.r.', 'It was written by dana.r2.');
+  expectAnswer('feed-scroll', 'Post #35 says Thursday at noon.', 'Post #35 says Thursday at noonish.');
+  expectAnswer('modal-delete', 'Old report was moved to trash.', 'Old report was moved to trashish.');
+  expectAnswer('spa-team', 'The designer email is mia@example.com.', 'The designer email is mia@example.com.invalid.');
+  expectAnswer('faq-refund', 'You can ask within 30 days.', 'You can ask within 31 days.');
+  expectAnswer('chart-march', 'March sales were 42 units.', 'March sales were 142 units.');
+
+  const login = TASKS.find((entry) => entry.id === 'login')!;
+  await openAttempt(login.id, 'login-wrong-password', '/login');
+  await page.fill('#email', 'agent@example.com');
+  await page.fill('#pw', 'correct-horse-batteries');
+  await page.click('button[type="submit"]');
+  await verify(login.id, 'login-wrong-password', false);
+
+  const cookie = TASKS.find((entry) => entry.id === 'cookie-cart')!;
+  await openAttempt(cookie.id, 'cookie-cart-no-add', '/cookie');
+  await page.getByRole('button', { name: 'Accept' }).click();
+  await verify(cookie.id, 'cookie-cart-no-add', false);
+
+  const item = TASKS.find((entry) => entry.id === 'longlist-item')!;
+  await openAttempt(item.id, 'longlist-item-149', '/item/149');
+  await verify(item.id, 'longlist-item-149', false);
+
+  const pricing = TASKS.find((entry) => entry.id === 'pricing-team')!;
+  await openAttempt(pricing.id, 'pricing-no-navigation', '/site/home');
+  await verify(pricing.id, 'pricing-no-navigation', false);
+
+  const refresh = TASKS.find((entry) => entry.id === 'dashboard-refresh')!;
+  await openAttempt(refresh.id, 'dashboard-no-refresh', '/dashboard');
+  await verify(refresh.id, 'dashboard-no-refresh', false);
+
+  const booking = TASKS.find((entry) => entry.id === 'booking-date')!;
+  await openAttempt(booking.id, 'booking-four-guests', '/booking');
+  await page.fill('#dt', '2026-12-24');
+  await page.selectOption('#tm', '19:00');
+  await page.fill('#ppl', '4');
+  await page.click('button[type="submit"]');
+  await verify(booking.id, 'booking-four-guests', false);
+
+  const search = TASKS.find((entry) => entry.id === 'search-pagination')!;
+  await openAttempt(search.id, 'search-wrong-result', '/search');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByText('Otter notes 2').click();
+  await verify(search.id, 'search-wrong-result', false);
+
+  const deletion = TASKS.find((entry) => entry.id === 'modal-delete')!;
+  await openAttempt(deletion.id, 'delete-wrong-file', '/files');
+  await page.getByRole('button', { name: 'Delete Budget 2026' }).click();
+  await page.click('#yes');
+  await verify(deletion.id, 'delete-wrong-file', false);
+
+  const spa = TASKS.find((entry) => entry.id === 'spa-team')!;
+  await openAttempt(spa.id, 'spa-wrong-person', '/app');
+  await page.getByRole('button', { name: 'Team' }).click();
+  await page.getByRole('button', { name: 'Sam Lee' }).click();
+  await verify(spa.id, 'spa-wrong-person', false);
+
+  const faq = TASKS.find((entry) => entry.id === 'faq-refund')!;
+  await openAttempt(faq.id, 'faq-wrong-topic', '/help');
+  await page.getByRole('button', { name: 'Can I change my plan?' }).click();
+  await verify(faq.id, 'faq-wrong-topic', false);
 });
 
 it('requires navigation, iframe payment, menu selection, and plan selection actions', async () => {

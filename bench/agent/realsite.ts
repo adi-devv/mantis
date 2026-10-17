@@ -1,6 +1,6 @@
 /**
  * Real-site tasks for the agent eval: Online-Mind2Web-style rows from bench/agent/realsite-tasks.json
- * (an array of { task_id, website, confirmed_task, level, checks }; `task` is accepted for `confirmed_task`). Real sites have no regex answer, so these tasks are
+ * (an array of { task_id, website, confirmed_task, level, checks, deterministic }; `task` is accepted for `confirmed_task`). Real sites have no regex answer, so these tasks are
  * `judged: true` and graded afterwards by a blind LLM judge (bench/agent/judge.ts). The task's own
  * `expect` only checks that the agent finished (it printed the FINAL_URL line).
  *
@@ -12,9 +12,39 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import type { AgentTask } from './tasks.js';
 
-/** Optional deterministic answer key for a row: substrings the final reply / some evidence frame must contain. */
+/** Optional legacy answer key: substrings the final reply / some evidence frame must contain. */
 export interface RealsiteChecks { answerIncludes?: string[]; evidenceIncludes?: string[] }
-export interface RealsiteRow { task_id: string; website: string; task: string; level: string; checks?: RealsiteChecks }
+export interface MatchPredicate { type: 'text' | 'number' | 'entity'; value: string | number }
+export interface UrlPredicate { origin: string; path: string; query?: Record<string, string> }
+
+/**
+ * Explicit opt-in for answer keys that are safe to grade without a model.  All
+ * requirements are checked against one final, harness-captured page state, so
+ * a label from an earlier frame cannot prove that a final selection survived.
+ */
+export interface DeterministicGrader {
+  kind: 'fact' | 'form' | 'state';
+  answerIncludes: MatchPredicate[];
+  final: {
+    url: UrlPredicate;
+    textIncludes: MatchPredicate[];
+    formValues?: { label: string; value: string }[];
+  };
+}
+
+/** Minimal final-frame shape, kept independent of the evidence implementation. */
+export interface DeterministicEvidence {
+  url: string;
+  text: string;
+  forms?: { label: string; value: string }[];
+  final?: boolean;
+}
+
+export interface RealsiteRow {
+  task_id: string; website: string; task: string; level: string;
+  checks?: RealsiteChecks;
+  deterministic?: DeterministicGrader;
+}
 
 export const REALSITE_FILE = path.join(import.meta.dirname, 'realsite-tasks.json');
 
@@ -84,7 +114,7 @@ export function sampleRealsite(rows: readonly RealsiteRow[], n: number, seed: nu
 export function loadRealsiteRows(file: string = REALSITE_FILE, reportIssues: (message: string) => void = console.warn): RealsiteRow[] {
   if (!existsSync(file)) return [];
   const raw: unknown = JSON.parse(readFileSync(file, 'utf8'));
-  if (!Array.isArray(raw)) throw new Error(`${file} must contain a JSON array of { task_id, website, confirmed_task, level, checks }.`);
+  if (!Array.isArray(raw)) throw new Error(`${file} must contain a JSON array of { task_id, website, confirmed_task, level, checks, deterministic }.`);
   const text = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v.trim() : null);
   const issues: string[] = [];
   const rows = raw.flatMap((item): RealsiteRow[] => {
@@ -94,14 +124,19 @@ export function loadRealsiteRows(file: string = REALSITE_FILE, reportIssues: (me
     // Online-Mind2Web calls the task text `confirmed_task`; plain `task` is also accepted.
     const task = text(o.confirmed_task) ?? text(o.task);
     if (!task_id || !website || !task) return [];
+    const deterministicIssue = validateDeterministicGrader(o.deterministic);
+    const deterministic = parseDeterministicGrader(o.deterministic);
     const checksIssue = validateChecks(o.checks);
-    if (checksIssue) issues.push(`${task_id}: ${checksIssue}`);
+    // A complete deterministic grader is itself the explicit answer-key opt-in;
+    // legacy substring checks remain optional for those rows.
+    if (checksIssue && !deterministic) issues.push(`${task_id}: ${checksIssue}`);
+    if (deterministicIssue) issues.push(`${task_id}: ${deterministicIssue}`);
     const checks = parseChecks(o.checks);
-    return [{ task_id, website, task, level: text(o.level) ?? 'unknown', ...(checks ? { checks } : {}) }];
+    return [{ task_id, website, task, level: text(o.level) ?? 'unknown', ...(checks ? { checks } : {}), ...(deterministic ? { deterministic } : {}) }];
   });
   if (issues.length) {
     const shown = issues.slice(0, 10).join('; ');
-    reportIssues(`[realsite] ${issues.length} task row${issues.length === 1 ? '' : 's'} missing valid answer-key checks in ${file}: ${shown}${issues.length > 10 ? `; and ${issues.length - 10} more` : ''}`);
+    reportIssues(`[realsite] ${issues.length} task row${issues.length === 1 ? '' : 's'} missing valid checks or deterministic graders in ${file}: ${shown}${issues.length > 10 ? `; and ${issues.length - 10} more` : ''}`);
   }
   return rows;
 }
@@ -119,6 +154,36 @@ export function validateChecks(value: unknown): string | null {
   return null;
 }
 
+/** Null for an absent or complete deterministic opt-in; otherwise a stable validation message. */
+export function validateDeterministicGrader(value: unknown): string | null {
+  if (value === undefined) return null;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return 'deterministic must be an object';
+  const o = value as Record<string, unknown>;
+  if (Object.keys(o).some((key) => !['kind', 'answerIncludes', 'final'].includes(key))) return 'deterministic contains an unknown field';
+  if (o.kind !== 'fact' && o.kind !== 'form' && o.kind !== 'state') return 'deterministic.kind must be fact, form or state';
+  if (!o.final || typeof o.final !== 'object' || Array.isArray(o.final)) return 'deterministic.final must be an object';
+  const final = o.final as Record<string, unknown>;
+  if (Object.keys(final).some((key) => !['url', 'textIncludes', 'formValues'].includes(key))) return 'deterministic.final contains an unknown field';
+  const predicate = (v: unknown): boolean => !!v && typeof v === 'object' && !Array.isArray(v) &&
+    ['text', 'number', 'entity'].includes((v as Record<string, unknown>).type as string) &&
+    ((typeof (v as Record<string, unknown>).value === 'string' && Boolean((v as Record<string, unknown>).value.trim())) || (typeof (v as Record<string, unknown>).value === 'number' && Number.isFinite((v as Record<string, unknown>).value)));
+  if (!Array.isArray(o.answerIncludes) || !o.answerIncludes.length || !o.answerIncludes.every(predicate)) return 'deterministic.answerIncludes must be non-empty typed predicates';
+  if (!final.url || typeof final.url !== 'object' || Array.isArray(final.url)) return 'deterministic.final.url must be an origin/path predicate';
+  const url = final.url as Record<string, unknown>;
+  if (Object.keys(url).some((key) => !['origin', 'path', 'query'].includes(key)) || typeof url.origin !== 'string' || !url.origin.trim() || typeof url.path !== 'string' || !url.path.startsWith('/')) return 'deterministic.final.url must contain an origin and absolute path';
+  if (url.query !== undefined && (!url.query || typeof url.query !== 'object' || Array.isArray(url.query) || !Object.values(url.query as Record<string, unknown>).every((v) => typeof v === 'string'))) return 'deterministic.final.url.query must map names to strings';
+  if (!Array.isArray(final.textIncludes) || !final.textIncludes.length || !final.textIncludes.every(predicate)) return 'deterministic.final.textIncludes must be non-empty typed predicates';
+  const values = final.formValues;
+  const validForms = Array.isArray(values) && values.length > 0 && values.every((entry) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return false;
+    const form = entry as Record<string, unknown>;
+    return typeof form.label === 'string' && Boolean(form.label.trim()) && typeof form.value === 'string' && Boolean(form.value.trim());
+  });
+  if ((o.kind === 'form' || o.kind === 'state') && !validForms) return 'deterministic.final.formValues must be a non-empty label/value array for form or state graders';
+  if (o.kind === 'fact' && values !== undefined && !validForms) return 'deterministic.final.formValues must be a non-empty label/value array when supplied';
+  return null;
+}
+
 /** `checks` objects keep only the lists that are non-empty arrays of non-empty strings; anything else is ignored. */
 function parseChecks(value: unknown): RealsiteChecks | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
@@ -130,7 +195,29 @@ function parseChecks(value: unknown): RealsiteChecks | undefined {
   return answerIncludes || evidenceIncludes ? { ...(answerIncludes ? { answerIncludes } : {}), ...(evidenceIncludes ? { evidenceIncludes } : {}) } : undefined;
 }
 
+function parseDeterministicGrader(value: unknown): DeterministicGrader | undefined {
+  if (value === undefined || validateDeterministicGrader(value) !== null) return undefined;
+  const o = value as DeterministicGrader;
+  const predicates = (items: MatchPredicate[]): MatchPredicate[] => items.map((item) => ({ type: item.type, value: typeof item.value === 'string' ? item.value.trim() : item.value }));
+  return {
+    kind: o.kind,
+    answerIncludes: predicates(o.answerIncludes),
+    final: {
+      url: { origin: o.final.url.origin.trim(), path: o.final.url.path, ...(o.final.url.query ? { query: { ...o.final.url.query } } : {}) },
+      textIncludes: predicates(o.final.textIncludes),
+      ...(o.final.formValues ? { formValues: o.final.formValues.map(({ label, value }) => ({ label: label.trim(), value: value.trim() })) } : {}),
+    },
+  };
+}
+
 const norm = (s: string): string => s.replace(/\s+/g, ' ').trim().toLowerCase();
+const predicateLabel = (predicate: MatchPredicate): string => String(predicate.value);
+const matchesPredicate = (source: string, predicate: MatchPredicate): boolean => {
+  const value = norm(String(predicate.value));
+  if (predicate.type === 'text') return norm(source).includes(value);
+  if (predicate.type === 'number') return new RegExp(`(?<![\\p{L}\\p{N}])${value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\p{L}\\p{N}])`, 'u').test(norm(source));
+  return new RegExp(`(?<![\\p{L}\\p{N}])${value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\p{L}\\p{N}])`, 'u').test(norm(source));
+};
 
 /**
  * Run a row's answer-key checks (case-insensitive, whitespace collapsed): every `answerIncludes` string must be in
@@ -144,6 +231,32 @@ export function evaluateChecks(checks: RealsiteChecks | undefined, answer: strin
   const failed = [
     ...(checks.answerIncludes ?? []).filter((x) => !reply.includes(norm(x))).map((x) => `answer lacks "${x}"`),
     ...(checks.evidenceIncludes ?? []).filter((x) => !texts.some((t) => t.includes(norm(x)))).map((x) => `no frame shows "${x}"`),
+  ];
+  return { pass: failed.length === 0, failed };
+}
+
+/**
+ * Evaluate a complete opted-in grader.  The final-frame restriction is
+ * deliberate: stateful work must prove URL, result text, and submitted form
+ * values together, rather than collecting matching fragments from history.
+ */
+export function evaluateDeterministicGrader(grader: DeterministicGrader | undefined, answer: string, frames: DeterministicEvidence[]): { pass: boolean; failed: string[] } | null {
+  if (!grader) return null;
+  // A stateful grader may only use the unique terminal harness capture.  Picking
+  // the first marked frame would let a stale intermediate state prove success.
+  const finals = frames.filter((frame) => frame.final);
+  if (finals.length !== 1) return { pass: false, failed: [finals.length ? 'multiple final captured evidence frames' : 'no final captured evidence frame'] };
+  const final = finals[0]!;
+  const reply = norm(answer);
+  let parsed: URL | null = null;
+  try { parsed = new URL(final.url); } catch { /* reported below as an unmatched URL predicate */ }
+  const text = final.text;
+  const forms = final.forms ?? [];
+  const failed = [
+    ...grader.answerIncludes.filter((item) => !matchesPredicate(answer, item)).map((item) => `answer lacks "${predicateLabel(item)}"`),
+    ...(!parsed || parsed.origin !== grader.final.url.origin || parsed.pathname !== grader.final.url.path || Object.entries(grader.final.url.query ?? {}).some(([key, value]) => parsed.searchParams.get(key) !== value) ? ['final URL does not match the required origin/path'] : []),
+    ...grader.final.textIncludes.filter((item) => !matchesPredicate(text, item)).map((item) => `final frame lacks "${predicateLabel(item)}"`),
+    ...(grader.final.formValues ?? []).filter((wanted) => !forms.some((actual) => norm(actual.label) === norm(wanted.label) && norm(actual.value) === norm(wanted.value))).map((wanted) => `final form lacks ${JSON.stringify(wanted.label)}=${JSON.stringify(wanted.value)}`),
   ];
   return { pass: failed.length === 0, failed };
 }

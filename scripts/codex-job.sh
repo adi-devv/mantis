@@ -24,8 +24,8 @@ write_status() { # state end exit
 }
 
 write_status running "" ""
-codex exec --skip-git-repo-check -m "$model" -c "model_reasoning_effort=$effort" -s "$sandbox" -C "$root" \
-  -o "$dir/$label.out.md" - < "$brief" > "$dir/$label.log" 2>&1
+codex exec --skip-git-repo-check -m "$model" -c "model_reasoning_effort=$effort" -s "$sandbox" -C "$root" \n  -o "$dir/$label.out.md" - < "$brief" > "$dir/$label.log" 2>&1
+codex exec --skip-git-repo-check -m "$model" -c "model_reasoning_effort=$effort" -s "$sandbox" -C "$root" 
 code=$?
 write_status "$([ "$code" -eq 0 ] && echo done || echo failed)" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$code"
 exit "$code"

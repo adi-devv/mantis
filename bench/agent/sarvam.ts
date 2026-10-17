@@ -1,4 +1,4 @@
-/** Small OpenAI-compatible Sarvam client. Never surface request secrets or response bodies in errors. */
+/** Small OpenAI-compatible Sarvam client. Validation details are retained only for HTTP 400 diagnostics. */
 import { spawnSync } from 'node:child_process';
 import { closeSync, existsSync, openSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
@@ -23,6 +23,8 @@ export interface SarvamRequest {
   reasoning_effort?: string | null;
   max_tokens?: number;
   temperature?: number;
+  /** Harness-level cancellation; never serialized to the provider. */
+  signal?: AbortSignal;
 }
 export interface SarvamUsage {
   promptTokens: number | null;
@@ -55,7 +57,42 @@ export interface SarvamClientOptions {
 
 export interface SarvamTransportStats { attempts: number; rateLimits: number }
 
-const sleepFor = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
+/** Capabilities observed by the probe, keyed by the API model id. */
+const MODEL_CAPABILITIES: Record<string, { images: boolean }> = {
+  gemma4: { images: true },
+  'deepseekv4.1-flash': { images: true },
+  'glm5.3': { images: false },
+  'sarvam-105b': { images: false },
+};
+
+/** Unknown models are deliberately conservative: text requests are portable, image requests are not. */
+export function sarvamModelSupportsImages(model: string): boolean {
+  return MODEL_CAPABILITIES[resolveSarvamModel(model)]?.images === true;
+}
+
+type Sleep = (ms: number, signal?: AbortSignal) => Promise<void>;
+export const sleepFor: Sleep = (ms, signal) => new Promise((resolve, reject) => {
+  const timer = setTimeout(done, ms);
+  function done(): void { signal?.removeEventListener('abort', onAbort); resolve(); }
+  function onAbort(): void { clearTimeout(timer); reject(abortError(signal)); }
+  if (signal) signal.addEventListener('abort', onAbort, { once: true });
+});
+const abortError = (signal?: AbortSignal): Error => signal?.reason instanceof Error ? signal.reason : new Error('Sarvam request aborted');
+const throwIfAborted = (signal?: AbortSignal): void => { if (signal?.aborted) throw abortError(signal); };
+/** Makes injected test sleeps and real limiter waits cancellable without assuming they clear timers. */
+export const abortableSleep = async (sleep: Sleep, ms: number, signal?: AbortSignal): Promise<void> => {
+  throwIfAborted(signal);
+  if (!signal) return sleep(ms);
+  let abort: (() => void) | undefined;
+  try {
+    await Promise.race([sleep(ms, signal), new Promise<never>((_, reject) => {
+      abort = () => reject(abortError(signal));
+      signal.addEventListener('abort', abort, { once: true });
+    })]);
+  } finally {
+    if (abort) signal.removeEventListener('abort', abort);
+  }
+};
 const numberFromEnv = (name: string, fallback: number, min: number, max: number): number => {
   const value = Number(process.env[name] ?? fallback);
   return Number.isInteger(value) && value >= min && value <= max ? value : fallback;
@@ -77,8 +114,9 @@ const readLimitState = (): SharedLimitState => {
     };
   } catch { return emptyLimitState(); }
 };
-const lockFile = async (sleep: (ms: number) => Promise<void>): Promise<(() => void)> => {
+const lockFile = async (sleep: Sleep, signal?: AbortSignal): Promise<(() => void)> => {
   for (;;) {
+    throwIfAborted(signal);
     try {
       const fd = openSync(LOCK_FILE, 'wx');
       return () => { try { closeSync(fd); unlinkSync(LOCK_FILE); } catch { /* best-effort temp cleanup */ } };
@@ -86,7 +124,7 @@ const lockFile = async (sleep: (ms: number) => Promise<void>): Promise<(() => vo
       // An interrupted process can leave a lock behind. It is safe to reclaim only stale locks.
       try { if (Date.now() - statSync(LOCK_FILE).mtimeMs > 120_000) unlinkSync(LOCK_FILE); }
       catch { /* another process released it */ }
-      await sleep(25 + Math.floor(Math.random() * 25));
+      await abortableSleep(sleep, 25 + Math.floor(Math.random() * 25), signal);
     }
   }
 };
@@ -99,27 +137,34 @@ const lockFile = async (sleep: (ms: number) => Promise<void>): Promise<(() => vo
 class SarvamLimiter {
   private active = 0;
   private readonly waiters: (() => void)[] = [];
-  constructor(private readonly rpm: number, private readonly concurrency: number, private readonly sleep: (ms: number) => Promise<void>) {}
+  constructor(private readonly rpm: number, private readonly concurrency: number, private readonly sleep: Sleep) {}
 
-  private async processSlot(): Promise<() => void> {
-    while (this.active >= this.concurrency) await new Promise<void>(resolve => this.waiters.push(resolve));
+  private async processSlot(signal?: AbortSignal): Promise<() => void> {
+    while (this.active >= this.concurrency) {
+      throwIfAborted(signal);
+      await new Promise<void>((resolve, reject) => {
+        const wake = (): void => { signal?.removeEventListener('abort', abort); resolve(); };
+        const abort = (): void => { const at = this.waiters.indexOf(wake); if (at >= 0) this.waiters.splice(at, 1); reject(abortError(signal)); };
+        this.waiters.push(wake); signal?.addEventListener('abort', abort, { once: true });
+      });
+    }
     this.active++;
     return () => { this.active--; this.waiters.shift()?.(); };
   }
 
-  async acquire(): Promise<() => void> {
-    const release = await this.processSlot();
+  async acquire(signal?: AbortSignal): Promise<() => void> {
+    const release = await this.processSlot(signal);
     try {
-      let waitedForCooldown = false;
       for (;;) {
-        const unlock = await lockFile(this.sleep);
+        throwIfAborted(signal);
+        const unlock = await lockFile(this.sleep, signal);
         let wait = 0;
         try {
           const now = Date.now();
           const state = readLimitState();
           state.timestamps = state.timestamps.filter((at) => at > now - WINDOW_MS && at <= now + WINDOW_MS);
-          // Each caller waits out a published cooldown once (the wait is real, so it has elapsed on the next pass).
-          if (state.cooldownUntil > now && !waitedForCooldown) { wait = state.cooldownUntil - now; waitedForCooldown = true; }
+          // Re-read after every wait: another worker may have extended this deadline.
+          if (state.cooldownUntil > now) { wait = state.cooldownUntil - now; }
           else if (state.timestamps.length >= this.rpm) wait = Math.max(1, state.timestamps[0]! + WINDOW_MS - now);
           else {
             state.timestamps.push(now);
@@ -128,7 +173,7 @@ class SarvamLimiter {
           }
           writeFileSync(LIMIT_FILE, JSON.stringify(state), 'utf8');
         } finally { unlock(); }
-        await this.sleep(wait);
+        await abortableSleep(this.sleep, wait, signal);
       }
     } catch (error) { release(); throw error; }
   }
@@ -144,7 +189,7 @@ class SarvamLimiter {
 }
 
 let sharedLimiter: SarvamLimiter | undefined;
-const limiter = (sleep: (ms: number) => Promise<void>): SarvamLimiter => {
+const limiter = (sleep: Sleep): SarvamLimiter => {
   // The process-wide limiter is intentionally configured once: changing env vars
   // midway through a run must not let a later client evade the shared budget.
   return sharedLimiter ??= new SarvamLimiter(numberFromEnv('SARVAM_RPM', 30, 1, 10_000), numberFromEnv('SARVAM_CONCURRENCY', 2, 1, 100), sleep);
@@ -198,7 +243,7 @@ export class SarvamClient {
   private readonly fetcher: typeof globalThis.fetch;
   private readonly timeoutMs: number;
   private readonly retries: number;
-  private readonly sleep: (ms: number) => Promise<void>;
+  private readonly sleep: Sleep;
   private readonly limiter: SarvamLimiter;
   private stats: SarvamTransportStats = { attempts: 0, rateLimits: 0 };
 
@@ -223,12 +268,15 @@ export class SarvamClient {
 
   transportStats(): SarvamTransportStats { return { ...this.stats }; }
 
-  private async request(endpoint: string, body?: unknown): Promise<{ data: unknown; stats: SarvamTransportStats }> {
+  private async request(endpoint: string, body?: unknown, signal?: AbortSignal): Promise<{ data: unknown; stats: SarvamTransportStats }> {
     const requestStats: SarvamTransportStats = { attempts: 0, rateLimits: 0 };
     for (let attempt = 0; ; attempt++) {
       // Queue behind the shared limiter first: waiting for a slot or cooldown must not eat the request timeout.
-      const release = await this.limiter.acquire();
+      throwIfAborted(signal);
+      const release = await this.limiter.acquire(signal);
       const controller = new AbortController();
+      const abort = (): void => controller.abort(signal?.reason);
+      signal?.addEventListener('abort', abort, { once: true });
       const timer = setTimeout(() => controller.abort(), this.timeoutMs);
       try {
         let response: Response;
@@ -241,12 +289,20 @@ export class SarvamClient {
             });
         } catch {
           if (attempt >= this.retries) throw new Error(controller.signal.aborted ? 'Sarvam request timed out' : 'Sarvam network request failed');
-          await this.sleep(this.backoff(attempt));
+          await abortableSleep(this.sleep, this.backoff(attempt), signal);
           continue;
         } finally { release(); }
         if (!response.ok) {
           const retry = (response.status === 429 || response.status >= 500) && attempt < this.retries;
-          if (!retry) throw new Error(`Sarvam HTTP ${response.status}`);
+          if (!retry) {
+            // Sarvam's validation details are the only useful diagnosis for a 400.
+            // Keep a finite error in case a proxy sends an unexpectedly large body.
+            if (response.status === 400) {
+              const detail = (await response.text()).trim().slice(0, 4_000);
+              throw new Error(`Sarvam HTTP 400${detail ? `: ${detail}` : ''}`);
+            }
+            throw new Error(`Sarvam HTTP ${response.status}`);
+          }
           let delay = this.backoff(attempt);
           if (response.status === 429) {
             requestStats.rateLimits++; this.stats.rateLimits++;
@@ -258,13 +314,14 @@ export class SarvamClient {
           await response.body?.cancel().catch(() => {});
           // A 429 publishes a shared cooldown; the next acquire performs that
           // wait once for this worker and every other worker observes it too.
-          if (response.status !== 429) await this.sleep(delay);
+          if (response.status !== 429) await abortableSleep(this.sleep, delay, signal);
           continue;
         }
         try { return { data: await response.json(), stats: requestStats }; }
         catch { throw new Error(controller.signal.aborted ? 'Sarvam request timed out' : 'Sarvam response was not valid JSON'); }
       } finally {
         clearTimeout(timer);
+        signal?.removeEventListener('abort', abort);
       }
     }
   }
@@ -294,7 +351,8 @@ export class SarvamClient {
   async complete(request: SarvamRequest): Promise<SarvamCompletion> {
     const model = resolveSarvamModel(request.model);
     const started = performance.now();
-    const response = await this.request('/chat/completions', { ...request, model });
+    const { signal, ...body } = request;
+    const response = await this.request('/chat/completions', { ...body, model }, signal);
     const data = object(response.data);
     const choices = data?.choices;
     const message = Array.isArray(choices) ? object(object(choices[0])?.message) : null;

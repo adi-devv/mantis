@@ -6,9 +6,9 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { evaluateChecks, loadRealsiteRows, loadRealsiteTasks, mulberry32, parseFinalUrl, realsitePrompt, sampleRealsite, sanitizeAnswer } from '../bench/agent/realsite.js';
+import { evaluateChecks, evaluateDeterministicGrader, loadRealsiteRows, loadRealsiteTasks, mulberry32, parseFinalUrl, realsitePrompt, sampleRealsite, sanitizeAnswer } from '../bench/agent/realsite.js';
 import type { RealsiteRow } from '../bench/agent/realsite.js';
-import { buildJudgePrompt, parseJudgeOutput, readFinalTexts, renderJudgedMarkdown, runKey } from '../bench/agent/judge.js';
+import { buildJudgePrompt, parseJudgeOutput, parseSarvamTrace, readFinalTexts, renderJudgedMarkdown, runKey } from '../bench/agent/judge.js';
 import type { JudgedRun } from '../bench/agent/judge.js';
 
 const FIXTURE = path.join(import.meta.dirname, 'fixtures', 'realsite');
@@ -160,6 +160,13 @@ describe('judge helpers', () => {
     expect(readFinalTexts(path.join(FIXTURE, 'no-such-logs'), 'codex').size).toBe(0);
   });
 
+  it('reads full Sarvam final replies from its trace rather than treating them as Codex events', () => {
+    const full = 'Completed the requested work.\nFINAL_URL: https://example.test/final';
+    expect(parseSarvamTrace(`${JSON.stringify({ type: 'sarvam.completion', content: full, toolCalls: [] })}\n${JSON.stringify({ type: 'sarvam.summary', resultText: full })}`)).toBe(full);
+    // Near miss: a tool-call turn is not the final reply.
+    expect(parseSarvamTrace(JSON.stringify({ type: 'sarvam.completion', content: 'planning', toolCalls: [{ id: '1' }] }))).toBeNull();
+  });
+
   it('turns a fixture log into a clean, blind judge prompt', () => {
     const text = readFinalTexts(path.join(FIXTURE, 'logs'), 'codex').get(runKey('rs-1', 'mantis', 1))!;
     const prompt = buildJudgePrompt({ task: 'Find the cheapest mug', website: 'https://example.com', finalUrl: parseFinalUrl(text), answer: sanitizeAnswer(text), screenshotPath: null });
@@ -248,6 +255,22 @@ describe('answer-key checks', () => {
   });
 });
 
+describe('complete deterministic graders', () => {
+  const grader = {
+    kind: 'fact' as const,
+    answerIncludes: [{ type: 'number' as const, value: 18 }, { type: 'entity' as const, value: 'North Harbor' }],
+    final: { url: { origin: 'https://example.test', path: '/results', query: { page: '1' } }, textIncludes: [{ type: 'number' as const, value: 18 }] },
+  };
+  it('uses typed numeric/entity matches and parsed origin/path predicates', () => {
+    expect(evaluateDeterministicGrader(grader, 'North Harbor has 18 entries.', [{ final: true, url: 'https://example.test/results?page=1', text: '18 entries' }])).toEqual({ pass: true, failed: [] });
+  });
+  it('rejects numeric and URL near misses that substring matching accepted', () => {
+    const numeric = evaluateDeterministicGrader(grader, 'North Harbor has 180 entries.', [{ final: true, url: 'https://example.test/results?page=1', text: '180 entries' }]);
+    expect(numeric?.pass).toBe(false);
+    expect(evaluateDeterministicGrader(grader, 'North Harbor has 18 entries.', [{ final: true, url: 'https://not-example.test/results?page=1', text: '18 entries' }])?.failed).toContain('final URL does not match the required origin/path');
+  });
+});
+
 describe('judged report with evidence and checks', () => {
   const rows = new Map(makeRows({ easy: 3 }).map((r) => [r.task_id, r]));
   const old = (task: string, approach: string, verdict: JudgedRun['verdict']): JudgedRun => ({ task, approach, run: 1, verdict, reason: 'r', finalUrl: null, toolCalls: 1, totalInputTokens: 1, wallS: 1 });
@@ -268,8 +291,8 @@ describe('judged report with evidence and checks', () => {
     ], rows, 'judge');
     const section = md.slice(md.indexOf('## Evidence and checks'));
     expect(md.indexOf('## Per task')).toBeLessThan(md.indexOf('## Evidence and checks'));
-    expect(section).toContain('| mantis | 2 | 1 | 1 | 0 | 0 | 0 | 2 | 1 |');
-    expect(section).toContain('| tree | 2 | 0 | 2 | 0 | 0 | 0 | 1 | 0 |');
+    expect(section).toContain('| mantis | 2 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 1 |');
+    expect(section).toContain('| tree | 2 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 |');
     expect(section).toContain('- `easy-0` mantis run 1: judge success; checks failed (answer lacks "30,887")');
     expect(section).toContain('- `easy-2` tree run 1: judge failure; checks passed');
     expect(section).not.toContain('easy-1` mantis'); // check and judge agree

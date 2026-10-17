@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "bench:tool-diagnostics": "tsx tool-diagnostics.ts",
     "bench:sarvam-probe": "tsx sarvam-probe.ts",
     "bench:sarvam-calibrate": "tsx sarvam-calibrate.ts"
   }

@@ -8,8 +8,9 @@
  * attached, read-only) or `claude -p` (Read tool only) returns {"verdict","reason"}. The judge never
  * sees which approach produced a run: tool-revealing lines are stripped from the reply and the run order is shuffled.
  * Newer runs also carry evidence frames (bench/agent/evidence.ts): the judge then sees a chronological packet of
- * harness-captured frames (URL, page text, image) instead of one final screenshot, and rows with answer-key `checks`
- * (bench/agent/realsite.ts) are also checked deterministically; a failed check turns the verdict into a failure.
+ * harness-captured frames (URL, page text, image) instead of one final screenshot. Rows that explicitly opt into a
+ * complete deterministic grader are decided from their final captured state before any model call; legacy `checks`
+ * still only veto a judged verdict.
  * Writes results/<name>-judged.{json,md}. Env: JUDGE_PROVIDER (codex | claude | sarvam, default codex), JUDGE_MODEL
  * (gpt-6.1-sol / claude-sonnet-5-5), JUDGE_REASONING (high, Codex only), JUDGE_CONCURRENCY (6), JUDGE_SEED (1),
  * JUDGE_TIMEOUT_S (240), CODEX_BIN, CLAUDE_BIN.
@@ -22,13 +23,13 @@ import { pathToFileURL } from 'node:url';
 import { chromiumExecutable } from '../../src/userAgent.js';
 import { parseClaudeStream } from './integrity.js';
 import { parseCodexStream } from './codex.js';
-import { evaluateChecks, loadRealsiteRows, mulberry32, parseFinalUrl, sanitizeAnswer, shuffled } from './realsite.js';
+import { evaluateChecks, evaluateDeterministicGrader, loadRealsiteRows, mulberry32, parseFinalUrl, sanitizeAnswer, shuffled } from './realsite.js';
 import type { RealsiteRow } from './realsite.js';
 import { TASKS } from './tasks.js';
 import { evidenceShowsOnlySiteErrors } from './evidence.js';
 import type { EvidenceFrame, EvidenceSidecar, FormValue } from './evidence.js';
 import { decodePng, encodePng, fitWithin } from './png.js';
-import { loadSarvamEnv, resolveSarvamModel, SarvamClient } from './sarvam.js';
+import { loadSarvamEnv, resolveSarvamModel, SarvamClient, sarvamModelSupportsImages } from './sarvam.js';
 import type { SarvamContentPart } from './sarvam.js';
 
 const REPO = path.resolve(import.meta.dirname, '..', '..');
@@ -56,6 +57,9 @@ export interface JudgedRun {
   /** Evidence-format rows only: frame IDs the judge cited, frames shown, the judge's own verdict, deterministic checks. */
   evidence?: string[]; frameCount?: number; finalFrame?: string | null; judgeVerdict?: Verdict;
   checks?: { pass: boolean; failed: string[] } | null;
+  /** How this verdict was reached, so deterministic successes never look model-judged. */
+  grading?: 'deterministic' | 'judge' | 'status';
+  deterministic?: { pass: boolean; failed: string[] } | null;
   /** Per-run signal used to make the task-level site_broken decision. */
   siteFailure?: boolean;
   judgeModel?: string; judgeError?: string;
@@ -80,10 +84,23 @@ export function readFinalTexts(logDir: string, provider: string): Map<string, st
   const texts = new Map<string, string>();
   for (const [key, { file }] of latest) {
     const stream = readFileSync(path.join(logDir, file), 'utf8');
-    const text = (provider === 'claude' ? parseClaudeStream(stream) : parseCodexStream(stream)).resultText;
+    const text = provider === 'sarvam' ? parseSarvamTrace(stream) : (provider === 'claude' ? parseClaudeStream(stream) : parseCodexStream(stream)).resultText;
     if (text) texts.set(key, text);
   }
   return texts;
+}
+
+/** Sarvam logs are harness traces, not Codex event streams.  Prefer the summary, then the last final completion. */
+export function parseSarvamTrace(stream: string): string | null {
+  let final: string | null = null;
+  for (const line of stream.split(/\r?\n/)) {
+    try {
+      const event = JSON.parse(line) as { type?: unknown; resultText?: unknown; content?: unknown; toolCalls?: unknown };
+      if (event.type === 'sarvam.summary' && typeof event.resultText === 'string') final = event.resultText;
+      else if (event.type === 'sarvam.completion' && typeof event.content === 'string' && (!Array.isArray(event.toolCalls) || event.toolCalls.length === 0)) final = event.content;
+    } catch { /* a truncated diagnostic line is not a final reply */ }
+  }
+  return final;
 }
 
 export const runKey = (task: string, approach: string, run: number): string => `${task}|${approach}|${run}`;
@@ -149,9 +166,9 @@ const excerpt = (text: string, max: number): string => {
  * The judge prompt for a run with evidence frames: the frames in chronological order, each with its URL, image and
  * page text. When there are no frames, `freshImage` (a fresh load of the final URL) or nothing replaces them.
  */
-export function buildEvidencePrompt(input: { task: string; website: string; finalUrl: string | null; answer: string; frames: PacketFrame[]; attached: boolean; freshImage?: string }): string {
+export function buildEvidencePrompt(input: { task: string; website: string; finalUrl: string | null; answer: string; frames: PacketFrame[]; attached: boolean; imagesUnavailable?: boolean; freshImage?: string }): string {
   const { frames, attached } = input;
-  const where = (image: string): string => (attached ? `${image} (attached)` : `${image} (open it with the Read tool)`);
+  const where = (image: string): string => input.imagesUnavailable ? 'unavailable for this judge model' : (attached ? `${image} (attached)` : `${image} (open it with the Read tool)`);
   const hasFinal = frames.some((f) => f.final);
   const evidence: string[] = frames.length
     ? [
@@ -170,9 +187,11 @@ export function buildEvidencePrompt(input: { task: string; website: string; fina
         ];
       }),
     ]
-    : input.freshImage
+    : input.freshImage && !input.imagesUnavailable
       ? [`No frames were captured during the run. ${attached ? 'The attached image' : `The image at ${input.freshImage} (open it with the Read tool)`} is a fresh load of the final URL in a new browser (1280x800). It only shows that the page exists, not the state the agent's session reached (searches, filters, cart, form entries); do not penalise a page that lacks such state when the reply is specific and consistent with it.`]
-      : ['No evidence is available (no frames were captured and the final URL could not be loaded); judge on the reply and URL alone, and answer "unsure" if the reply alone is not enough.'];
+      : input.imagesUnavailable
+        ? ['Images are unavailable for this judge model. No frame text was captured; judge on the reply and URL alone, and answer "unsure" if the reply alone is not enough.']
+        : ['No evidence is available (no frames were captured and the final URL could not be loaded); judge on the reply and URL alone, and answer "unsure" if the reply alone is not enough.'];
   return [
     'You are grading whether a web agent completed a task on a real website. You are not told how the agent worked; judge only the evidence below.',
     '',
@@ -197,6 +216,21 @@ export function buildEvidencePrompt(input: { task: string; website: string; fina
 
 /** Newer runs record `evidenceFrames` (even when empty); only they get the evidence packet and answer-key checks. */
 export const isEvidenceRun = (run: SavedRun): boolean => Object.hasOwn(run, 'evidenceFrames');
+
+/**
+ * Return a deterministic result only for a successful evidence-format run.
+ * Legacy and interrupted runs return null for the existing status/model path;
+ * an opted-in run with unavailable terminal evidence falls back to the normal
+ * adjudicator; only an observed final state can deterministically fail.
+ */
+export function deterministicGradeForRun(row: RealsiteRow, status: string, evidenceRun: boolean, answer: string, frames: PacketFrame[]): { pass: boolean; failed: string[] } | null {
+  const finalFrames = frames.filter((frame) => frame.final);
+  const accessBlock = frames.some((frame) => /\b(?:captcha|access denied|forbidden|unusual traffic|verify you are human|bot check|country\/region (?:not )?available)\b/i.test(frame.text));
+  // A block is a model-adjudicated outcome, not an answer-key failure.
+  return evidenceRun && status === 'success' && finalFrames.length === 1 && !accessBlock
+    ? evaluateDeterministicGrader(row.deterministic, answer, frames)
+    : null;
+}
 
 /** The sidecar written by run.ts, only if it sits inside `allowedRoot` and has the expected shape; otherwise null. */
 export function readEvidenceSidecar(sidecarPath: string | null | undefined, allowedRoot: string): EvidenceSidecar | null {
@@ -332,7 +366,7 @@ export function renderJudgedMarkdown(name: string, runs: JudgedRun[], tasks: Map
   const taskIds = [...new Set(runs.map((r) => r.task))];
   const L: string[] = [];
   L.push(`# Real-site eval, blind-judged: ${name}`, '');
-  L.push(`> Each current-format run was graded blind by \`${judgeModel}\` from the agent's final reply and a judge evidence packet of per-step harness frames (page image, URL, text, and final form values); deterministic task checks can override the judge. Legacy runs use the final live-page screenshot, or a fresh load when unavailable. Tool-revealing lines were stripped and the order shuffled.`, '');
+  L.push(`> Each current-format run was graded blind by \`${judgeModel}\` from the agent's final reply and a judge evidence packet of per-step harness frames (page image, URL, text, and final form values), unless an explicitly opted-in complete deterministic grader decided it first. Legacy substring checks can override a judge verdict. Legacy runs use the final live-page screenshot, or a fresh load when unavailable. Tool-revealing lines were stripped and the order shuffled.`, '');
   L.push('## Per approach', '');
   L.push('| Approach | Runs | Success | Failure | Unsure | Blocked | Site broken | Overall success rate | Success rate excluding universally blocked / site-broken tasks | Avg tool calls | Avg input tokens | Avg time (s) |');
   L.push('|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|');
@@ -365,12 +399,13 @@ function renderEvidenceSection(runs: JudgedRun[]): string[] {
   const withEvidence = runs.filter((r) => r.frameCount !== undefined || r.evidence !== undefined);
   // A cited frame is "earlier" unless it is the final one (the last frame when no frame was marked final).
   const citesEarlier = (r: JudgedRun): boolean => (r.evidence ?? []).some((id) => id !== (r.finalFrame ?? `F${r.frameCount ?? 0}`));
-  L.push('| Approach | Evidence runs | Success | Failure | Unsure | Blocked | Site broken | With frames | Citing an earlier frame |');
-  L.push('|---|---:|---:|---:|---:|---:|---:|---:|---:|');
+  L.push('| Approach | Evidence runs | Success | Failure | Unsure | Blocked | Site broken | Deterministic | Judge fallback | Status-only | With frames | Citing an earlier frame |');
+  L.push('|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|');
   for (const a of [...new Set(runs.map((r) => r.approach))]) {
     const rs = withEvidence.filter((r) => r.approach === a);
     const count = (v: Verdict): number => rs.filter((r) => r.verdict === v).length;
-    L.push(`| ${a} | ${rs.length} | ${count('success')} | ${count('failure')} | ${count('unsure')} | ${count('blocked')} | ${count('site_broken')} | ${rs.filter((r) => (r.frameCount ?? 0) > 0).length} | ${rs.filter(citesEarlier).length} |`);
+    const provenance = (kind: NonNullable<JudgedRun['grading']>): number => rs.filter((r) => r.grading === kind).length;
+    L.push(`| ${a} | ${rs.length} | ${count('success')} | ${count('failure')} | ${count('unsure')} | ${count('blocked')} | ${count('site_broken')} | ${provenance('deterministic')} | ${provenance('judge')} | ${provenance('status')} | ${rs.filter((r) => (r.frameCount ?? 0) > 0).length} | ${rs.filter(citesEarlier).length} |`);
   }
   L.push('', '### Check vs judge disagreements', '');
   const clash = runs.filter((r) => r.checks && (r.checks.pass ? (r.judgeVerdict ?? r.verdict) === 'failure' : (r.judgeVerdict ?? r.verdict) !== 'failure'));
@@ -482,7 +517,7 @@ export function selectSarvamJudgeModel(hasImages: boolean, explicitModel?: strin
 /** Sarvam receives the same blind prompt and frames as the CLI judges, with no filesystem tools. */
 export async function callSarvamJudge(client: Pick<SarvamClient, 'complete'>, prompt: string, model: string, shots: string[], options: { retries?: number; sleep?: (ms: number) => Promise<void>; evidenceIds?: string[]; requireEvidence?: boolean; onModel?: (model: string) => void } = {}): Promise<{ verdict: Verdict; reason: string; evidence?: string[]; attempts?: number; rateLimits?: number; promptTokens?: number | null; completionTokens?: number | null }> {
   const content: SarvamContentPart[] = [{ type: 'text', text: prompt }];
-  for (const shot of shots) {
+  for (const shot of sarvamModelSupportsImages(model) ? shots : []) {
     content.push({ type: 'text', text: `Attached image: ${path.basename(shot)}` });
     content.push({ type: 'image_url', image_url: { url: `data:image/png;base64,${readFileSync(shot).toString('base64')}` } });
   }
@@ -599,28 +634,36 @@ export async function judgeBenchmark(name: string, options: JudgeOptions = {}): 
     }
     const canJudge = r.status === 'success' || (r.status !== 'connection_failure' && shouldJudgeNonSuccess(r, text));
     const answer = sanitizeAnswer(text);
-    const attached = judgeProvider !== 'claude';
+    // Select from the packet that will be available, before deciding whether its
+    // bytes may travel to the selected Sarvam model.
+    const selectedModel = judgeProvider === 'sarvam'
+      ? selectSarvamJudgeModel(evidenceRun ? packet.frames.length > 0 || Boolean(canJudge && finalUrl) : Boolean(r.finalScreenshotPath), explicitModel)
+      : model;
+    const supportsImages = process.env.JUDGE_IMAGES === 'off' ? false : judgeProvider !== 'sarvam' || sarvamModelSupportsImages(selectedModel);
+    const attached = judgeProvider !== 'claude' && supportsImages;
     let shots: string[] = [];
+    let savedImages: string[] = [];
     let prompt: string;
     if (evidenceRun) {
       const fresh = canJudge && !packet.frames.length && finalUrl && await screenshot(finalUrl, path.join(dir, 'fresh.png')) ? 'fresh.png' : undefined;
       const names = fresh ? [fresh] : packet.frames.map((f) => f.image);
-      shots = names.map((n) => path.join(dir, n));
+      savedImages = names.map((n) => path.join(dir, n));
+      shots = supportsImages ? savedImages : [];
       prompt = buildEvidencePrompt({ task: row.task, website: row.website, finalUrl, answer, attached,
-        freshImage: fresh && (attached ? fresh : path.join(dir, fresh)),
+        imagesUnavailable: !supportsImages, freshImage: fresh && (attached ? fresh : path.join(dir, fresh)),
         frames: packet.frames.map((f) => ({ ...f, image: attached ? f.image : path.join(dir, f.image) })),
       });
     } else {
       const shot = path.join(dir, 'final.png');
       const source = canJudge ? await selectJudgeScreenshot(r.finalScreenshotPath, shot, finalUrl, screenshot, logs) : null;
-      shots = source ? [shot] : [];
+      savedImages = source ? [shot] : [];
+      shots = supportsImages ? savedImages : [];
       prompt = buildJudgePrompt({ task: row.task, website: row.website, finalUrl, answer, screenshotPath: source ? (attached ? 'final.png' : shot) : null, screenshotSource: source ?? undefined, attached });
     }
-    if (options.requireSavedEvidence && !shots.length) {
+    if (options.requireSavedEvidence && !savedImages.length) {
       skipped.push({ task: r.task, approach: r.approach, run: r.run, reason: evidenceRun ? 'No saved evidence frame images are available; fresh page loads are disabled.' : 'No saved final screenshot is available; fresh page loads are disabled.' });
       return null;
     }
-    const selectedModel = judgeProvider === 'sarvam' ? selectSarvamJudgeModel(shots.length > 0, explicitModel) : model;
     assertDifferentJudgeModel(selectedModel, agentModels);
     return { r, text, base, evidenceRun, dir, packet, shots, prompt, selectedModel };
   };
@@ -631,9 +674,23 @@ export async function judgeBenchmark(name: string, options: JudgeOptions = {}): 
     const row = rows.get(r.task)!;
     let result: { verdict: Verdict; reason: string; evidence?: string[] };
     let judgeError: string | undefined;
-    if (r.status === 'connection_failure') result = { verdict: 'unsure', reason: 'MCP connection failure; the run never started.' };
-    else if (r.status !== 'success' && !shouldJudgeNonSuccess(r, text)) result = { verdict: 'failure', reason: `The run did not finish (${r.status}).` };
-    else {
+    // Complete graders are an explicit opt-in. They may only decide a completed
+    // evidence-format run; an old run, an interrupted run, or a row without a
+    // final harness capture follows the normal judged/status path below.
+    const deterministic = deterministicGradeForRun(row, r.status, evidenceRun, text, packet.frames);
+    let grading: NonNullable<JudgedRun['grading']>;
+    if (deterministic) {
+      result = deterministic.pass
+        ? { verdict: 'success', reason: 'Complete deterministic grader passed on the final captured state.' }
+        : { verdict: 'failure', reason: `Deterministic grader failed: ${deterministic.failed.join('; ')}.` };
+      grading = 'deterministic';
+    } else if (r.status === 'connection_failure') {
+      result = { verdict: 'unsure', reason: 'MCP connection failure; the run never started.' };
+      grading = 'status';
+    } else if (r.status !== 'success' && !shouldJudgeNonSuccess(r, text)) {
+      result = { verdict: 'failure', reason: `The run did not finish (${r.status}).` };
+      grading = 'status';
+    } else {
       try {
         result = sarvam ? await callSarvamJudge(sarvam, prompt, selectedModel, shots, { requireEvidence: evidenceRun, evidenceIds: packet.frames.map((f) => f.id), onModel: (resolved) => { assertDifferentJudgeModel(resolved, agentModels); actualModel = resolved; } })
           : parseJudgeOutput(judgeProvider === 'codex'
@@ -644,19 +701,23 @@ export async function judgeBenchmark(name: string, options: JudgeOptions = {}): 
         judgeError = `judge error: ${error instanceof Error ? error.message : String(error)}`.slice(0, 200);
         result = { verdict: 'unsure', reason: judgeError };
       }
+      grading = 'judge';
     }
     const { evidence, ...plain } = result;
     result = applyRunStatus(r.status, plain);
     let extra: Partial<JudgedRun> = {};
     if (evidenceRun) {
-      const judgeVerdict = result.verdict;
+      const judgeVerdict = grading === 'judge' ? result.verdict : undefined;
       // Deterministic answer-key checks (evidence-format rows only); a failed check overrides the judge.
       const checks = r.status === 'connection_failure' ? null : evaluateChecks(row.checks, text, packet.texts);
-      if (checks && !checks.pass) result = { verdict: 'failure', reason: `Checks failed: ${checks.failed.join('; ')}. ${result.reason}`.trim() };
+      if (grading !== 'deterministic' && checks && !checks.pass) result = { verdict: 'failure', reason: `Checks failed: ${checks.failed.join('; ')}. ${result.reason}`.trim() };
       extra = {
         evidence, frameCount: packet.frames.length, finalFrame: packet.frames.find((f) => f.final)?.id ?? null,
-        judgeVerdict, checks, siteFailure: checks?.pass !== true && (packet.siteFailure || judgeVerdict === 'site_broken'),
+        ...(judgeVerdict ? { judgeVerdict } : {}), checks, deterministic, grading,
+        siteFailure: deterministic?.pass !== true && (packet.siteFailure || judgeVerdict === 'site_broken'),
       };
+    } else {
+      extra = { grading };
     }
     judged.push({ ...base, ...result, ...extra, judgeModel: actualModel, ...(judgeError ? { judgeError } : {}) });
     log(`[judge] (${judged.length}/${judgedRuns.length}) ${r.task.slice(0, 8)} ... ${result.verdict}`);

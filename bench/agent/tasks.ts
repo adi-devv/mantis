@@ -65,7 +65,7 @@ const LOCAL_AND_LIVE_TASKS: AgentTask[] = [
     category: 'forms',
     site: 'local',
     prompt: (b) => `Open ${b}/login and sign in with email agent@example.com and password correct-horse-battery. What is the page heading after signing in?`,
-    expect: /Signed in/i,
+    expect: /(?<!not )\bSigned in\b/i,
     check: check((e) => leadsTo(e, 'submit', '/login', (x) => control(x, 'email', 'agent@example.com') && control(x, 'pw', 'correct-horse-battery'), (x) => /Signed in/.test(x.text))),
   },
   {
@@ -73,7 +73,9 @@ const LOCAL_AND_LIVE_TASKS: AgentTask[] = [
     category: 'overlays',
     site: 'local',
     prompt: (b) => `Open ${b}/cookie and add the product to the cart. What message confirms it?`,
-    expect: /Added to cart/i,
+    // The fixture check establishes the exact cart state; the reply need only
+    // identify the confirmation message rather than repeat its item count.
+    expect: /\bAdded to cart(?:\s*\(1 item\))?\.?\s*$/i,
     check: check((e) => leadsTo(e, 'click', '/cookie', (x) => target(x, 'add'), (x) => target(x, 'add') && /Added to cart \(1 item\)/.test(x.text))),
   },
   {
@@ -81,7 +83,7 @@ const LOCAL_AND_LIVE_TASKS: AgentTask[] = [
     category: 'lists',
     site: 'local',
     prompt: (b) => `Open ${b}/longlist and open "Item 150". What is the heading of the page it leads to?`,
-    expect: /Detail for item 150/i,
+    expect: /Detail for item 150\b/i,
     check: check((e) => has(e, (x) => x.path === '/item/150' && x.kind === 'load' && /Detail for item 150/.test(x.text))),
   },
   {
@@ -89,7 +91,7 @@ const LOCAL_AND_LIVE_TASKS: AgentTask[] = [
     category: 'navigation',
     site: 'local',
     prompt: (b) => `Open ${b}/site/home, go to the pricing page and find the price of the Team plan.`,
-    expect: /\$29/,
+    expect: /\$29\b/,
     check: check((e) => has(e, (x) => x.path === '/site/pricing' && x.kind === 'load' && /Team: \$29 per month/.test(x.text))),
   },
   {
@@ -97,7 +99,7 @@ const LOCAL_AND_LIVE_TASKS: AgentTask[] = [
     category: 'dynamic',
     site: 'local',
     prompt: (b) => `Open ${b}/dashboard, refresh the data, and tell me what the "Last updated" line says now. Also: what is the amount for Initech 3?`,
-    expect: /just now[\s\S]*\$4,218|\$4,218[\s\S]*just now/i,
+    expect: /\bjust now\b[\s\S]*\$4,218\b|\$4,218\b[\s\S]*\bjust now\b/i,
     check: check((e) => leadsTo(e, 'click', '/dashboard', (x) => target(x, 'ref'), (x) => target(x, 'ref') && /Last updated: just now/.test(x.text))),
   },
   // ---- forms ----
@@ -132,7 +134,7 @@ const LOCAL_AND_LIVE_TASKS: AgentTask[] = [
     category: 'forms',
     site: 'local',
     prompt: (b) => `Open ${b}/booking and book a table for 3 guests on 2026-12-24 at 19:00. What does the confirmation say?`,
-    expect: /Booked for 2026-12-24 at 19:00, 3 guests/,
+    expect: /Booked for 2026-12-24 at 19:00, 3 guests\b/,
     check: check((e) => leadsTo(e, 'submit', '/booking', (x) => control(x, 'dt', '2026-12-24') && control(x, 'tm', '19:00') && control(x, 'ppl', '3'), (x) => /Booked for 2026-12-24 at 19:00, 3 guests/.test(x.text))),
   },
   // ---- reading ----
@@ -141,7 +143,7 @@ const LOCAL_AND_LIVE_TASKS: AgentTask[] = [
     category: 'reading',
     site: 'local',
     prompt: (b) => `Open ${b}/article. In what year was the harbour light first lit?`,
-    expect: /1874/,
+    expect: /\b1874\b/,
     check: check((e) => has(e, (x) => x.path === '/article' && x.kind === 'load')),
   },
   {
@@ -149,7 +151,7 @@ const LOCAL_AND_LIVE_TASKS: AgentTask[] = [
     category: 'reading',
     site: 'local',
     prompt: (b) => `Open ${b}/inventory. What is the SKU of Widget 30, and how many are in stock?`,
-    expect: /W-1203[\s\S]*\b113\b|\b113\b[\s\S]*W-1203/,
+    expect: /\bW-1203\b[\s\S]*\b113\b|\b113\b[\s\S]*\bW-1203\b/,
     check: check((e) => has(e, (x) => x.path === '/inventory' && x.kind === 'load')),
   },
   // ---- lists ----
@@ -158,7 +160,7 @@ const LOCAL_AND_LIVE_TASKS: AgentTask[] = [
     category: 'lists',
     site: 'local',
     prompt: (b) => `Open ${b}/dashboard. Among customers with status Churned, which one has the highest amount, and what is the amount?`,
-    expect: /Acme 6[\s\S]*9,?950|9,?950[\s\S]*Acme 6/,
+    expect: /\bAcme 6\b[\s\S]*\b9,?950\b|\b9,?950\b[\s\S]*\bAcme 6\b/,
     check: check((e) => has(e, (x) => x.path === '/dashboard' && x.kind === 'load')),
   },
   {
@@ -166,7 +168,7 @@ const LOCAL_AND_LIVE_TASKS: AgentTask[] = [
     category: 'lists',
     site: 'local',
     prompt: (b) => `Open ${b}/search, find the result titled "Quokka facts" (it may be on a later page) and open it. Who wrote it?`,
-    expect: /dana\.r/,
+    expect: /\bdana\.r\b/,
     check: check((e) => has(e, (x) => x.path === '/search' && x.kind === 'click' && /Next/.test(x.target.text)) && leadsTo(e, 'click', '/search', (x) => /Quokka facts/.test(x.target.text), (x) => /Written by dana\.r/.test(x.text))),
   },
   {
@@ -174,7 +176,7 @@ const LOCAL_AND_LIVE_TASKS: AgentTask[] = [
     category: 'lists',
     site: 'local',
     prompt: (b) => `Open ${b}/feed. What does post #35 say?`,
-    expect: /Thursday at noon/i,
+    expect: /\bThursday at noon\b/i,
     check: check((e) => has(e, (x) => x.path === '/feed' && x.kind === 'load')),
   },
   // ---- overlays ----
@@ -183,7 +185,7 @@ const LOCAL_AND_LIVE_TASKS: AgentTask[] = [
     category: 'overlays',
     site: 'local',
     prompt: (b) => `Open ${b}/files and delete the file "Old report". What message confirms it?`,
-    expect: /Old report was moved to trash/i,
+    expect: /\bOld report was moved to trash\b/i,
     check: check((e) => {
       return leadsTo(e, 'click', '/files', (x) => x.target.ariaLabel === 'Delete Old report', (x) => /Delete "Old report"/.test(x.text)) &&
         leadsTo(e, 'click', '/files', (x) => target(x, 'yes'), (x) => /Old report was moved to trash/.test(x.text) && !/Old report 🗑/.test(x.text));
@@ -208,7 +210,7 @@ const LOCAL_AND_LIVE_TASKS: AgentTask[] = [
     category: 'navigation',
     site: 'local',
     prompt: (b) => `Open ${b}/app. In the Team section, find the email address of the designer.`,
-    expect: /mia@example\.com/i,
+    expect: /\bmia@example\.com\b(?!\.[A-Za-z])/i,
     check: check((e) => {
       return leadsTo(e, 'click', '/app', (x) => x.target.text === 'Team', (x) => /Mia Wong/.test(x.text)) &&
         leadsTo(e, 'click', '/app', (x) => x.target.text === 'Mia Wong', (x) => /Email: mia@example\.com/.test(x.text));

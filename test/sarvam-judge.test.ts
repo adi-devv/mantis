@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { assertDifferentJudgeModel, builtInJudgeRows, callSarvamJudge, judgeBenchmark, recordedAgentModels, selectSarvamJudgeModel } from '../bench/agent/judge.js';
+import { assertDifferentJudgeModel, buildEvidencePrompt, builtInJudgeRows, callSarvamJudge, judgeBenchmark, recordedAgentModels, selectSarvamJudgeModel } from '../bench/agent/judge.js';
 import type { SavedBenchmark, SavedRun } from '../bench/agent/judge.js';
 import type { SarvamCompletion, SarvamRequest } from '../bench/agent/sarvam.js';
 
@@ -56,6 +56,26 @@ describe('Sarvam strict judge schema', () => {
     expect(await callSarvamJudge({ complete }, 'prompt', 'gemma4', [], { sleep, requireEvidence: true, evidenceIds: ['F1'] })).toEqual({ verdict: 'success', reason: 'Found it.', evidence: ['F1'] });
     expect(sleep.mock.calls).toEqual([[500], [1000]]);
     await expect(callSarvamJudge({ complete: vi.fn(async () => completion('{"verdict":"success","reason":12}')) }, 'prompt', 'gemma4', [], { retries: 0 })).rejects.toThrow('malformed verdict JSON');
+  });
+
+  it('keeps chronological text evidence but omits images for a text-only judge model', async () => {
+    const shot = path.join(folder(), 'f1.png'); writeFileSync(shot, 'image bytes');
+    const complete = vi.fn(async (_request: SarvamRequest) => completion('{"verdict":"success","reason":"Text confirms it.","evidence":["F1"]}', 'glm5.3'));
+    await expect(callSarvamJudge({ complete }, 'F1\nURL: https://example.test\nForm values: value', 'glm-5.3', [shot], { requireEvidence: true, evidenceIds: ['F1'] })).resolves.toMatchObject({ verdict: 'success' });
+    const request = complete.mock.calls[0]?.[0] as SarvamRequest;
+    expect(JSON.stringify(request.messages)).toContain('URL: https://example.test');
+    expect(JSON.stringify(request.messages)).not.toContain('image_url');
+    const packet = buildEvidencePrompt({ task: 't', website: 'w', finalUrl: 'https://example.test/end', answer: 'done', attached: false, imagesUnavailable: true,
+      frames: [{ id: 'F1', url: 'https://example.test/form', text: 'submitted', forms: [{ label: 'name', value: 'Ada' }], final: true, image: 'f1.png' }] });
+    expect(packet).toContain('F1 (final, captured after the agent finished)');
+    expect(packet).toContain('URL: https://example.test/form');
+    expect(packet).toContain('name: Ada');
+    expect(packet).toContain('Image: unavailable for this judge model');
+
+    // Near miss: a vision-capable model still receives the image evidence.
+    const visual = vi.fn(async (_request: SarvamRequest) => completion('{"verdict":"success","reason":"Image confirms it.","evidence":["F1"]}'));
+    await callSarvamJudge({ complete: visual }, 'F1', 'gemma4', [shot], { requireEvidence: true, evidenceIds: ['F1'] });
+    expect(JSON.stringify(visual.mock.calls[0]?.[0])).toContain('image_url');
   });
 });
 

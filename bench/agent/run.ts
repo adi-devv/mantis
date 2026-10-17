@@ -31,7 +31,7 @@ import { createMcpProxy } from './mcp-proxy.js';
 import type { McpProxy } from './mcp-proxy.js';
 import { parseCodexStream } from './codex.js';
 import type { ParsedCodexStream } from './codex.js';
-import { SarvamClient, loadSarvamEnv } from './sarvam.js';
+import { SarvamClient, loadSarvamEnv, sarvamModelSupportsImages } from './sarvam.js';
 import { runSarvamAgent } from './sarvam-agent.js';
 import type { SarvamAgentResult } from './sarvam-agent.js';
 
@@ -401,23 +401,30 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
     if (PROVIDER === 'sarvam') {
       const traceLog = createWriteStream(path.join(logDir, `${unique}.jsonl`));
       traceLog.on('error', () => { /* diagnostic traces are best-effort */ });
+      const controller = new AbortController();
       let timedOut = false;
-      const run = runSarvamAgent({
+      const timer = setTimeout(() => { timedOut = true; controller.abort(new Error('Sarvam agent timed out')); }, TIMEOUT_MS);
+      try {
+      const sarvam = await runSarvamAgent({
         client: new SarvamClient({ timeoutMs: Math.min(120_000, TIMEOUT_MS) }), mcp: server, model: MODEL, prompt, server: name,
         allow: a.allow, deny: a.deny, maxSteps: SARVAM_MAX_STEPS, toolTimeoutMs: Math.min(60_000, TIMEOUT_MS),
         trace: (event) => traceLog.write(JSON.stringify({ at: new Date().toISOString(), ...event }) + '\n'),
         onToolResult: () => { toolsDone++; queueCapture(); },
+        signal: controller.signal,
       });
-      const timeout = new Promise<null>((resolve) => setTimeout(() => { timedOut = true; resolve(null); }, TIMEOUT_MS));
-      const sarvam = await Promise.race([run, timeout]);
-      if (sarvam) {
-        parsed = sarvam; costInr = sarvam.costInr;
-        // Direct harness MCP calls do not flow through the proxy's agent hook.
-        toolsDone = sarvam.toolCalls;
-      } else {
+      parsed = sarvam; costInr = sarvam.costInr;
+      // Direct harness MCP calls do not flow through the proxy's agent hook.
+      toolsDone = sarvam.toolCalls;
+      } catch (error) {
+        if (!timedOut) throw error;
+        // Cancellation can arrive while tool discovery is still pending, before
+        // the agent can construct a partial result. Keep the telemetry accrued by
+        // the harness and record an ordinary timeout rather than a startup crash.
         parsed = { ...parseClaudeStream(''), sawInit: true, connected: true, mcpStatuses: ['connected'], resultError: true, resultText: 'Sarvam agent timed out', turns: null } as SarvamAgentResult;
+      } finally {
+        clearTimeout(timer);
+        traceLog.end();
       }
-      traceLog.end();
       const now = Date.now();
       processResult = { out: '', exitCode: timedOut ? null : 0, signal: timedOut ? 'timeout' : null, timedOut, launchError: null, initAt: cliStart, exitAt: now };
     } else processResult = await new Promise<typeof processResult>((done) => {
@@ -655,6 +662,9 @@ const approaches = (process.env.AGENT_APPROACHES ?? 'mantis,tree,screenshot').sp
 const validApproaches: Approach[] = ['mantis', 'tree', 'devtools', 'browseruse', 'screenshot'];
 if (!approaches.length || approaches.some((a) => !validApproaches.includes(a)) || new Set(approaches).size !== approaches.length) {
   throw new Error(`AGENT_APPROACHES must be a comma-separated unique list from: ${validApproaches.join(', ')}`);
+}
+if (PROVIDER === 'sarvam' && approaches.includes('screenshot') && !sarvamModelSupportsImages(MODEL)) {
+  throw new Error(`AGENT_MODEL ${JSON.stringify(MODEL)} cannot run the screenshot approach because it does not support image observations.`);
 }
 const providerPrefix = PROVIDER;
 const rawName = process.env.AGENT_OUT ?? `${providerPrefix}-agent-verified${want === PILOT.join(',') ? '-pilot' : ''}`;

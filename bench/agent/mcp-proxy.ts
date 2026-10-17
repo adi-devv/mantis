@@ -15,7 +15,7 @@ export interface McpProxy {
   /** Route one agent connection through the proxy. */
   attach(socket: net.Socket): void;
   /** Harness-only JSON-RPC request; resolves with `result`, rejects on an error response or timeout. */
-  call(method: string, params: object, timeoutMs?: number): Promise<any>;
+  call(method: string, params: object, timeoutMs?: number, signal?: AbortSignal): Promise<any>;
   /** Called after an agent tools/call response has been forwarded, with the number of agent tool calls completed. */
   onToolResult(callback: (count: number) => void): void;
   /** Reject the harness requests still waiting (the server is going away). */
@@ -51,11 +51,19 @@ export function createMcpProxy(child: { stdin: Writable; stdout: Readable }): Mc
   let nextId = 0;
 
   const send = (message: object): void => { child.stdin.write(JSON.stringify(message) + '\n'); };
-  const request = (method: string, params: object, timeoutMs: number): Promise<any> => new Promise((resolve, reject) => {
+  const request = (method: string, params: object, timeoutMs: number, signal?: AbortSignal): Promise<any> => new Promise((resolve, reject) => {
     const id = `${HARNESS_PREFIX}${++nextId}`;
-    const timer = setTimeout(() => { pending.delete(id); reject(new Error(`${method} timed out after ${timeoutMs} ms`)); }, timeoutMs);
-    pending.set(id, { resolve, reject, timer });
-    try { send({ jsonrpc: '2.0', id, method, params }); } catch (error) { clearTimeout(timer); pending.delete(id); reject(error as Error); }
+    if (signal?.aborted) { reject(signal.reason instanceof Error ? signal.reason : new Error('MCP request aborted')); return; }
+    const abort = (): void => {
+      pending.delete(id);
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', abort);
+      reject(signal?.reason instanceof Error ? signal.reason : new Error('MCP request aborted'));
+    };
+    const timer = setTimeout(() => { pending.delete(id); signal?.removeEventListener('abort', abort); reject(new Error(`${method} timed out after ${timeoutMs} ms`)); }, timeoutMs);
+    pending.set(id, { resolve: (value) => { signal?.removeEventListener('abort', abort); resolve(value); }, reject: (error) => { signal?.removeEventListener('abort', abort); reject(error); }, timer });
+    signal?.addEventListener('abort', abort, { once: true });
+    try { send({ jsonrpc: '2.0', id, method, params }); } catch (error) { abort(); }
   });
 
   child.stdout.setEncoding('utf8');
@@ -96,14 +104,14 @@ export function createMcpProxy(child: { stdin: Writable; stdout: Readable }): Mc
         child.stdin.write(line + '\n');
       }));
     },
-    async call(method, params, timeoutMs = 15_000) {
+    async call(method, params, timeoutMs = 15_000, signal) {
       if (!agentInitialized) {
-        harnessReady ??= request('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'bench-capture', version: '1.0' } }, timeoutMs)
+        harnessReady ??= request('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'bench-capture', version: '1.0' } }, timeoutMs, signal)
           .then(() => send({ jsonrpc: '2.0', method: 'notifications/initialized' }))
           .catch((error) => { harnessReady = null; throw error; });
         await harnessReady;
       }
-      return request(method, params, timeoutMs);
+      return request(method, params, timeoutMs, signal);
     },
     onToolResult(callback) { listeners.push(callback); },
     close(reason) {
