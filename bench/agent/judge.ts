@@ -10,7 +10,7 @@
  * Newer runs also carry evidence frames (bench/agent/evidence.ts): the judge then sees a chronological packet of
  * harness-captured frames (URL, page text, image) instead of one final screenshot, and rows with answer-key `checks`
  * (bench/agent/realsite.ts) are also checked deterministically; a failed check turns the verdict into a failure.
- * Writes results/<name>-judged.{json,md}. Env: JUDGE_PROVIDER (codex | claude, default codex), JUDGE_MODEL
+ * Writes results/<name>-judged.{json,md}. Env: JUDGE_PROVIDER (codex | claude | sarvam, default codex), JUDGE_MODEL
  * (gpt-6.1-sol / claude-sonnet-5-5), JUDGE_REASONING (high, Codex only), JUDGE_CONCURRENCY (6), JUDGE_SEED (1),
  * JUDGE_TIMEOUT_S (240), CODEX_BIN, CLAUDE_BIN.
  */
@@ -24,13 +24,17 @@ import { parseClaudeStream } from './integrity.js';
 import { parseCodexStream } from './codex.js';
 import { evaluateChecks, loadRealsiteRows, mulberry32, parseFinalUrl, sanitizeAnswer, shuffled } from './realsite.js';
 import type { RealsiteRow } from './realsite.js';
+import { TASKS } from './tasks.js';
+import { evidenceShowsOnlySiteErrors } from './evidence.js';
 import type { EvidenceFrame, EvidenceSidecar, FormValue } from './evidence.js';
 import { decodePng, encodePng, fitWithin } from './png.js';
+import { loadSarvamEnv, resolveSarvamModel, SarvamClient } from './sarvam.js';
+import type { SarvamContentPart } from './sarvam.js';
 
 const REPO = path.resolve(import.meta.dirname, '..', '..');
 const RESULTS = path.join(REPO, 'bench', 'results');
 
-export type Verdict = 'success' | 'failure' | 'unsure' | 'blocked';
+export type Verdict = 'success' | 'failure' | 'unsure' | 'blocked' | 'site_broken';
 
 /** The parts of a bench/agent/run.ts RunResult that the judge needs. */
 export interface SavedRun {
@@ -41,6 +45,8 @@ export interface SavedRun {
   evidencePath?: string | null; evidenceFrames?: string[];
   toolCalls: number; totalInputTokens: number | null;
   timings?: { cliWallMs?: number | null };
+  initModel?: string | null; resolvedModels?: string[];
+  attempts?: { initModel?: string | null; resolvedModels?: string[] }[];
 }
 
 export interface JudgedRun {
@@ -50,6 +56,9 @@ export interface JudgedRun {
   /** Evidence-format rows only: frame IDs the judge cited, frames shown, the judge's own verdict, deterministic checks. */
   evidence?: string[]; frameCount?: number; finalFrame?: string | null; judgeVerdict?: Verdict;
   checks?: { pass: boolean; failed: string[] } | null;
+  /** Per-run signal used to make the task-level site_broken decision. */
+  siteFailure?: boolean;
+  judgeModel?: string; judgeError?: string;
 }
 
 // ---- Logs ----
@@ -94,7 +103,7 @@ export async function selectJudgeScreenshot(savedPath: string | null | undefined
 // ---- Judge prompt and reply parsing ----
 
 const RULES =
-  'Mark "success" only if the task was actually accomplished (or, for questions, the answer is correct and supported by the evidence). Mark "failure" if it was not, or the reply is wrong, evasive, or off-task. If the reply says a required login, purchase, or personal-information prompt stopped it but no such prompt is visible on a live capture, mark "unsure" unless other evidence shows failure. If the task asks for a result the site computes and the agent gives its own estimate or calculation instead, mark "failure". Mark "blocked" only for an explicit site refusal of automation or access, such as a CAPTCHA/bot check, HTTP 403/Access Denied, or country/region block, supported by the evidence. An ordinary 404, network error, or incomplete agent attempt is not blocked. Mark "unsure" if the evidence is not enough to decide. A normal login, purchase, or personal-information step after correct prior work counts as success, not blocked.';
+  'Mark "success" only if the task was actually accomplished (or, for questions, the answer is correct and supported by the evidence). Mark "failure" if it was not, or the reply is wrong, evasive, or off-task. If the reply says a required login, purchase, or personal-information prompt stopped it but no such prompt is visible on a live capture, mark "unsure" unless other evidence shows failure. If the task asks for a result the site computes and the agent gives its own estimate or calculation instead, mark "failure". Mark "blocked" only for an explicit site refusal of automation or access, such as a CAPTCHA/bot check, HTTP 403/Access Denied, or country/region block, supported by the evidence. Mark "site_broken" only when the evidence shows the site itself failed (for example a browser load error or server error page) before usable task content was available; do not use it for an agent mistake, incomplete attempt, ordinary missing result, or merely an empty evidence packet. An ordinary 404 is not blocked and is site_broken only when the evidence establishes that the requested site content itself is broken. Mark "unsure" if the evidence is not enough to decide. A normal login, purchase, or personal-information step after correct prior work counts as success, not blocked.';
 
 export function buildJudgePrompt(input: { task: string; website: string; finalUrl: string | null; answer: string; screenshotPath: string | null; screenshotSource?: 'live' | 'fresh'; attached?: boolean }): string {
   return [
@@ -118,7 +127,7 @@ export function buildJudgePrompt(input: { task: string; website: string; finalUr
       : 'No screenshot is available (the final URL could not be loaded); judge on the reply and URL alone, and answer "unsure" if that is not enough.',
     '',
     RULES,
-    'Reply with only strict JSON, no code fence: {"verdict":"success"|"failure"|"unsure"|"blocked","reason":"<one sentence>"}',
+    'Reply with only strict JSON, no code fence: {"verdict":"success"|"failure"|"unsure"|"blocked"|"site_broken","reason":"<one sentence>"}',
   ].join('\n');
 }
 
@@ -182,7 +191,7 @@ export function buildEvidencePrompt(input: { task: string; website: string; fina
     '',
     RULES + ' Missing verification of a required detail (variant, price, inputs, results, or a claimed required gate) means unsure unless evidence establishes failure. An explicitly substituted self-calculation fails when the task requires a site-generated result; missing on-screen output alone does not establish substitution.' +
       (frames.length ? ' Base your verdict on the frames; cite the frame IDs you rely on.' : ''),
-    'Reply with only strict JSON, no code fence: {"verdict":"success"|"failure"|"unsure"|"blocked","reason":"<one sentence>","evidence":["F1",...]}',
+    'Reply with only strict JSON, no code fence: {"verdict":"success"|"failure"|"unsure"|"blocked"|"site_broken","reason":"<one sentence>","evidence":["F1",...]}',
   ].join('\n');
 }
 
@@ -216,9 +225,9 @@ export function prepareFrameImage(png: Buffer, final: boolean): { png: Buffer; d
  * Copy a run's evidence frames into the blind judge folder as f1.png..fn.png and return them in order. `texts` holds the
  * page text of every frame in the sidecar (also those whose image is missing), for the deterministic checks.
  */
-export function buildEvidencePacket(sidecarPath: string | null | undefined, allowedRoot: string, destDir: string): { frames: PacketFrame[]; texts: string[] } {
+export function buildEvidencePacket(sidecarPath: string | null | undefined, allowedRoot: string, destDir: string): { frames: PacketFrame[]; texts: string[]; siteFailure: boolean } {
   const sidecar = readEvidenceSidecar(sidecarPath, allowedRoot);
-  if (!sidecar) return { frames: [], texts: [] };
+  if (!sidecar) return { frames: [], texts: [], siteFailure: false };
   const folder = path.dirname(path.resolve(sidecarPath!));
   const frames: PacketFrame[] = [];
   sidecar.frames.forEach((frame, i) => {
@@ -228,7 +237,7 @@ export function buildEvidencePacket(sidecarPath: string | null | undefined, allo
     writeFileSync(path.join(destDir, image), prepareFrameImage(readFileSync(source), frame.final === true).png);
     frames.push({ id: frame.id, url: frame.url, text: frame.text, final: frame.final === true, ...(frame.final ? { forms: frame.forms ?? [] } : {}), image });
   });
-  return { frames, texts: sidecar.frames.map((f) => f.text) };
+  return { frames, texts: sidecar.frames.map((f) => f.text), siteFailure: evidenceShowsOnlySiteErrors(sidecar.frames) };
 }
 
 /**
@@ -250,7 +259,7 @@ export function parseJudgeOutput(output: string): { verdict: Verdict; reason: st
   for (const m of text.matchAll(/\{[^{}]*\}/g)) {
     try {
       const v = JSON.parse(m[0]) as Record<string, unknown>;
-      if (v.verdict === 'success' || v.verdict === 'failure' || v.verdict === 'unsure' || v.verdict === 'blocked') {
+      if (v.verdict === 'success' || v.verdict === 'failure' || v.verdict === 'unsure' || v.verdict === 'blocked' || v.verdict === 'site_broken') {
         const reason = typeof v.reason === 'string' ? v.reason.trim() : '';
         // Cited frame IDs (F1, F2..): keep the well-formed ones, in order, without repeats.
         const cited = Array.isArray(v.evidence) ? [...new Set(v.evidence.filter((id): id is string => typeof id === 'string' && /^F\d+$/.test(id)))] : [];
@@ -261,9 +270,9 @@ export function parseJudgeOutput(output: string): { verdict: Verdict; reason: st
   return unsure(`unparseable judge reply: ${text.slice(0, 120).replace(/\s+/g, ' ')}`);
 }
 
-/** A stopped run can only receive a blocked exception; otherwise it remains a failure. */
+/** A stopped run can receive a supported blocked/site-broken exception; otherwise it remains a failure. */
 export function applyRunStatus(status: string, result: { verdict: Verdict; reason: string }): { verdict: Verdict; reason: string } {
-  return status === 'success' || status === 'connection_failure' || result.verdict === 'blocked'
+  return status === 'success' || status === 'connection_failure' || result.verdict === 'blocked' || result.verdict === 'site_broken'
     ? result
     : { verdict: 'failure', reason: `The run did not finish (${status}). ${result.reason}`.trim().slice(0, 200) };
 }
@@ -292,22 +301,51 @@ export function universallyBlockedTasks(runs: JudgedRun[]): Set<string> {
   return ids;
 }
 
+/**
+ * A site is broken at task level only when every run from every tested approach carries either the judge's
+ * site_broken verdict or the strict deterministic error-page signal. A passing answer-key check is usable content.
+ */
+export function universallySiteBrokenTasks(runs: JudgedRun[]): Set<string> {
+  const approaches = new Set(runs.map((r) => r.approach));
+  const ids = new Set<string>();
+  for (const task of new Set(runs.map((r) => r.task))) {
+    const group = runs.filter((r) => r.task === task);
+    const complete = approaches.size === new Set(group.map((r) => r.approach)).size;
+    if (complete && group.every((r) => r.checks?.pass !== true && (r.siteFailure === true || r.verdict === 'site_broken'))) ids.add(task);
+  }
+  return ids;
+}
+
+/** Promote only universal site failures; an isolated site_broken judgment remains an ordinary failed run. */
+export function finalizeSiteBrokenVerdicts(runs: JudgedRun[]): JudgedRun[] {
+  const broken = universallySiteBrokenTasks(runs);
+  return runs.map((run) => broken.has(run.task)
+    ? { ...run, verdict: 'site_broken' }
+    : run.verdict === 'site_broken'
+      ? { ...run, verdict: 'failure', reason: `Site failure was not universal across approaches. ${run.reason}`.trim() }
+      : run);
+}
+
 export function renderJudgedMarkdown(name: string, runs: JudgedRun[], tasks: Map<string, RealsiteRow>, judgeModel: string): string {
+  runs = finalizeSiteBrokenVerdicts(runs);
   const approaches = [...new Set(runs.map((r) => r.approach))];
   const taskIds = [...new Set(runs.map((r) => r.task))];
   const L: string[] = [];
   L.push(`# Real-site eval, blind-judged: ${name}`, '');
-  L.push(`> Each run's final reply and screenshot were graded by \`${judgeModel}\` without knowing which approach produced it. Screenshots come from the agent's final live page when available; older or failed captures use a fresh load of the reported URL. Tool-revealing lines were stripped and the order shuffled.`, '');
+  L.push(`> Each current-format run was graded blind by \`${judgeModel}\` from the agent's final reply and a judge evidence packet of per-step harness frames (page image, URL, text, and final form values); deterministic task checks can override the judge. Legacy runs use the final live-page screenshot, or a fresh load when unavailable. Tool-revealing lines were stripped and the order shuffled.`, '');
   L.push('## Per approach', '');
-  L.push('| Approach | Runs | Success | Failure | Unsure | Blocked | Overall success rate | Success rate excluding universally blocked tasks | Avg tool calls | Avg input tokens | Avg time (s) |');
-  L.push('|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|');
-  const excluded = universallyBlockedTasks(runs);
+  L.push('| Approach | Runs | Success | Failure | Unsure | Blocked | Site broken | Overall success rate | Success rate excluding universally blocked / site-broken tasks | Avg tool calls | Avg input tokens | Avg time (s) |');
+  L.push('|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|');
+  const blocked = universallyBlockedTasks(runs);
+  const siteBroken = universallySiteBrokenTasks(runs);
+  const excluded = new Set([...blocked, ...siteBroken]);
   const rate = (rs: JudgedRun[]): string => rs.length ? `${(100 * rs.filter((r) => r.verdict === 'success').length / rs.length).toFixed(1)}%` : 'n/a';
   for (const a of approaches) {
     const rs = runs.filter((r) => r.approach === a);
     const count = (v: Verdict): number => rs.filter((r) => r.verdict === v).length;
-    L.push(`| ${a} | ${rs.length} | ${count('success')} | ${count('failure')} | ${count('unsure')} | ${count('blocked')} | ${rate(rs)} | ${rate(rs.filter((r) => !excluded.has(r.task)))} | ${fmtAvg(avg(rs.map((r) => r.toolCalls)), 1)} | ${fmtAvg(avg(rs.map((r) => r.totalInputTokens)))} | ${fmtAvg(avg(rs.map((r) => r.wallS)), 1)} |`);
+    L.push(`| ${a} | ${rs.length} | ${count('success')} | ${count('failure')} | ${count('unsure')} | ${count('blocked')} | ${count('site_broken')} | ${rate(rs)} | ${rate(rs.filter((r) => !excluded.has(r.task)))} | ${fmtAvg(avg(rs.map((r) => r.toolCalls)), 1)} | ${fmtAvg(avg(rs.map((r) => r.totalInputTokens)))} | ${fmtAvg(avg(rs.map((r) => r.wallS)), 1)} |`);
   }
+  L.push('', `Universally blocked tasks: ${blocked.size ? [...blocked].map((id) => `\`${id}\``).join(', ') : 'none'}. Site-broken tasks: ${siteBroken.size ? [...siteBroken].map((id) => `\`${id}\``).join(', ') : 'none'}.`);
   L.push('', '## Per task', '');
   L.push(`| Task | ${approaches.join(' | ')} |`);
   L.push(`|---|${approaches.map(() => '---').join('|')}|`);
@@ -327,12 +365,12 @@ function renderEvidenceSection(runs: JudgedRun[]): string[] {
   const withEvidence = runs.filter((r) => r.frameCount !== undefined || r.evidence !== undefined);
   // A cited frame is "earlier" unless it is the final one (the last frame when no frame was marked final).
   const citesEarlier = (r: JudgedRun): boolean => (r.evidence ?? []).some((id) => id !== (r.finalFrame ?? `F${r.frameCount ?? 0}`));
-  L.push('| Approach | Evidence runs | Success | Failure | Unsure | Blocked | With frames | Citing an earlier frame |');
-  L.push('|---|---:|---:|---:|---:|---:|---:|---:|');
+  L.push('| Approach | Evidence runs | Success | Failure | Unsure | Blocked | Site broken | With frames | Citing an earlier frame |');
+  L.push('|---|---:|---:|---:|---:|---:|---:|---:|---:|');
   for (const a of [...new Set(runs.map((r) => r.approach))]) {
     const rs = withEvidence.filter((r) => r.approach === a);
     const count = (v: Verdict): number => rs.filter((r) => r.verdict === v).length;
-    L.push(`| ${a} | ${rs.length} | ${count('success')} | ${count('failure')} | ${count('unsure')} | ${count('blocked')} | ${rs.filter((r) => (r.frameCount ?? 0) > 0).length} | ${rs.filter(citesEarlier).length} |`);
+    L.push(`| ${a} | ${rs.length} | ${count('success')} | ${count('failure')} | ${count('unsure')} | ${count('blocked')} | ${count('site_broken')} | ${rs.filter((r) => (r.frameCount ?? 0) > 0).length} | ${rs.filter(citesEarlier).length} |`);
   }
   L.push('', '### Check vs judge disagreements', '');
   const clash = runs.filter((r) => r.checks && (r.checks.pass ? (r.judgeVerdict ?? r.verdict) === 'failure' : (r.judgeVerdict ?? r.verdict) !== 'failure'));
@@ -393,34 +431,140 @@ function runCli(bin: string, args: string[], prompt: string, cwd: string, timeou
   });
 }
 
-async function main(): Promise<void> {
-  const name = process.env.JUDGE_IN;
+export type JudgeProvider = 'codex' | 'claude' | 'sarvam';
+export interface SavedBenchmark {
+  model?: string;
+  metadata?: { settings?: { provider?: string; model?: string } };
+  results: SavedRun[];
+}
+export interface JudgeReport {
+  source: string; judgeProvider: JudgeProvider; judgeModel: string; judgeModels: string[];
+  siteBrokenTasks: string[]; runs: JudgedRun[];
+  skipped: { task: string; approach: string; run: number; reason: string }[];
+}
+export interface JudgeOptions {
+  provider?: JudgeProvider; model?: string; resultsDir?: string;
+  saved?: SavedBenchmark; rows?: RealsiteRow[];
+  write?: boolean; freshScreenshots?: boolean; requireSavedEvidence?: boolean;
+  runKeys?: Set<string>; quiet?: boolean;
+  expectedFrameCounts?: Map<string, number>;
+  sarvamClient?: Pick<SarvamClient, 'complete'>;
+}
+
+/** Standard benchmark rows are judged too; only gated rows carry deterministic checks. */
+export function builtInJudgeRows(): RealsiteRow[] {
+  return TASKS.filter((task) => !task.judged).map((task) => ({
+    task_id: task.id,
+    website: task.site === 'local' ? 'local fixture' : 'live website',
+    task: task.prompt('http://fixture.invalid'),
+    level: task.category,
+  }));
+}
+
+/** Only recorded model identities count; current environment settings do not describe a historical run. */
+export function recordedAgentModels(saved: SavedBenchmark): string[] {
+  return [...new Set([
+    saved.model, saved.metadata?.settings?.model,
+    ...saved.results.flatMap((r) => [r.initModel, ...(r.resolvedModels ?? []),
+      ...(r.attempts ?? []).flatMap((a) => [a.initModel, ...(a.resolvedModels ?? [])])]),
+  ].filter((m): m is string => typeof m === 'string' && Boolean(m.trim())).map((m) => resolveSarvamModel(m.trim())))];
+}
+
+class JudgeModelCollision extends Error {}
+export function assertDifferentJudgeModel(model: string, agentModels: string[]): void {
+  if (agentModels.includes(resolveSarvamModel(model))) throw new JudgeModelCollision(`Judge model ${resolveSarvamModel(model)} must differ from the recorded agent model.`);
+}
+
+export function selectSarvamJudgeModel(hasImages: boolean, explicitModel?: string): string {
+  return resolveSarvamModel(explicitModel ?? (hasImages ? 'gemma-4-31b' : 'deepseek-v4.1-flash'));
+}
+
+/** Sarvam receives the same blind prompt and frames as the CLI judges, with no filesystem tools. */
+export async function callSarvamJudge(client: Pick<SarvamClient, 'complete'>, prompt: string, model: string, shots: string[], options: { retries?: number; sleep?: (ms: number) => Promise<void>; evidenceIds?: string[]; requireEvidence?: boolean; onModel?: (model: string) => void } = {}): Promise<{ verdict: Verdict; reason: string; evidence?: string[]; attempts?: number; rateLimits?: number; promptTokens?: number | null; completionTokens?: number | null }> {
+  const content: SarvamContentPart[] = [{ type: 'text', text: prompt }];
+  for (const shot of shots) {
+    content.push({ type: 'text', text: `Attached image: ${path.basename(shot)}` });
+    content.push({ type: 'image_url', image_url: { url: `data:image/png;base64,${readFileSync(shot).toString('base64')}` } });
+  }
+  const sleep = options.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+  const retries = options.retries ?? 2;
+  let structuredOutput = true;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const resolved = resolveSarvamModel(model);
+    const reasoningModel = ['deepseekv4.1-flash', 'glm5.3'].includes(resolved);
+    let response;
+    try {
+      response = await client.complete({ model, messages: [{ role: 'user', content }], max_tokens: 2048, temperature: 0,
+        ...(resolved === 'sarvam-105b' ? { reasoning_effort: null } : reasoningModel ? { reasoning_effort: 'low' } : {}),
+        ...(structuredOutput ? { response_format: { type: 'json_object' } } : {}) });
+    } catch (error) {
+      // Some beta model routes do not implement response_format. Keep the strict
+      // prompt and fall back to prompt-only JSON without treating that as a verdict.
+      if (structuredOutput && error instanceof Error && error.message === 'Sarvam HTTP 400') { structuredOutput = false; attempt--; continue; }
+      throw error;
+    }
+    options.onModel?.(resolveSarvamModel(response.model));
+    try {
+      const value: unknown = JSON.parse(response.content ?? '');
+      if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error();
+      const v = value as Record<string, unknown>;
+      const verdicts: Verdict[] = ['success', 'failure', 'unsure', 'blocked', 'site_broken'];
+      if (!verdicts.includes(v.verdict as Verdict) || typeof v.reason !== 'string' || !v.reason.trim()) throw new Error();
+      if (Object.keys(v).some((key) => !['verdict', 'reason', 'evidence'].includes(key))) throw new Error();
+      if ((options.requireEvidence || v.evidence !== undefined) && (!Array.isArray(v.evidence) || v.evidence.some((id) => typeof id !== 'string' || !/^F\d+$/.test(id) || (options.evidenceIds && !options.evidenceIds.includes(id))))) throw new Error();
+      return { verdict: v.verdict as Verdict, reason: v.reason.trim(), ...(Array.isArray(v.evidence) ? { evidence: [...new Set(v.evidence as string[])] } : {}),
+        ...(response.attempts === undefined ? {} : { attempts: response.attempts, rateLimits: response.rateLimits ?? 0,
+          ...(response.usage.promptTokens === null ? {} : { promptTokens: response.usage.promptTokens }),
+          ...(response.usage.completionTokens === null ? {} : { completionTokens: response.usage.completionTokens }) }) };
+    } catch {
+      if (attempt === retries) throw new Error('Sarvam judge returned malformed verdict JSON after retries.');
+      await sleep(500 * 2 ** attempt);
+    }
+  }
+  throw new Error('Sarvam judge returned no verdict.');
+}
+
+/** Reusable judging pipeline; calibration disables writes and fresh page loads. */
+export async function judgeBenchmark(name: string, options: JudgeOptions = {}): Promise<JudgeReport> {
   if (!name || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/.test(name)) throw new Error('Set JUDGE_IN=<result name> (reads bench/results/<name>.json).');
-  const judgeProvider = process.env.JUDGE_PROVIDER ?? 'codex';
-  if (judgeProvider !== 'codex' && judgeProvider !== 'claude') throw new Error('JUDGE_PROVIDER must be codex or claude.');
-  const model = process.env.JUDGE_MODEL ?? (judgeProvider === 'codex' ? 'gpt-6.1-sol' : 'claude-sonnet-5-5');
+  const judgeProvider = options.provider ?? process.env.JUDGE_PROVIDER ?? 'codex';
+  if (judgeProvider !== 'codex' && judgeProvider !== 'claude' && judgeProvider !== 'sarvam') throw new Error('JUDGE_PROVIDER must be codex, claude or sarvam.');
+  if (judgeProvider === 'sarvam') loadSarvamEnv();
+  const explicitModel = options.model ?? process.env.JUDGE_MODEL;
+  const model = explicitModel ?? (judgeProvider === 'codex' ? 'gpt-6.1-sol' : judgeProvider === 'claude' ? 'claude-sonnet-5-5' : 'automatic (images: gemma4; text: deepseekv4.1-flash)');
   const reasoning = process.env.JUDGE_REASONING ?? 'high';
-  const concurrency = Number(process.env.JUDGE_CONCURRENCY ?? 6);
+  const concurrency = Number(process.env.JUDGE_CONCURRENCY ?? (judgeProvider === 'sarvam' ? 2 : 6));
   const seed = Number(process.env.JUDGE_SEED ?? 1);
   const timeoutMs = Number(process.env.JUDGE_TIMEOUT_S ?? 240) * 1000;
   if (!Number.isInteger(concurrency) || concurrency < 1) throw new Error('JUDGE_CONCURRENCY must be a positive integer.');
-  const jsonPath = path.join(RESULTS, `${name}.json`);
-  if (!existsSync(jsonPath)) throw new Error(`${jsonPath} does not exist.`);
-  const saved = JSON.parse(readFileSync(jsonPath, 'utf8')) as { metadata?: { settings?: { provider?: string } }; results: SavedRun[] };
+  const resultsDir = options.resultsDir ?? RESULTS;
+  const jsonPath = path.join(resultsDir, `${name}.json`);
+  if (!options.saved && !existsSync(jsonPath)) throw new Error(`${jsonPath} does not exist.`);
+  const saved = options.saved ?? JSON.parse(readFileSync(jsonPath, 'utf8')) as SavedBenchmark;
+  if (!Array.isArray(saved.results)) throw new Error('Source result has no results array.');
+  const agentModels = recordedAgentModels(saved);
+  if (judgeProvider !== 'sarvam' || explicitModel) assertDifferentJudgeModel(judgeProvider === 'sarvam' ? resolveSarvamModel(model) : model, agentModels);
+  // Missing credentials fail before worker errors can turn them into "unsure" verdicts.
+  const sarvam = judgeProvider === 'sarvam' ? options.sarvamClient ?? new SarvamClient({ timeoutMs }) : null;
   const provider = saved.metadata?.settings?.provider ?? 'codex';
-  const rows = new Map(loadRealsiteRows().map((r) => [r.task_id, r]));
-  const judgedRuns = saved.results.filter((r) => rows.has(r.task));
-  if (!judgedRuns.length) throw new Error(`${name}.json has no runs of tasks from bench/agent/realsite-tasks.json.`);
-  const texts = readFinalTexts(path.join(RESULTS, 'agent-logs', name), provider);
+  const catalog = options.rows ?? [...loadRealsiteRows(), ...builtInJudgeRows()];
+  const rows = new Map(catalog.map((r) => [r.task_id, r]));
+  const judgedRuns = saved.results.filter((r) => rows.has(r.task) && (!options.runKeys || options.runKeys.has(runKey(r.task, r.approach, r.run))));
+  if (!judgedRuns.length) throw new Error(`${name}.json has no runs of known benchmark tasks.`);
+  const logs = path.join(resultsDir, 'agent-logs', name);
+  const texts = readFinalTexts(logs, provider);
 
   const { chromium } = await import('playwright');
-  let browserPromise: ReturnType<typeof chromium.launch> | null = null;
+  const browserHolder: { promise: ReturnType<typeof chromium.launch> | null } = { promise: null };
   const work = mkdtempSync(path.join(os.tmpdir(), 'jdg-'));
   const judged: JudgedRun[] = [];
+  const skipped: JudgeReport['skipped'] = [];
+  const log = (message: string): void => { if (!options.quiet) console.log(message); };
 
   const screenshot = async (url: string, file: string): Promise<boolean> => {
+    if (options.freshScreenshots === false) return false;
     if (!/^https?:\/\//i.test(url)) return false;
-    const browser = await (browserPromise ??= chromium.launch({ headless: true, ...chromiumExecutable() }));
+    const browser = await (browserHolder.promise ??= chromium.launch({ headless: true, ...chromiumExecutable() }));
     const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
     try {
       const page = await context.newPage();
@@ -431,7 +575,7 @@ async function main(): Promise<void> {
     } catch { return false; } finally { await context.close().catch(() => {}); }
   };
 
-  const judgeOne = async (r: SavedRun, index: number): Promise<void> => {
+  const prepare = async (r: SavedRun, index: number) => {
     const row = rows.get(r.task)!;
     const text = texts.get(runKey(r.task, r.approach, r.run)) ?? r.answer ?? '';
     const finalUrl = parseFinalUrl(text);
@@ -440,41 +584,65 @@ async function main(): Promise<void> {
       toolCalls: r.toolCalls, totalInputTokens: r.totalInputTokens,
       wallS: r.timings?.cliWallMs == null ? null : r.timings.cliWallMs / 1000,
     };
-    const logs = path.join(RESULTS, 'agent-logs', name);
     const evidenceRun = isEvidenceRun(r);
     // Per-judge folder, named by position only so nothing about the approach leaks into the path.
     const dir = path.join(work, `j${index}`);
     mkdirSync(dir, { recursive: true });
-    const packet = evidenceRun && r.status !== 'connection_failure' ? buildEvidencePacket(r.evidencePath, logs, dir) : { frames: [] as PacketFrame[], texts: [] as string[] };
+    const packet = evidenceRun && r.status !== 'connection_failure' ? buildEvidencePacket(r.evidencePath, logs, dir) : { frames: [] as PacketFrame[], texts: [] as string[], siteFailure: false };
+    if (options.requireSavedEvidence && evidenceRun) {
+      const sidecar = readEvidenceSidecar(r.evidencePath, logs);
+      const baselineCount = options.expectedFrameCounts?.get(runKey(r.task, r.approach, r.run));
+      if (!sidecar || sidecar.frames.length !== packet.frames.length || (r.evidenceFrames?.length ?? 0) !== packet.frames.length || (baselineCount !== undefined && baselineCount !== packet.frames.length)) {
+        skipped.push({ task: r.task, approach: r.approach, run: r.run, reason: 'Saved evidence packet is missing or incomplete, or differs from the baseline frame count; fresh page loads are disabled.' });
+        return null;
+      }
+    }
+    const canJudge = r.status === 'success' || (r.status !== 'connection_failure' && shouldJudgeNonSuccess(r, text));
+    const answer = sanitizeAnswer(text);
+    const attached = judgeProvider !== 'claude';
+    let shots: string[] = [];
+    let prompt: string;
+    if (evidenceRun) {
+      const fresh = canJudge && !packet.frames.length && finalUrl && await screenshot(finalUrl, path.join(dir, 'fresh.png')) ? 'fresh.png' : undefined;
+      const names = fresh ? [fresh] : packet.frames.map((f) => f.image);
+      shots = names.map((n) => path.join(dir, n));
+      prompt = buildEvidencePrompt({ task: row.task, website: row.website, finalUrl, answer, attached,
+        freshImage: fresh && (attached ? fresh : path.join(dir, fresh)),
+        frames: packet.frames.map((f) => ({ ...f, image: attached ? f.image : path.join(dir, f.image) })),
+      });
+    } else {
+      const shot = path.join(dir, 'final.png');
+      const source = canJudge ? await selectJudgeScreenshot(r.finalScreenshotPath, shot, finalUrl, screenshot, logs) : null;
+      shots = source ? [shot] : [];
+      prompt = buildJudgePrompt({ task: row.task, website: row.website, finalUrl, answer, screenshotPath: source ? (attached ? 'final.png' : shot) : null, screenshotSource: source ?? undefined, attached });
+    }
+    if (options.requireSavedEvidence && !shots.length) {
+      skipped.push({ task: r.task, approach: r.approach, run: r.run, reason: evidenceRun ? 'No saved evidence frame images are available; fresh page loads are disabled.' : 'No saved final screenshot is available; fresh page loads are disabled.' });
+      return null;
+    }
+    const selectedModel = judgeProvider === 'sarvam' ? selectSarvamJudgeModel(shots.length > 0, explicitModel) : model;
+    assertDifferentJudgeModel(selectedModel, agentModels);
+    return { r, text, base, evidenceRun, dir, packet, shots, prompt, selectedModel };
+  };
+
+  const judgeOne = async (prepared: NonNullable<Awaited<ReturnType<typeof prepare>>>): Promise<void> => {
+    const { r, text, base, evidenceRun, dir, packet, shots, prompt, selectedModel } = prepared;
+    let actualModel = selectedModel;
+    const row = rows.get(r.task)!;
     let result: { verdict: Verdict; reason: string; evidence?: string[] };
+    let judgeError: string | undefined;
     if (r.status === 'connection_failure') result = { verdict: 'unsure', reason: 'MCP connection failure; the run never started.' };
     else if (r.status !== 'success' && !shouldJudgeNonSuccess(r, text)) result = { verdict: 'failure', reason: `The run did not finish (${r.status}).` };
     else {
       try {
-        const answer = sanitizeAnswer(text);
-        const images = (names: string[]): string[] => names.map((n) => path.join(dir, n));
-        if (evidenceRun) {
-          // Without frames (capture failed), fall back to a fresh load of the final URL, if any.
-          const fresh = !packet.frames.length && finalUrl && await screenshot(finalUrl, path.join(dir, 'fresh.png')) ? 'fresh.png' : undefined;
-          const names = fresh ? [fresh] : packet.frames.map((f) => f.image);
-          const attached = judgeProvider === 'codex';
-          const prompt = buildEvidencePrompt({
-            task: row.task, website: row.website, finalUrl, answer, attached, freshImage: fresh && (attached ? fresh : path.join(dir, fresh)),
-            frames: packet.frames.map((f) => ({ ...f, image: attached ? f.image : path.join(dir, f.image) })),
-          });
-          result = parseJudgeOutput(attached
-            ? await callCodexJudge(prompt, dir, model, reasoning, images(names), timeoutMs)
-            : await callJudge(prompt, dir, model, timeoutMs, reasoning));
-        } else {
-          const shot = path.join(dir, 'final.png');
-          const source = await selectJudgeScreenshot(r.finalScreenshotPath, shot, finalUrl, screenshot, logs);
-          const prompt = buildJudgePrompt({ task: row.task, website: row.website, finalUrl, answer, screenshotPath: source ? shot : null, screenshotSource: source ?? undefined, attached: judgeProvider === 'codex' });
-          result = parseJudgeOutput(judgeProvider === 'codex'
-            ? await callCodexJudge(prompt, dir, model, reasoning, source ? [shot] : [], timeoutMs)
-            : await callJudge(prompt, dir, model, timeoutMs, reasoning));
-        }
+        result = sarvam ? await callSarvamJudge(sarvam, prompt, selectedModel, shots, { requireEvidence: evidenceRun, evidenceIds: packet.frames.map((f) => f.id), onModel: (resolved) => { assertDifferentJudgeModel(resolved, agentModels); actualModel = resolved; } })
+          : parseJudgeOutput(judgeProvider === 'codex'
+            ? await callCodexJudge(prompt, dir, selectedModel, reasoning, shots, timeoutMs)
+            : await callJudge(prompt, dir, selectedModel, timeoutMs, reasoning));
       } catch (error) {
-        result = { verdict: 'unsure', reason: `judge error: ${error instanceof Error ? error.message : String(error)}`.slice(0, 200) };
+        if (error instanceof JudgeModelCollision) throw error;
+        judgeError = `judge error: ${error instanceof Error ? error.message : String(error)}`.slice(0, 200);
+        result = { verdict: 'unsure', reason: judgeError };
       }
     }
     const { evidence, ...plain } = result;
@@ -485,33 +653,62 @@ async function main(): Promise<void> {
       // Deterministic answer-key checks (evidence-format rows only); a failed check overrides the judge.
       const checks = r.status === 'connection_failure' ? null : evaluateChecks(row.checks, text, packet.texts);
       if (checks && !checks.pass) result = { verdict: 'failure', reason: `Checks failed: ${checks.failed.join('; ')}. ${result.reason}`.trim() };
-      extra = { evidence, frameCount: packet.frames.length, finalFrame: packet.frames.find((f) => f.final)?.id ?? null, judgeVerdict, checks };
+      extra = {
+        evidence, frameCount: packet.frames.length, finalFrame: packet.frames.find((f) => f.final)?.id ?? null,
+        judgeVerdict, checks, siteFailure: checks?.pass !== true && (packet.siteFailure || judgeVerdict === 'site_broken'),
+      };
     }
-    judged.push({ ...base, ...result, ...extra });
-    console.log(`[judge] (${judged.length}/${judgedRuns.length}) ${r.task.slice(0, 8)} ... ${result.verdict}`);
+    judged.push({ ...base, ...result, ...extra, judgeModel: actualModel, ...(judgeError ? { judgeError } : {}) });
+    log(`[judge] (${judged.length}/${judgedRuns.length}) ${r.task.slice(0, 8)} ... ${result.verdict}`);
   };
 
   try {
     const order = shuffled(judgedRuns, mulberry32(seed));
-    console.log(`[judge] ${order.length} runs, ${Math.min(concurrency, order.length)} at a time, model ${model}`);
+    log(`[judge] ${order.length} runs, ${Math.min(concurrency, order.length)} at a time, model ${model}`);
+    // Prepare every packet and check all selected models before any billable judge request.
+    const prepared: NonNullable<Awaited<ReturnType<typeof prepare>>>[] = [];
     let next = 0;
-    await Promise.all(Array.from({ length: Math.min(concurrency, order.length) }, async () => {
-      while (next < order.length) { const i = next++; await judgeOne(order[i]!, i); }
+    const preparations = await Promise.allSettled(Array.from({ length: Math.min(concurrency, order.length) }, async () => {
+      while (next < order.length) { const i = next++; const item = await prepare(order[i]!, i); if (item) prepared.push(item); }
     }));
+    const preparationError = preparations.find((r) => r.status === 'rejected');
+    if (preparationError?.status === 'rejected') throw preparationError.reason;
+    next = 0;
+    const calls = await Promise.allSettled(Array.from({ length: Math.min(concurrency, prepared.length) }, async () => {
+      while (next < prepared.length) { const i = next++; await judgeOne(prepared[i]!); }
+    }));
+    const callError = calls.find((r) => r.status === 'rejected');
+    if (callError?.status === 'rejected') throw callError.reason;
   } finally {
-    if (browserPromise) await browserPromise.then((browser) => browser.close()).catch(() => {});
+    if (browserHolder.promise) await browserHolder.promise.then((browser) => browser.close()).catch(() => {});
     try { rmSync(work, { recursive: true, force: true }); } catch { /* temp cleanup is best effort */ }
   }
 
   // Report in the original run order, not the shuffled judging order.
   const orderOf = (j: JudgedRun): number => saved.results.findIndex((r) => r.task === j.task && r.approach === j.approach && r.run === j.run);
   judged.sort((a, b) => orderOf(a) - orderOf(b));
-  writeFileSync(path.join(RESULTS, `${name}-judged.json`), JSON.stringify({ source: name, judgeModel: model, runs: judged }, null, 2));
-  writeFileSync(path.join(RESULTS, `${name}-judged.md`), renderJudgedMarkdown(name, judged, rows, model));
-  console.log(`[judge] wrote bench/results/${name}-judged.{json,md}`);
+  // Omitted cohort members cannot establish a universal site failure for the remaining runs.
+  const judgedKeys = new Set(judged.map((r) => runKey(r.task, r.approach, r.run)));
+  const omitted: JudgedRun[] = saved.results.filter((r) => rows.has(r.task) && !judgedKeys.has(runKey(r.task, r.approach, r.run))).map((r) => ({
+    task: r.task, approach: r.approach, run: r.run, verdict: 'unsure', reason: 'Not rejudged.', finalUrl: null,
+    toolCalls: r.toolCalls, totalInputTokens: r.totalInputTokens, wallS: null,
+  }));
+  const cohort = [...judged, ...omitted];
+  const finalRuns = finalizeSiteBrokenVerdicts(cohort).filter((r) => judgedKeys.has(runKey(r.task, r.approach, r.run)));
+  const siteBrokenTasks = [...universallySiteBrokenTasks(cohort)];
+  const judgeModels = [...new Set(judged.map((r) => r.judgeModel!))];
+  const judgeModel = judgeModels.length === 1 ? judgeModels[0]! : judgeModels.length ? `mixed (${judgeModels.join(', ')})` : model;
+  const report: JudgeReport = { source: name, judgeProvider, judgeModel, judgeModels, siteBrokenTasks, runs: finalRuns, skipped };
+  if (options.write !== false) {
+    writeFileSync(path.join(resultsDir, `${name}-judged.json`), JSON.stringify(report, null, 2));
+    writeFileSync(path.join(resultsDir, `${name}-judged.md`), renderJudgedMarkdown(name, finalRuns, rows, judgeModel));
+    log(`[judge] wrote bench/results/${name}-judged.{json,md}`);
+  }
+  return report;
 }
 
 // Run only when started directly (tests import the helpers above).
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
-  main().catch((error) => { console.error(error instanceof Error ? error.message : error); process.exit(1); });
+  loadSarvamEnv();
+  judgeBenchmark(process.env.JUDGE_IN ?? '').catch((error) => { console.error(error instanceof Error ? error.message : error); process.exit(1); });
 }

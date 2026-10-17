@@ -31,21 +31,27 @@ import { createMcpProxy } from './mcp-proxy.js';
 import type { McpProxy } from './mcp-proxy.js';
 import { parseCodexStream } from './codex.js';
 import type { ParsedCodexStream } from './codex.js';
+import { SarvamClient, loadSarvamEnv } from './sarvam.js';
+import { runSarvamAgent } from './sarvam-agent.js';
+import type { SarvamAgentResult } from './sarvam-agent.js';
 
 const REPO = path.resolve(import.meta.dirname, '..', '..');
 const OUT = path.join(REPO, 'bench', 'results');
-type Provider = 'codex' | 'claude';
+type Provider = 'codex' | 'claude' | 'sarvam';
 const PROVIDER_VALUE = process.env.AGENT_PROVIDER ?? 'codex';
-if (PROVIDER_VALUE !== 'codex' && PROVIDER_VALUE !== 'claude') throw new Error(`AGENT_PROVIDER must be codex or claude; received ${JSON.stringify(PROVIDER_VALUE)}.`);
+if (PROVIDER_VALUE !== 'codex' && PROVIDER_VALUE !== 'claude' && PROVIDER_VALUE !== 'sarvam') throw new Error(`AGENT_PROVIDER must be codex, claude, or sarvam; received ${JSON.stringify(PROVIDER_VALUE)}.`);
 const PROVIDER: Provider = PROVIDER_VALUE;
-const MODEL = process.env.AGENT_MODEL ?? (PROVIDER === 'codex' ? 'gpt-6.1-sol' : 'claude-haiku-5-5');
+if (PROVIDER === 'sarvam') loadSarvamEnv();
+const MODEL = process.env.AGENT_MODEL ?? (PROVIDER === 'codex' ? 'gpt-6.1-sol' : PROVIDER === 'claude' ? 'claude-haiku-5-5' : 'gemma-4-31b');
 const REASONING = process.env.AGENT_REASONING ?? 'medium';
 if (PROVIDER === 'codex' && !['low', 'medium', 'high', 'xhigh', 'max'].includes(REASONING)) throw new Error(`AGENT_REASONING must be low, medium, high, xhigh, or max; received ${JSON.stringify(REASONING)}.`);
+if (PROVIDER === 'sarvam' && !['gemma-4-31b', 'deepseek-v4.1-flash', 'glm-5.3', 'sarvam-105b'].includes(MODEL)) throw new Error(`AGENT_MODEL must be gemma-4-31b, deepseek-v4.1-flash, glm-5.3, or sarvam-105b for Sarvam; received ${JSON.stringify(MODEL)}.`);
 const RUNS = validatePositiveInt('AGENT_RUNS', process.env.AGENT_RUNS, 1, 1000);
 const TIMEOUT_S = validatePositiveInt('AGENT_TIMEOUT_S', process.env.AGENT_TIMEOUT_S, 600, 86_400);
 const TIMEOUT_MS = TIMEOUT_S * 1000;
+const SARVAM_MAX_STEPS = validatePositiveInt('AGENT_MAX_STEPS', process.env.AGENT_MAX_STEPS, 100, 1_000);
 /** Runs in flight at once. Each run is its own provider CLI process, MCP server and browser. */
-const CONCURRENCY = validatePositiveInt('AGENT_CONCURRENCY', process.env.AGENT_CONCURRENCY, 3, 64);
+const CONCURRENCY = validatePositiveInt('AGENT_CONCURRENCY', process.env.AGENT_CONCURRENCY, PROVIDER === 'sarvam' ? 2 : 3, 64);
 const RESUME = validateFlag('AGENT_RESUME', process.env.AGENT_RESUME);
 const OVERWRITE = validateFlag('AGENT_OVERWRITE', process.env.AGENT_OVERWRITE);
 if (RESUME && OVERWRITE) throw new Error('AGENT_RESUME=1 and AGENT_OVERWRITE=1 cannot be used together.');
@@ -60,6 +66,8 @@ const BENCH_UA = await benchUserAgent();
 const CODEX_BIN = process.env.CODEX_BIN ?? 'codex';
 const VENV_PY = path.join(REPO, 'bench', 'agent', '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
 const TSX = import.meta.resolve('tsx');
+/** A precompiled equivalent is useful where a TypeScript loader cannot start. */
+const SCREENSHOT_MCP = process.env.BENCH_SCREENSHOT_MCP ?? path.join(REPO, 'bench', 'agent', 'screenshot-mcp.ts');
 interface ServerSpec { command: string; args: string[]; env?: Record<string, string> }
 
 interface RawCapture { step: number; png: Buffer; state: string | null; final: boolean }
@@ -241,7 +249,7 @@ const APPROACHES: Record<Approach, { label: string; server: (dir: string) => Rec
   screenshot: {
     label: 'Screenshots (click by x,y)',
     // tsx by absolute URL: runs start in an empty temp folder where a bare 'tsx' does not resolve.
-    server: () => ({ screenshot: { command: node, args: ['--import', TSX, path.join(REPO, 'bench', 'agent', 'screenshot-mcp.ts')], env: { MANTIS_USER_AGENT: BENCH_UA } } }),
+    server: () => ({ screenshot: { command: node, args: SCREENSHOT_MCP.endsWith('.ts') ? ['--import', TSX, SCREENSHOT_MCP] : [SCREENSHOT_MCP], env: { MANTIS_USER_AGENT: BENCH_UA } } }),
     allow: ['mcp__screenshot'],
     deny: ['mcp__screenshot__bench_capture'],
   },
@@ -253,7 +261,7 @@ function preflightApproaches(approaches: Approach[]): void {
     tree: path.join(REPO, 'node_modules', '@playwright', 'mcp', 'cli.js'),
     devtools: path.join(REPO, 'node_modules', 'chrome-devtools-mcp', 'build', 'src', 'bin', 'chrome-devtools-mcp-main.js'),
     browseruse: VENV_PY,
-    screenshot: path.join(REPO, 'bench', 'agent', 'screenshot-mcp.ts'),
+    screenshot: SCREENSHOT_MCP,
   };
   const missing = [path.join(REPO, 'dist', 'server.js'), ...approaches.map((a) => requirements[a])].filter((p, i, list) => list.indexOf(p) === i && !existsSync(p));
   if (missing.length) throw new Error(`Benchmark preflight failed; required approach dependencies are missing: ${missing.join(', ')}. Install/build them before starting the selected agent CLI.`);
@@ -287,6 +295,11 @@ interface AttemptResult {
   observationImages: number;
   totalInputTokens: number | null;
   usageComplete: boolean;
+  /** Sarvam's published-price estimate; other providers leave this unknown. */
+  costInr: number | null;
+  /** API calls including retries, and provider 429s, for Sarvam only. */
+  apiAttempts: number;
+  rateLimits: number;
   usage: StreamUsage;
   timings: { mcpStartupMs: number; cliStartupMs: number | null; cliExecutionMs: number | null; cliWallMs: number | null; verificationMs: number; cleanupMs: number; /** Harness frame capture (steps + final); not part of any CLI timing. */ captureMs: number };
   exitCode: number | null;
@@ -307,7 +320,7 @@ interface RunResult {
   inputTokens: number | null; cacheWriteTokens: number | null; cacheReadTokens: number | null;
   /** Legacy total of normal + cache input tokens. */
   totalInputTokens: number | null;
-  outputTokens: number | null; costUsd: number | null;
+  outputTokens: number | null; costUsd: number | null; costInr: number | null;
   timings: { mcpStartupMs: number; cliStartupMs: number | null; cliExecutionMs: number | null; cliWallMs: number | null; verificationMs: number; cleanupMs: number; /** Harness frame capture (steps + final); not part of any CLI timing. */ captureMs: number };
   resolvedModels: string[];
   attempts: AttemptResult[];
@@ -330,7 +343,8 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
   let fixtureCheck: AttemptResult['fixtureCheck'] = null;
   let verificationMs = 0;
   let cleanupMs = 0;
-  let parsed: ReturnType<typeof parseClaudeStream> | ReturnType<typeof parseCodexStream> = parseClaudeStream('');
+  let parsed: ReturnType<typeof parseClaudeStream> | ReturnType<typeof parseCodexStream> | SarvamAgentResult = parseClaudeStream('');
+  let costInr: number | null = null;
   let finalScreenshotPath: string | null = null;
   let evidencePath: string | null = null;
   let evidenceFrames: string[] = [];
@@ -351,9 +365,7 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
     let capturedAt = -1;
     let stepsOpen = true;
     let stepRun: Promise<void> | null = null;
-    if (capturing) {
-      live.onToolResult((count) => {
-        toolsDone = count;
+    const queueCapture = (): void => {
         if (stepRun || !stepsOpen) return;
         stepRun = (async () => {
           while (stepsOpen && capturedAt < toolsDone) {
@@ -363,10 +375,10 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
             captureMs += Date.now() - started;
           }
         })().finally(() => { stepRun = null; });
-      });
-    }
+    };
+    if (capturing) live.onToolResult((count) => { toolsDone = count; queueCapture(); });
     const bridge = { command: node, args: [path.join(REPO, 'bench', 'agent', 'bridge.mjs'), String(server.port)] };
-    writeFileSync(cfg, JSON.stringify({ mcpServers: { [name]: bridge } }));
+    if (PROVIDER !== 'sarvam') writeFileSync(cfg, JSON.stringify({ mcpServers: { [name]: bridge } }));
     const taskBase = task.site === 'local' ? fixtures.baseFor(task.id, attemptId) : base;
     // Judged real-site prompts already say how to end the reply (FINAL_URL line); the judge reads the whole reply.
     const prompt = task.judged
@@ -378,18 +390,40 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
       enabledTools: a.allow.map((tool) => rawMcpToolName(name, tool)).filter((tool): tool is string => tool !== null),
       disabledTools: (a.deny ?? []).map((tool) => rawMcpToolName(name, tool)).filter((tool): tool is string => tool !== null),
     };
-    const cliCommand = PROVIDER === 'codex' ? CODEX_BIN : claudeBin();
+    const cliCommand = PROVIDER === 'codex' ? CODEX_BIN : PROVIDER === 'claude' ? claudeBin() : null;
     const args = PROVIDER === 'codex'
       ? codexArgs({ model: MODEL, reasoning: REASONING, prompt, cwd: dir, server: codexServer })
-      : [
+      : PROVIDER === 'claude' ? [
         '-p', prompt, '--output-format', 'stream-json', '--verbose', '--model', MODEL, '--tools', '', '--strict-mcp-config', '--mcp-config', cfg,
         '--setting-sources', '', '--allowedTools', ...a.allow, ...(a.deny ? ['--disallowedTools', ...a.deny] : []),
-      ];
+      ] : [];
     cliStart = Date.now();
-    processResult = await new Promise<typeof processResult>((done) => {
+    if (PROVIDER === 'sarvam') {
+      const traceLog = createWriteStream(path.join(logDir, `${unique}.jsonl`));
+      traceLog.on('error', () => { /* diagnostic traces are best-effort */ });
+      let timedOut = false;
+      const run = runSarvamAgent({
+        client: new SarvamClient({ timeoutMs: Math.min(120_000, TIMEOUT_MS) }), mcp: server, model: MODEL, prompt, server: name,
+        allow: a.allow, deny: a.deny, maxSteps: SARVAM_MAX_STEPS, toolTimeoutMs: Math.min(60_000, TIMEOUT_MS),
+        trace: (event) => traceLog.write(JSON.stringify({ at: new Date().toISOString(), ...event }) + '\n'),
+        onToolResult: () => { toolsDone++; queueCapture(); },
+      });
+      const timeout = new Promise<null>((resolve) => setTimeout(() => { timedOut = true; resolve(null); }, TIMEOUT_MS));
+      const sarvam = await Promise.race([run, timeout]);
+      if (sarvam) {
+        parsed = sarvam; costInr = sarvam.costInr;
+        // Direct harness MCP calls do not flow through the proxy's agent hook.
+        toolsDone = sarvam.toolCalls;
+      } else {
+        parsed = { ...parseClaudeStream(''), sawInit: true, connected: true, mcpStatuses: ['connected'], resultError: true, resultText: 'Sarvam agent timed out', turns: null } as SarvamAgentResult;
+      }
+      traceLog.end();
+      const now = Date.now();
+      processResult = { out: '', exitCode: timedOut ? null : 0, signal: timedOut ? 'timeout' : null, timedOut, launchError: null, initAt: cliStart, exitAt: now };
+    } else processResult = await new Promise<typeof processResult>((done) => {
       // Wait for MCP servers to connect before the first turn (otherwise the model may start with no tools).
       const env = { ...process.env, MCP_CONNECTION_NONBLOCKING: 'false', MCP_TIMEOUT: '60000' };
-      const p = spawn(cliCommand, args, { cwd: dir, stdio: ['ignore', 'pipe', 'pipe'], env });
+      const p = spawn(cliCommand!, args, { cwd: dir, stdio: ['ignore', 'pipe', 'pipe'], env });
       let stream = '';
       let stderr = '';
       const stdoutLog = createWriteStream(path.join(logDir, `${unique}.jsonl`));
@@ -442,7 +476,7 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
         stdoutLog.end(() => finish(result));
       });
     });
-    parsed = PROVIDER === 'codex' ? parseCodexStream(processResult.out, name) : parseClaudeStream(processResult.out);
+    if (PROVIDER !== 'sarvam') parsed = PROVIDER === 'codex' ? parseCodexStream(processResult.out, name) : parseClaudeStream(processResult.out);
     if (capturing) {
       stepsOpen = false;
       if (stepRun) await Promise.race([stepRun, new Promise((resolve) => setTimeout(resolve, 20_000))]);
@@ -512,16 +546,18 @@ async function runOnce(task: AgentTask, approach: Approach, base: string, run: n
     turns: parsed.turns, toolCalls: parsed.toolCalls, toolErrors: parsed.toolErrors,
     observationChars: parsed.observationChars, observationImages: parsed.observationImages,
     totalInputTokens: PROVIDER === 'codex' ? (parsed as ReturnType<typeof parseCodexStream>).totalInputTokens :
-      ([parsed.usage.inputTokens, parsed.usage.cacheWriteTokens, parsed.usage.cacheReadTokens].some((n) => n === null)
+      (PROVIDER === 'sarvam' ? (parsed as SarvamAgentResult).totalInputTokens : [parsed.usage.inputTokens, parsed.usage.cacheWriteTokens, parsed.usage.cacheReadTokens].some((n) => n === null)
         ? null : (parsed.usage.inputTokens ?? 0) + (parsed.usage.cacheWriteTokens ?? 0) + (parsed.usage.cacheReadTokens ?? 0)),
-    usageComplete: parsed.usageComplete, usage: parsed.usage,
+    usageComplete: parsed.usageComplete, usage: parsed.usage, costInr,
+    apiAttempts: PROVIDER === 'sarvam' ? ((parsed as SarvamAgentResult).apiAttempts ?? 0) : 0,
+    rateLimits: PROVIDER === 'sarvam' ? ((parsed as SarvamAgentResult).rateLimits ?? 0) : 0,
     timings: {
       mcpStartupMs, cliStartupMs: processResult.initAt === null || cliStart === null ? null : processResult.initAt - cliStart,
       cliExecutionMs: processResult.initAt === null || cliExitAt === null ? null : cliExitAt - processResult.initAt,
       cliWallMs, verificationMs, cleanupMs, captureMs,
     },
     exitCode: processResult.exitCode, signal: processResult.signal, timedOut: processResult.timedOut, fixtureCheck,
-    diagnostics: [...(PROVIDER === 'codex' ? (parsed as ParsedCodexStream).diagnostics : []), ...(captureFailures ? [`${captureFailures} step capture(s) failed or timed out`] : [])],
+    diagnostics: [...(('diagnostics' in parsed ? parsed.diagnostics as string[] : [])), ...(captureFailures ? [`${captureFailures} step capture(s) failed or timed out`] : [])],
   };
 }
 
@@ -530,15 +566,17 @@ const fmtMaybe = (n: number | null): string => n === null ? 'unknown' : fmt(n);
 
 function report(results: RunResult[], approaches: Approach[], tasks: AgentTask[], metadata: RunMetadata): string {
   const L: string[] = [];
+  const providerLabel = PROVIDER === 'codex' ? 'Codex CLI (`codex exec`)' : PROVIDER === 'claude' ? 'Claude Code (`claude -p`)' : 'Sarvam V2 API tool loop';
+  const providerShort = PROVIDER === 'codex' ? 'Codex' : PROVIDER === 'claude' ? 'Claude' : 'Sarvam';
   L.push('# Real-agent eval');
   L.push('');
-  L.push(`> ${PROVIDER === 'codex' ? 'Codex CLI (`codex exec`)' : 'Claude Code (`claude -p`)'} (requested model \`${MODEL}\`${PROVIDER === 'codex' ? `, reasoning ${REASONING}` : ''}) does each task with one browser approach at a time. ` +
-    `Correctness uses the expected answer and, for instrumented local fixtures, a page-state check. Token values come from the ${PROVIDER === 'codex' ? 'Codex event stream' : 'Claude stream'}; ${PROVIDER === 'codex' ? 'Codex does not report USD cost, so cost remains unknown' : 'reported cost is retained'}; missing values stay unknown. An LLM is in the loop, so numbers vary run to run.`);
+  L.push(`> ${providerLabel} (requested model \`${MODEL}\`${PROVIDER === 'codex' ? `, reasoning ${REASONING}` : ''}) does each task with one browser approach at a time. ` +
+    `Correctness uses the expected answer and, for instrumented local fixtures, a page-state check. Token values come from the ${PROVIDER === 'sarvam' ? 'Sarvam completion responses' : PROVIDER === 'codex' ? 'Codex event stream' : 'Claude stream'}; ${PROVIDER === 'sarvam' ? 'cost is an INR estimate from published prices' : PROVIDER === 'codex' ? 'Codex does not report USD cost, so cost remains unknown' : 'reported cost is retained'}; missing values stay unknown. An LLM is in the loop, so numbers vary run to run.`);
   L.push('');
   L.push(`- Date: ${new Date().toISOString().slice(0, 10)}; runs per task and approach: ${RUNS}; ${CONCURRENCY} runs in parallel.`);
   L.push(`- Scope: ${tasks.length} tasks × ${approaches.length} approaches × ${RUNS} runs = ${tasks.length * approaches.length * RUNS} logical runs; ${results.length} recorded so far; ${results.reduce((n, r) => n + r.attempts.length, 0)} total attempts including retries.`);
-  L.push(`- ${PROVIDER === 'codex' ? 'Codex' : 'Claude'} CLI version: ${metadata.cliVersion ?? 'unknown'}; resolved model(s): ${[...new Set(results.flatMap((r) => r.attempts.flatMap((a) => a.resolvedModels)))].join(', ') || 'unknown'}.`);
-  L.push(`- MCP startup (spawn + warm-up) is separate from ${PROVIDER === 'codex' ? 'Codex' : 'Claude'} CLI wall time. CLI wall time runs from process launch to exit; CLI startup is launch to first ${PROVIDER === 'codex' ? '`thread.started`' : 'init'} event, and CLI execution is that event to process exit. Fixture verification and cleanup are timed separately. These include contention from parallel runs. No tool-time vs model-time split is reported because the stream does not provide a reliable decomposition.`);
+  L.push(`- ${providerShort} runtime: ${metadata.cliVersion ?? 'unknown'}; resolved model(s): ${[...new Set(results.flatMap((r) => r.attempts.flatMap((a) => a.resolvedModels)))].join(', ') || 'unknown'}.`);
+  L.push(`- MCP startup (spawn + warm-up) is separate from ${providerShort} execution time. Execution runs from ${PROVIDER === 'sarvam' ? 'the first API request to the final response' : `process launch to exit; startup is launch to first ${PROVIDER === 'codex' ? '`thread.started`' : 'init'} event`}. Fixture verification and cleanup are timed separately. These include contention from parallel runs.`);
   L.push(`- Browser observation size counts text characters and image blocks returned by browser MCP tools. It is a separate diagnostic from ${PROVIDER === 'codex' ? 'Codex-reported' : 'Claude-reported'} input tokens; the benchmark does not subtract it to estimate overhead.`);
   L.push('- Mantis: all its tools. Accessibility tree: Playwright MCP 0.0.83 (headless, isolated) without its JavaScript-running tools. ' +
     'Screenshots: a minimal computer-use-style server (bench/agent/screenshot-mcp.ts): screenshot, click(x,y), type, key, scroll, back.');
@@ -554,7 +592,7 @@ function report(results: RunResult[], approaches: Approach[], tasks: AgentTask[]
     if (k === 'toolCalls' || k === 'toolErrors' || k === 'observationChars' || k === 'observationImages') return s + r[k];
     return s + (r.timings[k] ?? 0);
   }, 0);
-  const sumNullable = (rs: RunResult[], k: 'inputTokens' | 'cacheWriteTokens' | 'cacheReadTokens' | 'outputTokens' | 'costUsd' | 'totalInputTokens'): number | null => {
+  const sumNullable = (rs: RunResult[], k: 'inputTokens' | 'cacheWriteTokens' | 'cacheReadTokens' | 'outputTokens' | 'costUsd' | 'costInr' | 'totalInputTokens'): number | null => {
     const vals = rs.map((r) => r[k]);
     return vals.length === 0 || vals.some((x) => x === null) ? null : vals.reduce<number>((s, x) => s + (x ?? 0), 0);
   };
@@ -567,6 +605,10 @@ function report(results: RunResult[], approaches: Approach[], tasks: AgentTask[]
   L.push(`| Logical runs ending in connection failure | ${approaches.map((a) => by(a).filter((r) => r.status === 'connection_failure').length).join(' | ')} |`);
   L.push(`| Other attempted failures | ${approaches.map((a) => by(a).filter((r) => r.valid && !r.ok).length).join(' | ')} |`);
   L.push(`| Tool calls (including retries) | ${approaches.map((a) => fmt(sumNumber(by(a), 'toolCalls'))).join(' | ')} |`);
+  if (PROVIDER === 'sarvam') {
+    L.push(`| Sarvam API attempts (including retries) | ${approaches.map((a) => fmt(by(a).reduce((n, r) => n + r.attempts.reduce((total, attempt) => total + attempt.apiAttempts, 0), 0))).join(' | ')} |`);
+    L.push(`| Sarvam HTTP 429 responses | ${approaches.map((a) => fmt(by(a).reduce((n, r) => n + r.attempts.reduce((total, attempt) => total + attempt.rateLimits, 0), 0))).join(' | ')} |`);
+  }
   L.push(`| MCP tool errors (including retries) | ${approaches.map((a) => fmt(sumNumber(by(a), 'toolErrors'))).join(' | ')} |`);
   L.push(`| Browser observation text (observed chars) | ${approaches.map((a) => fmt(sumNumber(by(a), 'observationChars'))).join(' | ')} |`);
   L.push(`| Browser observation images (observed blocks) | ${approaches.map((a) => fmt(sumNumber(by(a), 'observationImages'))).join(' | ')} |`);
@@ -582,15 +624,16 @@ function report(results: RunResult[], approaches: Approach[], tasks: AgentTask[]
   L.push(`| Cleanup (total, s) | ${approaches.map((a) => (sumNumber(by(a), 'cleanupMs') / 1000).toFixed(1)).join(' | ')} |`);
   L.push(`| Harness capture (total, s) | ${approaches.map((a) => (sumNumber(by(a), 'captureMs') / 1000).toFixed(1)).join(' | ')} |`);
   L.push(`| Cost estimate (USD; including retries) | ${approaches.map((a) => { const n = sumNullable(by(a), 'costUsd'); return n === null ? 'unknown' : n.toFixed(2); }).join(' | ')} |`);
+  if (PROVIDER === 'sarvam') L.push(`| Cost estimate (INR; including retries) | ${approaches.map((a) => { const n = sumNullable(by(a), 'costInr'); return n === null ? 'unknown' : n.toFixed(2); }).join(' | ')} |`);
   L.push('');
   L.push('## Per run');
   L.push('');
-  L.push('| Task | Approach | Run | Status | Attempts | Tool calls | Tool errors | Obs. chars | Obs. images | Normal in | Cache write | Cache read | Output | MCP startup (s) | CLI startup (s) | CLI execution (s) | CLI wall (s) | Verify (s) | Cleanup (s) | Answer / error |');
-  L.push('|---|---|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|');
+  L.push(`| Task | Approach | Run | Status | Attempts | Tool calls | Tool errors |${PROVIDER === 'sarvam' ? ' API attempts | 429s |' : ''} Obs. chars | Obs. images | Normal in | Cache write | Cache read | Output | MCP startup (s) | CLI startup (s) | CLI execution (s) | CLI wall (s) | Verify (s) | Cleanup (s) | Answer / error |`);
+  L.push(`|---|---|---:|---|---:|---:|---:|${PROVIDER === 'sarvam' ? '---:|---:|' : ''}---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|`);
   for (const t of tasks) {
     for (const r of results.filter((x) => x.task === t.id)) {
       const note = (r.error || r.answer).replace(/\|/g, '\\|').replace(/\s+/g, ' ');
-      L.push(`| \`${r.task}\` | ${APPROACHES[r.approach].label} | ${r.run} | ${r.status} | ${r.attempts.length} | ${r.toolCalls} | ${r.toolErrors} | ${fmt(r.observationChars)} | ${r.observationImages} | ${fmtMaybe(r.inputTokens)} | ${fmtMaybe(r.cacheWriteTokens)} | ${fmtMaybe(r.cacheReadTokens)} | ${fmtMaybe(r.outputTokens)} | ${(r.timings.mcpStartupMs / 1000).toFixed(1)} | ${r.timings.cliStartupMs === null ? 'unknown' : (r.timings.cliStartupMs / 1000).toFixed(1)} | ${r.timings.cliExecutionMs === null ? 'unknown' : (r.timings.cliExecutionMs / 1000).toFixed(1)} | ${r.timings.cliWallMs === null ? 'unknown' : (r.timings.cliWallMs / 1000).toFixed(1)} | ${(r.timings.verificationMs / 1000).toFixed(2)} | ${(r.timings.cleanupMs / 1000).toFixed(2)} | ${note} |`);
+      L.push(`| \`${r.task}\` | ${APPROACHES[r.approach].label} | ${r.run} | ${r.status} | ${r.attempts.length} | ${r.toolCalls} | ${r.toolErrors} |${PROVIDER === 'sarvam' ? ` ${r.attempts.reduce((n, a) => n + a.apiAttempts, 0)} | ${r.attempts.reduce((n, a) => n + a.rateLimits, 0)} |` : ''} ${fmt(r.observationChars)} | ${r.observationImages} | ${fmtMaybe(r.inputTokens)} | ${fmtMaybe(r.cacheWriteTokens)} | ${fmtMaybe(r.cacheReadTokens)} | ${fmtMaybe(r.outputTokens)} | ${(r.timings.mcpStartupMs / 1000).toFixed(1)} | ${r.timings.cliStartupMs === null ? 'unknown' : (r.timings.cliStartupMs / 1000).toFixed(1)} | ${r.timings.cliExecutionMs === null ? 'unknown' : (r.timings.cliExecutionMs / 1000).toFixed(1)} | ${r.timings.cliWallMs === null ? 'unknown' : (r.timings.cliWallMs / 1000).toFixed(1)} | ${(r.timings.verificationMs / 1000).toFixed(2)} | ${(r.timings.cleanupMs / 1000).toFixed(2)} | ${note} |`);
     }
   }
   return L.join('\n') + '\n';
@@ -613,7 +656,7 @@ const validApproaches: Approach[] = ['mantis', 'tree', 'devtools', 'browseruse',
 if (!approaches.length || approaches.some((a) => !validApproaches.includes(a)) || new Set(approaches).size !== approaches.length) {
   throw new Error(`AGENT_APPROACHES must be a comma-separated unique list from: ${validApproaches.join(', ')}`);
 }
-const providerPrefix = PROVIDER === 'codex' ? 'codex' : 'claude';
+const providerPrefix = PROVIDER;
 const rawName = process.env.AGENT_OUT ?? `${providerPrefix}-agent-verified${want === PILOT.join(',') ? '-pilot' : ''}`;
 if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/.test(rawName) || rawName === '.' || rawName === '..') throw new Error(`invalid AGENT_OUT name: ${JSON.stringify(rawName)}`);
 const name = rawName;
@@ -633,7 +676,7 @@ if (outputExists && !RESUME && !OVERWRITE) {
 if (!existsSync(jsonPath) && RESUME) throw new Error(`AGENT_RESUME=1 requested, but ${jsonPath} does not exist.`);
 const settings = {
   provider: PROVIDER,
-  tasks: tasks.map((t) => t.id), approaches, runs: RUNS, model: MODEL, reasoning: PROVIDER === 'codex' ? REASONING : 'not-applicable', timeoutMs: TIMEOUT_MS, concurrency: CONCURRENCY,
+  tasks: tasks.map((t) => t.id), approaches, runs: RUNS, model: MODEL, reasoning: PROVIDER === 'codex' ? REASONING : PROVIDER === 'sarvam' ? `max-steps:${SARVAM_MAX_STEPS}` : 'not-applicable', timeoutMs: TIMEOUT_MS, concurrency: CONCURRENCY,
   toolRestrictions: {
     builtins: PROVIDER === 'codex'
       ? ['shell', 'apps', 'plugins', 'multi_agent', 'goals', 'sleep_tool', 'skill_search', 'view_image', 'browser_use', 'computer_use', 'in_app_browser', 'web_search']
@@ -649,7 +692,7 @@ const settings = {
     PLAYWRIGHT_BROWSERS_PATH: process.env.PLAYWRIGHT_BROWSERS_PATH ?? null,
     CODEX_BIN: process.env.CODEX_BIN ?? null,
     CLAUDE_BIN: process.env.CLAUDE_BIN ?? null,
-    resolvedCliCommand: PROVIDER === 'codex' ? CODEX_BIN : claudeBin(),
+    resolvedCliCommand: PROVIDER === 'codex' ? CODEX_BIN : PROVIDER === 'claude' ? claudeBin() : null,
   },
   browserPaths: {
     chromiumForMcp: MCP_CHROMIUM ?? null,
@@ -659,16 +702,16 @@ const settings = {
 preflightApproaches(approaches);
 const sourceFiles = [
   'bench/agent/run.ts', 'bench/agent/integrity.ts', 'bench/agent/tasks.ts', 'bench/agent/bridge.mjs',
-  'bench/agent/codex.ts', 'bench/agent/codex-config.ts', 'bench/agent/realsite.ts', 'bench/agent/evidence.ts', 'bench/agent/png.ts', 'bench/agent/mcp-proxy.ts',
+  'bench/agent/codex.ts', 'bench/agent/codex-config.ts', 'bench/agent/sarvam.ts', 'bench/agent/sarvam-agent.ts', 'bench/agent/realsite.ts', 'bench/agent/evidence.ts', 'bench/agent/png.ts', 'bench/agent/mcp-proxy.ts',
   ...(existsSync(path.join(REPO, 'bench', 'agent', 'realsite-tasks.json')) ? ['bench/agent/realsite-tasks.json'] : []),
   'bench/agent/screenshot-mcp.ts', 'bench/fixtures.ts', 'bench/fixtures-more.ts', 'bench/adapters.ts',
   ...sourceFilesUnder('src'), ...sourceFilesUnder('dist'), 'package-lock.json',
 ];
 const sourceHashes = hashSources(REPO, sourceFiles);
-const selectedCliCommand = PROVIDER === 'codex' ? CODEX_BIN : claudeBin();
-const cliProbe = spawnSync(selectedCliCommand, ['--version'], { encoding: 'utf8', timeout: 15_000, windowsHide: true });
-if (cliProbe.error || cliProbe.status !== 0) throw new Error(`Benchmark preflight failed; ${PROVIDER} CLI version could not be read: ${cliProbe.error?.message ?? cliProbe.stderr ?? `exit ${cliProbe.status}`}`);
-const cliVersion = (cliProbe.stdout || cliProbe.stderr).trim().slice(0, 200) || null;
+const selectedCliCommand = PROVIDER === 'codex' ? CODEX_BIN : PROVIDER === 'claude' ? claudeBin() : null;
+const cliProbe = selectedCliCommand ? spawnSync(selectedCliCommand, ['--version'], { encoding: 'utf8', timeout: 15_000, windowsHide: true }) : null;
+if (cliProbe && (cliProbe.error || cliProbe.status !== 0)) throw new Error(`Benchmark preflight failed; ${PROVIDER} CLI version could not be read: ${cliProbe.error?.message ?? cliProbe.stderr ?? `exit ${cliProbe.status}`}`);
+const cliVersion = cliProbe ? (cliProbe.stdout || cliProbe.stderr).trim().slice(0, 200) || null : 'Sarvam V2 API';
 if (!cliVersion) throw new Error(`Benchmark preflight failed; ${PROVIDER} CLI returned an empty version string.`);
 const metadata = makeMetadata(settings, sourceHashes, cliVersion);
 if (existsSync(jsonPath) && RESUME) {
@@ -717,6 +760,7 @@ try {
         totalInputTokens: attempts.some((x) => !x.usageComplete || x.totalInputTokens === null)
           ? null : attempts.reduce((sum, x) => sum + (x.totalInputTokens ?? 0), 0),
         outputTokens: nullableSum('outputTokens'), costUsd: nullableSum('costUsd'),
+        costInr: attempts.some((x) => x.costInr === null) ? null : attempts.reduce((sum, x) => sum + (x.costInr ?? 0), 0),
         timings: {
           mcpStartupMs: attempts.reduce((s, x) => s + x.timings.mcpStartupMs, 0),
           cliStartupMs: attempts.every((x) => x.timings.cliStartupMs !== null) ? attempts.reduce((s, x) => s + (x.timings.cliStartupMs ?? 0), 0) : null,

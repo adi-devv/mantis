@@ -16,6 +16,24 @@ export interface EvidenceFrame {
 }
 export interface EvidenceSidecar { frames: EvidenceFrame[]; captured: number; kept: number; captureMs: number }
 
+/**
+ * Strict, site-agnostic signatures for browser/network/server error documents. These deliberately do not include
+ * vague copy such as "something went wrong": normal pages can contain that text, while the signatures below identify
+ * a document which itself failed to load. A 404 is left to the judge because it can also be an agent navigation error.
+ */
+const SITE_ERROR_TEXT = /(?:^|\n)\s*(?:this site can(?:not|['’]t) be reached|this page (?:isn['’]t|is not) working|this webpage is not available|internal server error|bad gateway|service unavailable|gateway timeout|http error 5\d\d|err_[a-z0-9_]+)\b/im;
+const SITE_ERROR_URL = /^(?:chrome-error:\/\/|about:(?:neterror|certerror))/i;
+
+export function isSiteErrorFrame(frame: Pick<EvidenceFrame, 'url' | 'text'>): boolean {
+  return SITE_ERROR_URL.test(frame.url.trim()) || SITE_ERROR_TEXT.test(frame.text);
+}
+
+/** True only when the packet contains a definite site error and no frame contains usable page content. */
+export function evidenceShowsOnlySiteErrors(frames: readonly Pick<EvidenceFrame, 'url' | 'text'>[]): boolean {
+  const observed = frames.filter((frame) => frame.url.trim() || frame.text.trim());
+  return observed.some(isSiteErrorFrame) && observed.every((frame) => isSiteErrorFrame(frame) || !frame.text.trim());
+}
+
 export const FINAL_TEXT_CAP = 30_000;
 export const STEP_TEXT_CAP = 8_000;
 export const MAX_FRAMES = 12;

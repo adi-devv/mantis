@@ -150,8 +150,8 @@ describe('blocked verdict and adjusted rate', () => {
       run('mixed', 'mantis', 'blocked'), run('mixed', 'mantis', 'success', 2), run('mixed', 'tree', 'success')];
     expect([...universallyBlockedTasks(rows)]).toEqual(['all-blocked']);
     const report = renderJudgedMarkdown('x', rows, new Map(), 'judge');
-    expect(report).toContain('| Blocked | Overall success rate | Success rate excluding universally blocked tasks |');
-    expect(report).toContain('| mantis | 3 | 1 | 0 | 0 | 2 | 33.3% | 50.0% |');
+    expect(report).toContain('| Blocked | Site broken | Overall success rate | Success rate excluding universally blocked / site-broken tasks |');
+    expect(report).toContain('| mantis | 3 | 1 | 0 | 0 | 2 | 0 | 33.3% | 50.0% |');
   });
 
   it('keeps a task with missing approaches or a nonblocked run in the denominator', () => {
@@ -162,7 +162,7 @@ describe('blocked verdict and adjusted rate', () => {
     expect(applyRunStatus('wrong_answer', { verdict: 'blocked', reason: 'CAPTCHA' }).verdict).toBe('blocked');
     expect(applyRunStatus('wrong_answer', { verdict: 'success', reason: 'claim' }).verdict).toBe('failure');
     const prompt = buildJudgePrompt({ task: 'find item', website: 'https://example.com', finalUrl: null, answer: '', screenshotPath: null });
-    expect(prompt).toContain('An ordinary 404, network error, or incomplete agent attempt is not blocked.');
+    expect(prompt).toContain('An ordinary 404 is not blocked');
   });
 
   it('preserves fixed failure for legacy stopped rows and checks new rows for site blocks', () => {
@@ -243,7 +243,7 @@ describe('evidence packet prompt', () => {
     const prompt = buildJudgePrompt({ task: 'find item', website: 'https://example.com', finalUrl: null, answer: 'a', screenshotPath: null });
     expect(prompt).not.toContain('Evidence:');
     expect(prompt).not.toContain('"evidence"');
-    expect(prompt.split('\n').at(-1)).toBe('Reply with only strict JSON, no code fence: {"verdict":"success"|"failure"|"unsure"|"blocked","reason":"<one sentence>"}');
+    expect(prompt.split('\n').at(-1)).toBe('Reply with only strict JSON, no code fence: {"verdict":"success"|"failure"|"unsure"|"blocked"|"site_broken","reason":"<one sentence>"}');
   });
 
   it('parses cited frame IDs and ignores junk', () => {
@@ -273,6 +273,7 @@ describe('evidence packet files', () => {
     expect(packet.frames.map((f) => [f.id, f.image, f.final])).toEqual([['F1', 'f1.png', false], ['F2', 'f2.png', false], ['F3', 'f3.png', true]]);
     expect(packet.frames[2]!.forms).toEqual([{ label: 'Name', value: 'x' }]);
     expect(packet.texts).toEqual(['text 0', 'text 1', 'text 2']);
+    expect(packet.siteFailure).toBe(false);
     expect(size(path.join(dest, 'f1.png'))).toEqual([640, 400]);
     expect(size(path.join(dest, 'f2.png'))).toEqual([300, 200]); // never enlarged
     expect(size(path.join(dest, 'f3.png'))).toEqual([1280, 800]);
@@ -290,8 +291,8 @@ describe('evidence packet files', () => {
 
   it('refuses a sidecar outside the run log folder and skips missing images', () => {
     const { logs, sidecar, dest } = setup([{ file: 'a.final.png', png: solid(10, 10), final: true }]);
-    expect(buildEvidencePacket(sidecar, path.join(dir(), 'elsewhere'), dest)).toEqual({ frames: [], texts: [] });
-    expect(buildEvidencePacket(path.join(logs, 'missing.json'), logs, dest)).toEqual({ frames: [], texts: [] });
+    expect(buildEvidencePacket(sidecar, path.join(dir(), 'elsewhere'), dest)).toEqual({ frames: [], texts: [], siteFailure: false });
+    expect(buildEvidencePacket(path.join(logs, 'missing.json'), logs, dest)).toEqual({ frames: [], texts: [], siteFailure: false });
     const gone = setup([{ file: 'a.step-01.png', png: solid(10, 10) }, { file: 'a.final.png', png: solid(10, 10), final: true }]);
     rmSync(path.join(gone.logs, 'a.step-01.png'));
     const packet = buildEvidencePacket(gone.sidecar, gone.logs, gone.dest);

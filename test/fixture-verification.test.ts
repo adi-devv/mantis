@@ -7,12 +7,17 @@ import { startFixtures } from '../bench/fixtures.js';
 import { TASKS } from '../bench/agent/tasks.js';
 import { LONG_EXPECT } from '../bench/fixtures-long.js';
 import { spawn } from 'node:child_process';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import net from 'node:net';
-import { resolve } from 'node:path';
+import os from 'node:os';
+import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { deflateSync } from 'node:zlib';
-import { FINAL_TEXT_CAP, PAGE_STATE_FUNCTION, STEP_TEXT_CAP, packEvidence, parsePageState, selectFrames, toCapturedFrame } from '../bench/agent/evidence.js';
+import { evidenceShowsOnlySiteErrors, FINAL_TEXT_CAP, PAGE_STATE_FUNCTION, STEP_TEXT_CAP, packEvidence, parsePageState, selectFrames, toCapturedFrame } from '../bench/agent/evidence.js';
 import type { CapturedFrame } from '../bench/agent/evidence.js';
+import { finalizeSiteBrokenVerdicts, parseJudgeOutput, renderJudgedMarkdown, universallySiteBrokenTasks } from '../bench/agent/judge.js';
+import type { JudgedRun } from '../bench/agent/judge.js';
+import { loadRealsiteRows, validateChecks } from '../bench/agent/realsite.js';
 import { createMcpProxy } from '../bench/agent/mcp-proxy.js';
 import { decodePng, encodePng, fitWithin, grayThumb, resizeImage, thumbDiff } from '../bench/agent/png.js';
 import { classifyClickError } from '../src/browser.js';
@@ -24,6 +29,62 @@ const crc32 = (buf: Uint8Array): number => {
   return ~c >>> 0;
 };
 
+it('marks only a universal cross-approach site failure as site_broken', () => {
+  const judged = (approach: string, verdict: JudgedRun['verdict'], siteFailure = false): JudgedRun => ({
+    task: 'broken-task', approach, run: 1, verdict, siteFailure, reason: 'r', finalUrl: null,
+    toolCalls: 1, totalInputTokens: 1, wallS: 1,
+  });
+  const allBroken = [judged('mantis', 'site_broken'), judged('tree', 'failure', true), judged('screenshot', 'site_broken')];
+  expect(parseJudgeOutput('{"verdict":"site_broken","reason":"HTTP 503 page."}').verdict).toBe('site_broken');
+  expect(evidenceShowsOnlySiteErrors([
+    { url: 'https://example.test/', text: '' },
+    { url: 'chrome-error://chromewebdata/', text: 'This site can\u2019t be reached\nERR_CONNECTION_REFUSED' },
+  ])).toBe(true);
+  expect([...universallySiteBrokenTasks(allBroken)]).toEqual(['broken-task']);
+  expect(finalizeSiteBrokenVerdicts(allBroken).every((run) => run.verdict === 'site_broken')).toBe(true);
+  const report = renderJudgedMarkdown('broken', allBroken, new Map(), 'judge-model');
+  expect(report).toContain('| Site broken |');
+  expect(report).toContain('Site-broken tasks: `broken-task`.');
+  expect(report).toContain('| `broken-t` | site_broken | site_broken | site_broken |');
+
+  // Near miss: one approach reached usable content, so no run gets the task-level exclusion.
+  const usable = [...allBroken.slice(0, 2), judged('screenshot', 'failure')];
+  expect(universallySiteBrokenTasks(usable).size).toBe(0);
+  expect(finalizeSiteBrokenVerdicts(usable).map((run) => run.verdict)).toEqual(['failure', 'failure', 'failure']);
+  expect(evidenceShowsOnlySiteErrors([
+    { url: 'chrome-error://chromewebdata/', text: 'This site cannot be reached' },
+    { url: 'https://example.test/results', text: 'Product results loaded' },
+  ])).toBe(false);
+});
+
+it('describes the current judge packet and flags missing answer-key checks', () => {
+  expect(validateChecks({ answerIncludes: ['expected answer'] })).toBeNull();
+  expect(validateChecks(undefined)).toBe('missing checks'); // near miss: a cloud row omitted the answer key
+  expect(validateChecks({ answerIncludes: [] })).toMatch(/non-empty string arrays/);
+  const folder = mkdtempSync(join(os.tmpdir(), 'realsite-row-checks-'));
+  try {
+    const base = { task_id: 'cloud-row', website: 'https://example.test/', confirmed_task: 'Find it', level: 'easy' };
+    const missing = join(folder, 'missing.json');
+    writeFileSync(missing, JSON.stringify([base]));
+    const issues: string[] = [];
+    loadRealsiteRows(missing, (message) => issues.push(message));
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toContain('cloud-row: missing checks');
+
+    // Near miss: a complete answer key is accepted without invoking the injected reporter.
+    const valid = join(folder, 'valid.json');
+    writeFileSync(valid, JSON.stringify([{ ...base, checks: { answerIncludes: ['expected answer'] } }]));
+    const validIssues: string[] = [];
+    expect(loadRealsiteRows(valid, (message) => validIssues.push(message))[0]!.checks).toEqual({ answerIncludes: ['expected answer'] });
+    expect(validIssues).toEqual([]);
+  } finally { rmSync(folder, { recursive: true, force: true }); }
+  const run: JudgedRun = { task: 't', approach: 'mantis', run: 1, verdict: 'success', reason: '', finalUrl: null, toolCalls: 1, totalInputTokens: 1, wallS: 1, frameCount: 2, checks: { pass: true, failed: [] } };
+  const report = renderJudgedMarkdown('packet', [run], new Map(), 'judge-model');
+  expect(report).toContain('judge evidence packet of per-step harness frames');
+  expect(report).toContain('deterministic task checks can override the judge');
+  expect(report).not.toContain("Each run's final reply and screenshot were graded");
+});
+
 it('Mantis follows a verified label but rejects a covered control', async () => {
   const mantis = new MantisBrowser({ actionTimeoutMs: 300 });
   try {
@@ -33,6 +94,33 @@ it('Mantis follows a verified label but rejects a covered control', async () => 
     const covered = await mantis.click(idOf(view, 'button "Covered button"'));
     expect(covered).toMatch(/^error:.*covered by another element/);
     expect(await mantis.read()).not.toContain('covered clicked');
+  } finally {
+    await mantis.close();
+  }
+});
+
+it('grounds pilot diagnostics in a numbered closed trigger or a real visual target', async () => {
+  const mantis = new MantisBrowser({ actionTimeoutMs: 300 });
+  try {
+    let view = await mantis.open(fixture('generic-browser-cover-diagnosis.html'));
+    const trigger = idOf(view, 'button "Filters"');
+    expect(await mantis.click(idOf(view, 'button "Apply filters"'))).toContain(`open #${trigger} "Filters" first`);
+
+    // Near miss: a page layer with unrelated controls is not a modal to dismiss.
+    view = await mantis.open(fixture('generic-browser-cover-diagnosis.html'));
+    const hero = await mantis.click(idOf(view, 'button "Continue"'));
+    expect(hero).toContain('nothing to dismiss');
+    expect(hero).not.toContain('dismiss that first');
+
+    view = await mantis.open(fixture('generic-browser-collapsed-options.html'));
+    expect(view).toMatch(/"Black \(414 products\)" \(open #\d+ "Colour" first\)/);
+    expect(view).not.toMatch(/Black ink is archival\." \(open #/);
+
+    await mantis.open(fixture('generic-data-hint.html'));
+    const canvas = (await mantis.media()).match(/^#(\d+) canvas/m)?.[1];
+    expect(await mantis.data({ id: 9999 })).toContain(`data({id: ${canvas}})`);
+    await mantis.open(`${fixture('generic-data-hint.html')}?empty=1`);
+    expect(await mantis.data({ id: 9999 })).not.toContain('data({id:');
   } finally {
     await mantis.close();
   }

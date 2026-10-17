@@ -1,6 +1,6 @@
 /**
  * Real-site tasks for the agent eval: Online-Mind2Web-style rows from bench/agent/realsite-tasks.json
- * (an array of { task_id, website, confirmed_task, level }; `task` is accepted for `confirmed_task`). Real sites have no regex answer, so these tasks are
+ * (an array of { task_id, website, confirmed_task, level, checks }; `task` is accepted for `confirmed_task`). Real sites have no regex answer, so these tasks are
  * `judged: true` and graded afterwards by a blind LLM judge (bench/agent/judge.ts). The task's own
  * `expect` only checks that the agent finished (it printed the FINAL_URL line).
  *
@@ -80,22 +80,43 @@ export function sampleRealsite(rows: readonly RealsiteRow[], n: number, seed: nu
   return shuffled(picked, rand);
 }
 
-/** All valid rows of the JSON file ([] when the file is missing). Rows with missing fields are skipped. */
-export function loadRealsiteRows(file: string = REALSITE_FILE): RealsiteRow[] {
+/** All valid rows of the JSON file ([] when the file is missing). Missing or invalid answer-key checks are flagged. */
+export function loadRealsiteRows(file: string = REALSITE_FILE, reportIssues: (message: string) => void = console.warn): RealsiteRow[] {
   if (!existsSync(file)) return [];
   const raw: unknown = JSON.parse(readFileSync(file, 'utf8'));
-  if (!Array.isArray(raw)) throw new Error(`${file} must contain a JSON array of { task_id, website, confirmed_task, level }.`);
+  if (!Array.isArray(raw)) throw new Error(`${file} must contain a JSON array of { task_id, website, confirmed_task, level, checks }.`);
   const text = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v.trim() : null);
-  return raw.flatMap((item): RealsiteRow[] => {
+  const issues: string[] = [];
+  const rows = raw.flatMap((item): RealsiteRow[] => {
     const o = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>;
     const task_id = text(o.task_id);
     const website = text(o.website);
     // Online-Mind2Web calls the task text `confirmed_task`; plain `task` is also accepted.
     const task = text(o.confirmed_task) ?? text(o.task);
     if (!task_id || !website || !task) return [];
+    const checksIssue = validateChecks(o.checks);
+    if (checksIssue) issues.push(`${task_id}: ${checksIssue}`);
     const checks = parseChecks(o.checks);
     return [{ task_id, website, task, level: text(o.level) ?? 'unknown', ...(checks ? { checks } : {}) }];
   });
+  if (issues.length) {
+    const shown = issues.slice(0, 10).join('; ');
+    reportIssues(`[realsite] ${issues.length} task row${issues.length === 1 ? '' : 's'} missing valid answer-key checks in ${file}: ${shown}${issues.length > 10 ? `; and ${issues.length - 10} more` : ''}`);
+  }
+  return rows;
+}
+
+/** Null for a complete checks object; otherwise a stable validation message used by local and cloud runs. */
+export function validateChecks(value: unknown): string | null {
+  if (value === undefined) return 'missing checks';
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return 'checks must be an object';
+  const o = value as Record<string, unknown>;
+  const validList = (v: unknown): boolean => Array.isArray(v) && v.length > 0 && v.every((x) => typeof x === 'string' && x.trim());
+  const fields = ['answerIncludes', 'evidenceIncludes'] as const;
+  const invalid = fields.filter((field) => Object.hasOwn(o, field) && !validList(o[field]));
+  if (invalid.length) return `${invalid.join(' and ')} must be non-empty string arrays`;
+  if (!fields.some((field) => validList(o[field]))) return 'checks must include answerIncludes or evidenceIncludes';
+  return null;
 }
 
 /** `checks` objects keep only the lists that are non-empty arrays of non-empty strings; anything else is ignored. */

@@ -29,6 +29,17 @@ npx tsx src/cli.ts read https://example.com
 
 Benchmarks, their settings and how results are graded: [bench/README.md](../bench/README.md).
 
+## Sarvam evals
+
+Store `SARVAM_API_KEY` only in gitignored `.env`. Use the scoped scripts:
+
+```bash
+npm run bench:sarvam-probe
+npm run bench:sarvam-calibrate
+```
+
+Set `AGENT_PROVIDER=sarvam` to run an agent or `JUDGE_PROVIDER=sarvam` to judge. See [bench/README.md](../bench/README.md) for models, limits, and benchmark details.
+
 To use a local build instead of npm: `claude mcp add mantis -- node /abs/path/to/mantis/dist/server.js`.
 
 ## Configuration

@@ -1,0 +1,9 @@
+{
+  "name": "mantis-bench-agent",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bench:sarvam-probe": "tsx sarvam-probe.ts",
+    "bench:sarvam-calibrate": "tsx sarvam-calibrate.ts"
+  }
+}
